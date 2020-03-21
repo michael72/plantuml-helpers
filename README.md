@@ -6,7 +6,7 @@ This is a small helper for editing PlantUML files.
 
 ## Features
 
-Changes the arrows in UML diagrams from horizonatal to vertical and vice versa. It can also swap the arrow direction with also swapping the content. This is helpful when changing the order in which the elements are drawn.
+Changes the arrows in Plant-UML diagrams from horizonatal to vertical and vice versa. It can also swap the arrow direction with also swapping the content. This is helpful when changing the order in which the elements are drawn.
 
 ## Extension Settings
 
@@ -25,5 +25,9 @@ None.
 ### 0.1.0
 
 Add tests and support of multiplicities on arrows
+
+### 0.1.1
+
+Fix -|> arrow and multiplicities containing "-"
 
 **Enjoy!**
