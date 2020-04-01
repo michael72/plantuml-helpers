@@ -9,11 +9,11 @@ export enum Direction {
 }
 
 function rotateArrow(arrow: string, isVert: boolean) : string {
-	// - <=> --
+	// - <=> -- or . <=> ..
 	if (isVert) {
-		return arrow.replace("--", "-");
+		return arrow.replace("--", "-").replace("..", ".");
 	} else {
-		return arrow.replace("-", "--");
+		return arrow.replace("-", "--").replace(".", "..");
 	}	
 }
 
@@ -26,12 +26,14 @@ function reverse(s: string) : string {
 	return s.split("").reverse().join("");
 }
 
-function reverseArrow(arrow: string, dash: number, isVert: boolean) : string {
+function reverseArrow(arrow: string, dash: number, isDot: boolean, isVert: boolean) : string {
 	arrow = reverseChar(arrow, ">", "<");
 	arrow = reverseChar(arrow, "/", "\\");
 	let arrowLeft = arrow.substring(0, dash);
 	let arrowRight = arrow.substring(dash + (isVert ? 2 : 1));
-	return reverse(arrowRight) + (isVert ? "--" : "-") + reverse(arrowLeft); 
+	return reverse(arrowRight) 
+		+ (isVert ? (isDot ? ".." : "--") : (isDot ? "." : "-")) 
+		+ reverse(arrowLeft); 
 }
 
 const regex_mul_1 : RegExp = /(\S+)(\s+)(".*")/;
@@ -49,7 +51,7 @@ function reverseWithMul(item: string) : string {
 }
 
 /// Regex to find an arrow in the current line.
-const regex : RegExp = /(\s*)(\S+(?:\s+"[^"]+")?)(\s*)(\S*-\S*)(\s*)((?:"[^"]+"\s+)?\S+)(.*)/;
+const regex : RegExp = /(\s*)(\S+(?:\s+"[^"]+")?)(\s*)(\S*[-.]\S*)(\s*)((?:"[^"]+"\s+)?\S+)(.*)/;
 // example:                    A "1"                  ->          "2"          B  : foo
 
 // rotate:
@@ -66,7 +68,12 @@ export function rotate(line: string, dir: Direction) : string {
 	}
 	let a = 4; // arrow-index
 	var arrow = m[a];
-	let dash = arrow.indexOf("-");
+	var dash = arrow.indexOf("-");
+	var arr = "--";
+	if (dash === -1) {
+		dash = arrow.indexOf(".");
+		arr = "..";
+	} 
 	if (dash === -1) {
 		return line;
 	} 
@@ -75,10 +82,10 @@ export function rotate(line: string, dir: Direction) : string {
 	var right = m[a + 2]; // right elemet the arrow points to
 	let right_rest = m[a + 3];
 
-	let isVert = arrow.indexOf("--", dash) !== -1;
+	let isVert = arrow.indexOf(arr, dash) !== -1;
 	if ((isVert === (dir === Direction.Right)) || dir === Direction.Swap) {
 		// reverse arrow
-		arrow = reverseArrow(arrow, dash, isVert);
+		arrow = reverseArrow(arrow, dash, arr === "..", isVert);
 		// also reverse content
 		[left, right] = [reverseWithMul(right), reverseWithMul(left)];
 	}
@@ -104,6 +111,24 @@ function rotateSelected(textEditor: vscode.TextEditor, dir: Direction) {
 	}		
 }
 
+function autoFormatTxt(txt: string) : string {
+	return txt;
+}
+
+function autoFormatContent(textEditor: vscode.TextEditor) {
+	if (textEditor) {
+		const document = textEditor.document;
+		textEditor.edit(editBuilder => {
+			textEditor.selections.forEach(sel => {
+				const range = sel.isEmpty || sel.isSingleLine ? document.lineAt(sel.active.line).range || sel : sel;
+				let txt = autoFormatTxt(document.getText(range));
+				editBuilder.replace(range, txt);
+			});
+		}); // apply the (accumulated) replacement(s) (if multiple cursors/selections)
+	}		
+}
+
+
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
@@ -116,7 +141,10 @@ export function activate(context: vscode.ExtensionContext) {
 	let rotateRight = vscode.commands.registerTextEditorCommand('pumlhelper.rotateLineRight', (textEditor: vscode.TextEditor, edit: vscode.TextEditorEdit) => {
 		rotateSelected(textEditor, Direction.Right);
 	});
-	[swapLine, rotateLeft, rotateRight].forEach (s => {
+	//let autoFormat = vscode.commands.registerTextEditorCommand('pumlhelper.autoFormat', (textEditor: vscode.TextEditor, edit: vscode.TextEditorEdit) => {
+	//	autoFormatContent(textEditor);
+	//});
+	[swapLine, rotateLeft, rotateRight /*, autoFormat*/].forEach (s => {
 		context.subscriptions.push(s);	
 	});
 }
