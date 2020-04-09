@@ -19,3 +19,6 @@ install:
 script:
   - npm run compile
   
+test:
+  - npm t
+  
