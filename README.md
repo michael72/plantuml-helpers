@@ -16,18 +16,5 @@ Current key combinations are:
 * Alt-9: swap arrow left / right
 * Alt-0: rotate arrow to right
 
-## Known Issues
-
-None.
-
-## Release Notes
-
-### 0.1.0
-
-Add tests and support of multiplicities on arrows
-
-### 0.1.1
-
-Fix -|> arrow and multiplicities containing "-"
 
 **Enjoy!**
