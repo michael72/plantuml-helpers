@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import * as r from '../../rotate';
 
-suite('Extension Test Suite', () => {
+suite('Rotate Test Suite', () => {
 
 	test('rotate test', () => {
 		assert.equal(r.rotateLine("", r.Direction.Right), "");

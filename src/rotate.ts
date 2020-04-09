@@ -1,3 +1,5 @@
+import * as helpers from './helpers';
+
 // Contains all functions to rotate the visual representation of the content of a plantuml line.
 // The visual represent depends on
 // * if the arrow goes from left to right or right to left
@@ -5,8 +7,8 @@
 
 /** Direction to rotate in */
 export enum Direction {
-	Left, 
-	Right,  
+	Left,
+	Right,
 	Swap
 }
 
@@ -17,51 +19,29 @@ export enum Direction {
  * @param isVert true if the given arrow is vertical, else horizontal.
  * @return the rotated arrow
  */
-function rotateArrow(arrow: string, isVert: boolean) : string {
+function rotateArrow(arrow: string, isVert: boolean): string {
 	// - <=> -- or . <=> ..
 	if (isVert) {
 		return arrow.replace("--", "-").replace("..", ".");
 	} else {
 		return arrow.replace("-", "--").replace(".", "..");
-	}	
+	}
 }
 
-/**
- * Replaces the characters that indicate the arrow drawn to the left by the characters
- * that go right - or vice versa. Example: replaces `>` by `<` in `->`
- * 
- * @param arrow the actual arrow where the charactes are replace 
- * @param left representation of a character pointing in left direction
- * @param right opposite representation of left parameter
- * @return the reverted arrow
- */
-function reverseChar(arrow: string, left: string, right: string) : string {
-	return (arrow.indexOf(left) !== -1) ? arrow.replace(left, right) : arrow.replace(right, left);
-}
 
-/**
- * Reverses the whole string. `abcd` gets `dcba`.
- * @param s the string to revers
- * @return the reversed string
- */
-function reverse(s: string) : string {
-	return s.split("").reverse().join("");
-}
-
-function reverseArrow(arrow: string, dash: number, isDot: boolean, isVert: boolean) : string {
-	arrow = reverseChar(arrow, ">", "<");
-	arrow = reverseChar(arrow, "/", "\\");
+function reverseArrow(arrow: string, dash: number, isDot: boolean, isVert: boolean): string {
+	arrow = helpers.reverseHead(arrow);
 	let arrowLeft = arrow.substring(0, dash);
 	let arrowRight = arrow.substring(dash + (isVert ? 2 : 1));
-	return reverse(arrowRight) 
-		+ (isVert ? (isDot ? ".." : "--") : (isDot ? "." : "-")) 
-		+ reverse(arrowLeft); 
+	return helpers.reverse(arrowRight)
+		+ (isVert ? (isDot ? ".." : "--") : (isDot ? "." : "-"))
+		+ helpers.reverse(arrowLeft);
 }
 
-const regex_mul_1 : RegExp = /(\S+)(\s+)(".*")/;
-const regex_mul_2 : RegExp = /(".*")(\s+)(\S+)/;
-// return item and its multiplity. Example 'A "1"' will get '"1" A'
-function reverseWithMul(item: string) : string {
+const regex_mul_1: RegExp = /(\S+)(\s+)(".*")/;
+const regex_mul_2: RegExp = /(".*")(\s+)(\S+)/;
+// return item and its multiplicity. Example 'A "1"' will get '"1" A'
+function reverseWithMul(item: string): string {
 	var m = item.match(regex_mul_1);
 	if (!m) {
 		m = item.match(regex_mul_2);
@@ -73,7 +53,7 @@ function reverseWithMul(item: string) : string {
 }
 
 /// Regex to find an arrow in the current line.
-const regex : RegExp = /(\s*)(\S+(?:\s+"[^"]+")?)(\s*)(\S*[-.]\S*)(\s*)((?:"[^"]+"\s+)?\S+)(.*)/;
+const regex: RegExp = /(\s*)(\S+(?:\s+"[^"]+")?)(\s*)(\S*[-.]\S*)(\s*)((?:"[^"]+"\s+)?\S+)(.*)/;
 // example:                    A "1"                  ->          "2"          B  : foo
 
 // rotate line of plantuml code preserving the dependency.
@@ -83,7 +63,7 @@ A -> [C] : right
 C --> [D] : down
 B <- D : left
 @enduml */
-export function rotateLine(line: string, dir: Direction) : string {
+export function rotateLine(line: string, dir: Direction): string {
 	let m = line.match(regex);
 	if (!m) {
 		return line;
@@ -95,10 +75,10 @@ export function rotateLine(line: string, dir: Direction) : string {
 	if (dash === -1) {
 		dash = arrow.indexOf(".");
 		arr = "..";
-	} 
+	}
 	if (dash === -1) {
 		return line;
-	} 
+	}
 	let left_space = m[a - 3];
 	var left = m[a - 2]; // left element of the arrow
 	var right = m[a + 2]; // right elemet the arrow points to
@@ -114,6 +94,6 @@ export function rotateLine(line: string, dir: Direction) : string {
 	if (dir !== Direction.Swap) {
 		arrow = rotateArrow(arrow, isVert);
 	}
-	return left_space + left + m[a - 1] + arrow + m[a + 1] + right + right_rest; 
+	return left_space + left + m[a - 1] + arrow + m[a + 1] + right + right_rest;
 }
 

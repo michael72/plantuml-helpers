@@ -25,7 +25,8 @@
 	"activationEvents": [
 		"onCommand:pumlhelper.swapLine",
 		"onCommand:pumlhelper.rotateLineLeft",
-		"onCommand:pumlhelper.rotateLineRight"
+		"onCommand:pumlhelper.rotateLineRight",
+		"onCommand:pumlhelper.autoFormat"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
@@ -43,6 +44,11 @@
 			{
 				"command": "pumlhelper.rotateLineRight",
 				"title": "Rotate arrow right",
+				"category": "PlantUMLHelpers"
+			},
+			{
+				"command": "pumlhelper.autoFormat",
+				"title": "Auto Format UML",
 				"category": "PlantUMLHelpers"
 			}
 		],

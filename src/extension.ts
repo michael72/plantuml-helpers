@@ -15,7 +15,7 @@ function autoFormatContent(textEditor: vscode.TextEditor) {
 				editBuilder.replace(range, txt);
 			});
 		}); // apply the (accumulated) replacement(s) (if multiple cursors/selections)
-	}		
+	}
 }
 
 function rotateSelected(textEditor: vscode.TextEditor, dir: rotate.Direction) {
@@ -31,27 +31,27 @@ function rotateSelected(textEditor: vscode.TextEditor, dir: rotate.Direction) {
 				editBuilder.replace(range, rotated.join("\n"));
 			});
 		}); // apply the (accumulated) replacement(s) (if multiple cursors/selections)
-	}		
+	}
 }
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
-	let swapLine = vscode.commands.registerTextEditorCommand('pumlhelper.swapLine', (textEditor: vscode.TextEditor, edit: vscode.TextEditorEdit) => {
+	let swapLine = vscode.commands.registerTextEditorCommand('pumlhelper.swapLine', (textEditor: vscode.TextEditor, _: vscode.TextEditorEdit) => {
 		rotateSelected(textEditor, rotate.Direction.Swap);
 	});
-	let rotateLeft = vscode.commands.registerTextEditorCommand('pumlhelper.rotateLineLeft', (textEditor: vscode.TextEditor, edit: vscode.TextEditorEdit) => {
+	let rotateLeft = vscode.commands.registerTextEditorCommand('pumlhelper.rotateLineLeft', (textEditor: vscode.TextEditor, _: vscode.TextEditorEdit) => {
 		rotateSelected(textEditor, rotate.Direction.Left);
 	});
-	let rotateRight = vscode.commands.registerTextEditorCommand('pumlhelper.rotateLineRight', (textEditor: vscode.TextEditor, edit: vscode.TextEditorEdit) => {
+	let rotateRight = vscode.commands.registerTextEditorCommand('pumlhelper.rotateLineRight', (textEditor: vscode.TextEditor, _: vscode.TextEditorEdit) => {
 		rotateSelected(textEditor, rotate.Direction.Right);
 	});
-	let autoFormat = vscode.commands.registerTextEditorCommand('pumlhelper.autoFormat', (textEditor: vscode.TextEditor, edit: vscode.TextEditorEdit) => {
+	let autoFormat = vscode.commands.registerTextEditorCommand('pumlhelper.autoFormat', (textEditor: vscode.TextEditor, _: vscode.TextEditorEdit) => {
 		autoFormatContent(textEditor);
 	});
-	[swapLine, rotateLeft, rotateRight, autoFormat].forEach (s => {
-		context.subscriptions.push(s);	
+	[swapLine, rotateLeft, rotateRight, autoFormat].forEach(s => {
+		context.subscriptions.push(s);
 	});
 }
 
-export function deactivate() {}
+export function deactivate() { }

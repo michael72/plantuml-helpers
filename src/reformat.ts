@@ -1,3 +1,6 @@
+import * as uml from './uml';
+
+/*
 const regex_inner_diagram: RegExp = /(.*)(\S+\s+"\S+"\s+{[^{}]+})(.*)/;
 
 enum Component {
@@ -40,7 +43,7 @@ class Structure {
         this.key = key;
         this.content = lines;
         this.children = [];
-        this.addChildren();
+        //this.addChildren();
     }
 
     addChildren() {
@@ -50,12 +53,17 @@ class Structure {
             let sub = m[2];
             let right = m[3].trim();
         }
-    }
 }
-
+*/
 
 export function autoFormatTxt(txt: string): string {
-    return txt; // TODO
+    //return txt; // TODO
+    let arrow = uml.Arrow.fromString(txt);
+    if (arrow === undefined) {
+        return txt;
+    }
+    let s = arrow.toString();
+    return s;
 }
 
 
