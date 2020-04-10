@@ -1,40 +1,40 @@
-import * as assert from 'assert';
-import * as uml from '../../uml';
+import { equal } from 'assert';
+import * as uml from '../src/uml';
 
-suite('UML Test Suite', () => {
+describe('UML parser', () => {
 
-    test('parse arrow', () => {
+    it ('parse an arrow', () => {
         let arrow = uml.Arrow.fromString("->");
-        assert.equal(arrow?.direction, uml.Direction.Right);
-        assert.equal(arrow?.left, "");
-        assert.equal(arrow?.line, "-");
-        assert.equal(arrow?.right, ">");
-        assert.equal(arrow?.layout, uml.Layout.Horizontal);
+        equal(arrow?.direction, uml.Direction.Right);
+        equal(arrow?.left, "");
+        equal(arrow?.line, "-");
+        equal(arrow?.right, ">");
+        equal(arrow?.layout, uml.Layout.Horizontal);
     });
 
-    test('parse left arrow', () => {
+    it('should parse a left arrow', () => {
         let arrow = uml.Arrow.fromString("<~~");
-        assert.equal(arrow?.direction, uml.Direction.Left);
-        assert.equal(arrow?.left, "<");
-        assert.equal(arrow?.line, "~");
-        assert.equal(arrow?.right, "");
-        assert.equal(arrow?.layout, uml.Layout.Vertical);
+        equal(arrow?.direction, uml.Direction.Left);
+        equal(arrow?.left, "<");
+        equal(arrow?.line, "~");
+        equal(arrow?.right, "");
+        equal(arrow?.layout, uml.Layout.Vertical);
     });
 
-    test('arrow toString', () => {
+    it('should convert an arrow to a string', () => {
         let arrows = ["->", "-->", "<-", "<~", "<|-", "o->>"];
         arrows.forEach((arrow: string) => {
-            assert.equal(uml.Arrow.fromString(arrow)?.toString(), arrow, "converting '" + arrow + "' failed");
+            equal(uml.Arrow.fromString(arrow)?.toString(), arrow, "converting '" + arrow + "' failed");
         });
     });
 
-    test('reverse arrow', () => {
+    it('should reverse an arrow', () => {
         let arrows: Array<[string, string]>
             = [["->", "<-"], ["<~~", "~~>"], ["<|-", "-|>"], ["o->", "<-o"]];
         arrows.forEach((arrowOp: [string, string]) => {
             let [fwd, rev] = arrowOp;
-            assert.equal(uml.Arrow.fromString(fwd)?.reverse().toString(), rev);
-            assert.equal(uml.Arrow.fromString(rev)?.reverse().toString(), fwd);
+            equal(uml.Arrow.fromString(fwd)?.reverse().toString(), rev);
+            equal(uml.Arrow.fromString(rev)?.reverse().toString(), fwd);
         });
     });
 

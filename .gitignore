@@ -3,4 +3,6 @@ node_modules
 .vscode-test/
 .metals/
 *.vsix
+*-lock.json
+
 

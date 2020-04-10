@@ -1,11 +1,11 @@
-import * as assert from 'assert';
-import * as helpers from '../../helpers';
+import { equal } from "assert";
+import * as helpers from "../src/helpers";
 
-suite('Helpers Test Suite', () => {
-
-	test('reverse head', () => {
-        assert.equal(helpers.reverseHead("<--"), ">--");
-        assert.equal(helpers.reverseHead("<"), ">");
-        assert.equal(helpers.reverseHead("?!"), "?!");
-    });    
+describe("Helpers", () => {
+    it("should reverse an arrow head", () => {
+        equal(helpers.reverseHead("<--"), ">--");
+        equal(helpers.reverseHead("<"), ">");
+        equal(helpers.reverseHead("?!"), "?!");
+    });
 });
+

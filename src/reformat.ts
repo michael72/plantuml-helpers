@@ -1,4 +1,4 @@
-import * as uml from './uml';
+//import * as uml from './uml';
 
 /*
 const regex_inner_diagram: RegExp = /(.*)(\S+\s+"\S+"\s+{[^{}]+})(.*)/;
@@ -57,13 +57,7 @@ class Structure {
 */
 
 export function autoFormatTxt(txt: string): string {
-    //return txt; // TODO
-    let arrow = uml.Arrow.fromString(txt);
-    if (arrow === undefined) {
-        return txt;
-    }
-    let s = arrow.toString();
-    return s;
+    return txt; // TODO
 }
 
 
