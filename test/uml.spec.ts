@@ -1,15 +1,28 @@
 import { equal } from 'assert';
+import { expect, should } from 'chai';
 import * as uml from '../src/uml';
 
-describe('UML parser', () => {
+should();
 
-    it ('parse an arrow', () => {
+let equalArr = (actual: Array<string>, expected: Array<string>) => {
+    actual.length.should.equal(expected.length);
+    actual.map((a: string, idx: number) => {
+        a.should.equal(expected[idx]);
+    });
+};
+
+describe('Arrow class', () => {
+
+    it('should parse an arrow', () => {
         let arrow = uml.Arrow.fromString("->");
-        equal(arrow?.direction, uml.Direction.Right);
-        equal(arrow?.left, "");
-        equal(arrow?.line, "-");
-        equal(arrow?.right, ">");
-        equal(arrow?.layout, uml.Layout.Horizontal);
+        expect(arrow).to.not.be.undefined;
+        if (arrow !== undefined) {
+            arrow.direction.should.equal(uml.Direction.Right);
+            arrow.left.should.equal("");
+            arrow.line.should.equal("-");
+            arrow.right.should.equal(">");
+            arrow.layout.should.equal(uml.Layout.Horizontal);
+        }
     });
 
     it('should parse a left arrow', () => {
@@ -39,3 +52,23 @@ describe('UML parser', () => {
     });
 
 });
+
+describe("Line class", () => {
+    it ('should parse a simple component line', () => {
+        let line = "A -> B";
+        let parsed = uml.Line.fromString(line)!;
+        equalArr(parsed.sides, ["",""]);
+        equalArr(parsed.multiplicities, ["",""]);
+        equalArr(parsed.components, ["A", "B"]);
+        parsed.arrow.direction.should.equal(uml.Direction.Right);
+        parsed.toString().should.equal(line);
+    });
+
+    it ('should reverse a complex component line', () => {
+        let line = '   (CompA) "1-2" <|~~o "0:*" [CompB] : funny arrow ';
+        let parsed = uml.Line.fromString(line)!;
+        let expected = '   [CompB] "0:*" o~~|> "1-2" (CompA) : funny arrow ';
+        parsed.reverse().toString().should.equal(expected);
+    });
+});
+

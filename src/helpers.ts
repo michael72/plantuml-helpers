@@ -11,8 +11,8 @@ function _reverseChar(arrow: string, left: string, right: string): string {
 	return (arrow.indexOf(left) !== -1) ? arrow.replace(left, right) : arrow.replace(right, left);
 }
 
-export function reverseHead(head: string) : string {
-    return _reverseChar(head, ">", "<");
+export function reverseHead(head: string): string {
+	return _reverseChar(head, ">", "<");
 }
 
 /**
@@ -22,5 +22,37 @@ export function reverseHead(head: string) : string {
  */
 export function reverse(s: string): string {
 	return s.split("").reverse().join("");
+}
+
+/**
+ * Map class that with a getter function that returns the 
+ * default value given by the callback function used in the
+ * constructor.
+ * A default value can not be used as it would always return
+ * the same reference.
+ */
+export class DefaultMap<K, V> extends Map<K, V> {
+	/** Saves the default value callback */
+	private defaultVal: () => V;
+	public constructor(defaultVal: () => V) {
+		super();
+		this.defaultVal = defaultVal;
+	}
+	/** Gets the value for the given key or the default value, 
+	 * if none was yet added. Also adds the default value to the map.
+	 * In comparison to get() it also returns the actual type, not undefined.
+	 * @param key the search key to find its value.
+	 * @returns the value - either the saved or default. 
+	 */
+	public getDef(key: K): V {
+		let v = super.get(key);
+		if (v === undefined) {
+			let newValue = this.defaultVal();
+			super.set(key, newValue);
+			return newValue;
+		}
+		// value was already added
+		return v!;
+	}
 }
 

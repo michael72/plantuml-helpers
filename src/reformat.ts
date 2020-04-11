@@ -1,4 +1,4 @@
-//import * as uml from './uml';
+import * as uml from './uml';
 
 /*
 const regex_inner_diagram: RegExp = /(.*)(\S+\s+"\S+"\s+{[^{}]+})(.*)/;
@@ -56,8 +56,17 @@ class Structure {
 }
 */
 
+const regex: RegExp = /(.*\S+)(\s*)/s;
+
 export function autoFormatTxt(txt: string): string {
-    return txt; // TODO
+    let m = txt.match(regex);
+    var ending = "";
+    if (m) {
+        txt = m[1];
+        ending = m[2];
+    }
+    let parsed = uml.Component.fromString(txt);
+    return parsed.sort().toString() + ending; // TODO
 }
 
 

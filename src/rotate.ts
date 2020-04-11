@@ -53,7 +53,7 @@ function reverseWithMul(item: string): string {
 }
 
 /// Regex to find an arrow in the current line.
-const regex: RegExp = /(\s*)(\S+(?:\s+"[^"]+")?)(\s*)(\S*[-.]\S*)(\s*)((?:"[^"]+"\s+)?\S+)(.*)/;
+const regex: RegExp = /(\s*)(\S+(?:\s+"[^"]+")?)(\s*)(\S*[-~=.]\S*)(\s*)((?:"[^"]+"\s+)?\S+)(.*)/;
 // example:                    A "1"                  ->          "2"          B  : foo
 
 // rotate line of plantuml code preserving the dependency.
