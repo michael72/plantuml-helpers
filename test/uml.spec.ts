@@ -17,7 +17,7 @@ describe('Arrow class', () => {
         let arrow = uml.Arrow.fromString("->");
         expect(arrow).to.not.be.undefined;
         if (arrow !== undefined) {
-            arrow.direction.should.equal(uml.Direction.Right);
+            arrow.direction.should.equal(uml.ArrowDirection.Right);
             arrow.left.should.equal("");
             arrow.line.should.equal("-");
             arrow.right.should.equal(">");
@@ -27,7 +27,7 @@ describe('Arrow class', () => {
 
     it('should parse a left arrow', () => {
         let arrow = uml.Arrow.fromString("<~~");
-        equal(arrow?.direction, uml.Direction.Left);
+        equal(arrow?.direction, uml.ArrowDirection.Left);
         equal(arrow?.left, "<");
         equal(arrow?.line, "~");
         equal(arrow?.right, "");
@@ -60,7 +60,7 @@ describe("Line class", () => {
         equalArr(parsed.sides, ["",""]);
         equalArr(parsed.multiplicities, ["",""]);
         equalArr(parsed.components, ["A", "B"]);
-        parsed.arrow.direction.should.equal(uml.Direction.Right);
+        parsed.arrow.direction.should.equal(uml.ArrowDirection.Right);
         parsed.toString().should.equal(line);
     });
 
@@ -68,6 +68,28 @@ describe("Line class", () => {
         let line = '   (CompA) "1-2" <|~~o "0:*" [CompB] : funny arrow ';
         let parsed = uml.Line.fromString(line)!;
         let expected = '   [CompB] "0:*" o~~|> "1-2" (CompA) : funny arrow ';
+        parsed.reverse().toString().should.equal(expected);
+    });
+
+    it ('should preserve a hidden horizontal line', () => {
+        let line = 'A -[hidden] B';
+        let parsed = uml.Line.fromString(line)!;
+        let expected = 'B -[hidden] A';
+        parsed.reverse().toString().should.equal(expected);
+
+    });
+
+    it ('should preserve a hidden vertical line', () => {
+        let line = 'B -[hidden]- C';
+        let parsed = uml.Line.fromString(line)!;
+        let expected = 'C -[hidden]- B';
+        parsed.reverse().toString().should.equal(expected);
+    });
+
+    it ('should preserve an elongated line', () => {
+        let line = 'A ---> B';
+        let parsed = uml.Line.fromString(line)!;
+        let expected = 'B <--- A';
         parsed.reverse().toString().should.equal(expected);
     });
 });

@@ -1,13 +1,22 @@
-import {reverse, reverseHead, DefaultMap} from './helpers';
+import { reverse, reverseHead } from './helpers';
 
-export enum Direction {
+
+export enum CombinedDirection {
+    None,
+    Left,
+    Right,
+    Up,
+    Down
+}
+
+export enum ArrowDirection {
     None,
     Left,
     Right
 }
 
-export function opposite(direction: Direction): Direction {
-    return direction === Direction.Right ? Direction.Left : (direction === Direction.Left ? Direction.Right : Direction.None);
+export function opposite(direction: ArrowDirection): ArrowDirection {
+    return direction === ArrowDirection.Right ? ArrowDirection.Left : (direction === ArrowDirection.Left ? ArrowDirection.Right : ArrowDirection.None);
 }
 
 export enum Layout {
@@ -19,26 +28,32 @@ export function rotate(layout: Layout): Layout {
     return layout === Layout.Horizontal ? Layout.Vertical : Layout.Horizontal;
 }
 
-export class Arrow {
-    left: string;
-    line: string;
-    right: string;
-    direction: Direction;
-    layout: Layout;
+function layoutOf(combined: CombinedDirection): Layout {
+    return (combined === CombinedDirection.Up || combined === CombinedDirection.Down) ? Layout.Vertical : Layout.Horizontal;
+}
 
-    constructor(left: string, line: string,
-        right: string,
-        direction: Direction,
-        layout: Layout
-    ) {
-        this.left = left;
-        this.line = line;
-        this.right = right;
-        this.direction = direction;
-        this.layout = layout;
-    }
+function directionOf(combined: CombinedDirection): ArrowDirection {
+    return (combined === CombinedDirection.Up || combined === CombinedDirection.Left) ? ArrowDirection.Left : ArrowDirection.Right;
+}
+
+export class Arrow {
+
+    private constructor(public left: string,
+        public line: string,
+        public length: number,
+        public tag: string, 
+        public right: string,
+        public direction: ArrowDirection,
+        public layout: Layout) { }
 
     static fromString(arrow: string): Arrow | undefined {
+        let idxTag = arrow.indexOf("[");
+        var tag = "";
+        if (idxTag !== -1) {
+            let idxTagEnd = arrow.lastIndexOf("]") + 1;
+            tag = arrow.substring(idxTag, idxTagEnd); 
+            arrow = arrow.substring(0, idxTag) + arrow.substring(idxTagEnd);
+        }
         let find = (search: Array<string>) => {
             return search.find(s => arrow.indexOf(s) !== -1);
         };
@@ -47,14 +62,16 @@ export class Arrow {
             // arrow line was not found
             return;
         }
-        let [left, right] = this._leftRight(arrow.split(line));
+        let arr = arrow.split(line);
+        let [left, right] = this._leftRight(arr);
         let head = find([">", "<", "\\", "/"]);
         let direction = head === ">"
-            ? Direction.Right : (head === "<" ? Direction.Left : Direction.None);
-        let layout = arrow.split(line).length === 2
+            ? ArrowDirection.Right : (head === "<" ? ArrowDirection.Left : ArrowDirection.None);
+        let layout = arr.length === 2
             ? Layout.Horizontal : Layout.Vertical;
 
-        return new this(left === line ? "" : left, line, right === line ? "" : right, direction, layout);
+
+        return new this(left === line ? "" : left, line, Math.max(2, arr.length - 1), tag, right === line ? "" : right, direction, layout);
     }
 
     static _leftRight(arr: Array<string>): [string, string] {
@@ -78,31 +95,63 @@ export class Arrow {
     }
 
     toString(): string {
-        let mid = this.layout === Layout.Horizontal ? this.line : this.line + this.line;
+        var mid = this.line + this.tag; 
+        if (this.layout === Layout.Vertical) { 
+            mid += this.line.repeat(this.length - 1);
+        }
         return this.left + mid + this.right;
     }
 
+    private _revHead(arrow: string): string {
+        return reverse(reverseHead(arrow));
+    }
+
     reverse(): Arrow {
-        let rev = (arrow: string): string => { return reverse(reverseHead(arrow)); };
-        return new Arrow(rev(this.right), this.line, rev(this.left),
+        return new Arrow(this._revHead(this.right), this.line, this.length, this.tag, this._revHead(this.left),
             opposite(this.direction), this.layout);
+    }
+
+    rotate(): Arrow {
+        return new Arrow(this.left, this.line, this.layout === Layout.Horizontal ? 2 : this.length, this.tag, this.right,
+            this.direction, rotate(this.layout));
+    }
+
+    head(): string {
+        return this.direction === ArrowDirection.Right ? this.right : this.left;
+    }
+
+    combinedDirection(): CombinedDirection {
+        if (this.layout === Layout.Horizontal) {
+            return this.direction === ArrowDirection.Left ? CombinedDirection.Left :
+                (this.direction === ArrowDirection.Right ? CombinedDirection.Right : CombinedDirection.None);
+        } else {
+            return this.direction === ArrowDirection.Left ? CombinedDirection.Up :
+                (this.direction === ArrowDirection.Right ? CombinedDirection.Down : CombinedDirection.None);
+        }
+    }
+    setCombinedDirection(dir: CombinedDirection) {
+        let current = this.combinedDirection();
+        if (current !== dir) {
+            if (layoutOf(dir) !== this.layout) {
+                this.layout = rotate(this.layout);
+            }
+            if (directionOf(dir) !== this.direction) {
+                [this.left, this.right] = [this._revHead(this.right), this._revHead(this.left)];
+                this.direction = opposite(this.direction);
+            }
+        }
     }
 }
 
 export class Line {
-    components: Array<string>;
-    arrow: Arrow;
-    multiplicities: Array<string>;
-    sides: Array<string>;
     /// Regex to find an arrow in the current line.
     static regex: RegExp = /(\s*)(\S+)(?:\s+("[^"]+"))?\s*(\S*[-~=.]\S*)\s*(?:("[^"]+")\s+)?(\S+)(.*)/;
     // example:                    A "1"                  ->          "2"          B  : foo
 
-    constructor(components: Array<string>, arrow: Arrow, multiplicities: Array<string>, sides: Array<string>) {
-        this.components = components;
-        this.arrow = arrow;
-        this.multiplicities = multiplicities;
-        this.sides = sides;
+    constructor(public components: Array<string>,
+        public arrow: Arrow,
+        public multiplicities: Array<string>,
+        public sides: Array<string>) {
     }
 
     static fromString(line: String): Line | undefined {
@@ -138,8 +187,17 @@ export class Line {
             this.sides);
     }
 
-    deps(): Array<string> {
-        return this.arrow.direction === Direction.Right ? this.components : this.components.reverse();
+    combinedDirection(): CombinedDirection {
+        return this.arrow.combinedDirection();
+    }
+    setCombinedDirection(dir: CombinedDirection) {
+        let oldDir = this.arrow.direction;
+        this.arrow.setCombinedDirection(dir);
+        if (oldDir !== this.arrow.direction) {
+            // swap sides
+            this.components = this.components.reverse();
+            this.multiplicities = this.multiplicities.reverse();
+        }
     }
 }
 
@@ -158,14 +216,10 @@ function toString(content: Content | Array<Content>): string {
 }
 
 export class Component {
-    content: Array<Content>;
-    type?: string;
-    name?: string;
 
-    constructor(content: Array<Content>, type?: string, name?: string) {
-        this.type = type;
-        this.name = name;
-        this.content = content;
+    constructor(public content: Array<Content>,
+        public type?: string,
+        public name?: string) {
     }
 
     static regexTitle: RegExp = /(\s*)(\S+)\s+"(\S+)"\s*{?\s*/;
@@ -196,84 +250,4 @@ export class Component {
         return toString(this.content);
     }
 
-    sort(): Component {
-        // try to bring the components in order
-        let deps = new DefaultMap<string, Array<string>>(() => new Array());
-        let froms = new Array<string>();
-        this.content.forEach((line: Content) => {
-            if (line instanceof Line) {
-                let [from, to] = line.deps();
-                deps.getDef(from).push(to);
-                froms.push(from);
-            }
-        });
-        let pointedCounts = new DefaultMap<string, number>(() => 0);
-        for (let k of deps.keys()) {
-            pointedCounts.set(k, 0);
-            if (froms.indexOf(k) === -1) {
-                froms.push(k);
-            }
-        }
-        for (let v of deps.values()) {
-            for (let d of v) {
-                pointedCounts.set(d, pointedCounts.getDef(d) + 1);
-            }
-        }
-        let nodes = Array.from(deps.keys()).
-            sort((s1: string, s2: string) => {
-                let result = pointedCounts.get(s1)! - pointedCounts.get(s2)!;
-                return result !== 0 ? result : froms.indexOf(s1) - froms.indexOf(s2);
-            });
-
-        let sorted = this.content.filter((c: Content) => {
-            return !(c instanceof Line);
-        });
-        for (let node of nodes) {
-            this.content.forEach((c: Content) => {
-                if (c instanceof Line && c.deps()[0] === node) {
-                    sorted.push(c);
-                }
-            });
-        }
-
-        return new Component(sorted, this.type, this.name);
-    }
 }
-
-/*
-type Deps = Map<string, Array<string>>;
-type Cycles =  Array<Array<string>>;
-class CompDeps {
-    component: Component;
-    deps: Deps;
-    cycles: Cycles;
-
-    constructor(component: Component, deps: Deps, cycles: Cycles)  {
-        this.component = component;
-        this.deps = deps;
-        this.cycles = cycles;
-    }
-
-    static parse(component: Component) : CompDeps {
-        var deps = new Map<string, Array<string>>();
-        var cycles = new Array<Array<string>>();
-
-        let addDep = (newDep: Array<string>) => {
-            var dep = deps.get(newDep[0]);
-            if (dep === undefined) {
-                dep = [];
-                deps.set(newDep[0], dep);
-            }
-            dep.push(newDep[1]);
-        };
-
-        component.content.forEach((line: Content) => {
-            if (line instanceof Line) {
-                addDep(line.deps());
-            }
-        });
-
-        return new this(component, deps, cycles);
-    }
-}
-*/

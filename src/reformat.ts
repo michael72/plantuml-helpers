@@ -1,60 +1,151 @@
-import * as uml from './uml';
+import { DefaultMap } from './helpers';
+import { Component, Content, Line, CombinedDirection, Layout } from './uml';
 
-/*
-const regex_inner_diagram: RegExp = /(.*)(\S+\s+"\S+"\s+{[^{}]+})(.*)/;
-
-enum Component {
-    None,
-    Package,
-    Node,
-    Folder,
-    Frame,
-    Cloud,
-    Database
-}
-
-class DiagramNode {
-    component: Component;
-    name?: string;
-    content: Array<string>;
-
-    constructor(lines: string) {
-        this.component = Component.None;
-        this.content = lines.split("\n");
-    }
-}
-
-class Diagram {
-    public node: DiagramNode;
-    public children: Array<Diagram>;
-
-    constructor(lines: string) {
-        this.node = new DiagramNode(lines); // TODO
-        this.children = new Array;
-    }
-}
-
-class Structure {
-    key: string;
-    content: string;
-    children: Array<Structure>;
-
-    constructor(key: string, lines: string) {
-        this.key = key;
-        this.content = lines;
-        this.children = [];
-        //this.addChildren();
+export class Reformat {
+    private content: Array<Content>;
+    constructor(private component: Component) {
+        this.content = [...component.content];
     }
 
-    addChildren() {
-        let m = this.content.match(regex_inner_diagram);
-        if (m) {
-            let left = m[1].trim();
-            let sub = m[2];
-            let right = m[3].trim();
+    private _sort() {
+        // try to bring the components in order
+        let deps = new DefaultMap<string, Array<string>>(() => new Array());
+        let froms = new Array<string>();
+        this.content.forEach((line: Content) => {
+            if (line instanceof Line) {
+                let [from, to] = line.components;
+                deps.getDef(from).push(to);
+                froms.push(from);
+            }
+        });
+
+        let pointedCounts = new DefaultMap<string, number>(() => 0);
+        for (let [k, v] of deps.entries()) {
+            pointedCounts.set(k, 0);
+            if (froms.indexOf(k) === -1) {
+                froms.push(k);
+            }
+            // add transitive dependencies
+            var newDeps = v;
+            while (newDeps.length !== 0) {
+                let currentDeps = [...newDeps];
+                newDeps = [];
+                for (let c of currentDeps) {
+                    let ds = deps.get(c);
+                    if (ds !== undefined) {
+                        for (let d of ds) {
+                            // only add elements that are not already contained
+                            if (v.indexOf(d) === -1 && newDeps.indexOf(d) === -1) {
+                                newDeps.push(d);
+                            }
+                        }
+                    }
+                }
+                for (let n of newDeps) {
+                    v.push(n);
+                }
+            }
         }
+        for (let v of deps.values()) {
+            for (let d of v) {
+                pointedCounts.set(d, pointedCounts.getDef(d) + 1);
+            }
+        }
+
+        let nodes = Array.from(deps.keys()).
+            sort((s1: string, s2: string) => {
+                var result = pointedCounts.get(s1)! - pointedCounts.get(s2)!;
+                if (result === 0) {
+                    // the more objects depend on the current key, the better
+                    result = deps.get(s2)!.length - deps.get(s1)!.length;
+                    if (result === 0) {
+                        // preserve original order
+                        result = froms.indexOf(s1) - froms.indexOf(s2);
+                    }
+                }
+                return result;
+
+            });
+
+        let others = this.content.filter((c: Content) => {
+            return !(c instanceof Line);
+        });
+        let comb = (c: CombinedDirection): number => {
+            switch (c) {
+                case CombinedDirection.Right:
+                    return 1;
+                case CombinedDirection.Down:
+                    return 2;
+                case CombinedDirection.Left:
+                    return 3;
+                case CombinedDirection.Up:
+                    return 4;
+                default:
+                    return 100;
+            }
+        };
+        let orig = this.content.filter((c: Content) => {
+            return (c instanceof Line);
+        }).sort((a: Content, b: Content) => {
+            if (a instanceof Line && b instanceof Line) {
+                var result = nodes.indexOf(a.components[0]) - nodes.indexOf(b.components[0]);
+                if (result === 0) {
+                    result = comb(a.combinedDirection()) - comb(b.combinedDirection());
+                    if (result === 0) {
+                        result = nodes.indexOf(a.components[1]) - nodes.indexOf(b.components[1]);
+                    }
+                }
+                return result;
+            }
+            return 0;
+        });
+        var sorted = new Array<Content>();
+        var idx = 0;
+        while (orig.length !== 0) {
+            if (idx === sorted.length) {
+                sorted = sorted.concat(orig.splice(0, 1));
+            }
+            let elem = sorted[idx];
+            if (elem instanceof Line) {
+                for (let c of elem.components) {
+                    for (let oidx = 0; oidx < orig.length; ++oidx) {
+                        let o = orig[oidx];
+                        if (o instanceof Line && o.components[0] === c) {
+                            sorted = sorted.concat(orig.splice(oidx, 1));
+                            --oidx;
+                        }
+                    }
+                }
+            }
+            idx += 1;
+        }
+        this.content = others.concat(sorted);
+    }
+
+    autoFormat(): Component {
+        this.content.forEach((c: Content) => {
+            if (c instanceof Line) {
+                if (c.arrow.right === "|>" || c.arrow.left === "<|") {
+                    if (c.arrow.layout !== Layout.Vertical) {
+                        // in case we already have a correct layout we don't temper with it
+                        // (the user maybe knew what (s)he was doing...)
+                        c.setCombinedDirection(CombinedDirection.Up);
+                    }
+                }
+                else if (c.arrow.left === "o" || c.arrow.left === "*" || c.arrow.right === "o" || c.arrow.right === "*") {
+                    if (c.arrow.layout !== Layout.Horizontal) {
+                        // similar to above
+                        c.setCombinedDirection(CombinedDirection.Right);
+                    }
+                }
+            }
+        });
+        this._sort();
+        return new Component(this.content, this.component.type, this.component.name);
+    }
+
 }
-*/
+
 
 const regex: RegExp = /(.*\S+)(\s*)/s;
 
@@ -65,8 +156,9 @@ export function autoFormatTxt(txt: string): string {
         txt = m[1];
         ending = m[2];
     }
-    let parsed = uml.Component.fromString(txt);
-    return parsed.sort().toString() + ending; // TODO
+    let component = Component.fromString(txt);
+    let reformat = new Reformat(component);
+    return reformat.autoFormat().toString() + ending;
 }
 
 
