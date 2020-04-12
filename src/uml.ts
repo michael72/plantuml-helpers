@@ -58,7 +58,7 @@ export class Arrow {
             return search.find(s => arrow.indexOf(s) !== -1);
         };
         let line = find(["-", ".", "=", "~"]);
-        if (line === undefined) {
+        if (!line) {
             // arrow line was not found
             return;
         }
@@ -161,7 +161,7 @@ export class Line {
         }
         let a = 4; // arrow-index
         let arrow = Arrow.fromString(m[a]);
-        if (arrow === undefined) {
+        if (!arrow) {
             return;
         }
         let mirror = (idx: number): Array<string> => {
@@ -236,13 +236,13 @@ export class Component {
         }
         let content = arr.map((s: string): Content => {
             let line = Line.fromString(s);
-            return line === undefined ? s : line;
+            return line ? line : s;
         });
         return new this(content, type, name);
     }
 
     toString(): string {
-        if (this.type !== undefined) {
+        if (this.type) {
             let header = `${this.type} "${this.name}" {\n`;
             let footer = "\n}";
             return header + toString(this.content) + footer;

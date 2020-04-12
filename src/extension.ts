@@ -9,8 +9,30 @@ function autoFormatContent(textEditor: vscode.TextEditor) {
 		const document = textEditor.document;
 		textEditor.edit(editBuilder => {
 			textEditor.selections.forEach(sel => {
+				var range = sel;
+				if (sel.isEmpty || sel.isSingleLine) {
+					var line = sel.active.line;
+					var last = line;
+					while (line > 0) {
+						let text = document.lineAt(line).text.trim();
+						if (text === "@startuml" || text === "```plantuml" || text.indexOf("{") !== -1) {
+							line += 1;
+							break;
+						}
+						line -= 1;
+					}
+					while (last < document.lineCount) {
+						let text = document.lineAt(last).text.trim();
+						if (text === "@enduml" || text === "```" || text.indexOf("}") !== -1) {
+							last -= 1;
+							break;
+						}
+						last += 1;
+					}
+					
+					range = new vscode.Selection(line, 0, last, document.lineAt(last).range.end.character);
+				}
 				// TODO select whole block
-				const range = sel.isEmpty || sel.isSingleLine ? document.lineAt(sel.active.line).range || sel : sel;
 				let txt = reformat.autoFormatTxt(document.getText(range));
 				editBuilder.replace(range, txt);
 			});

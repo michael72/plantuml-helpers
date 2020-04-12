@@ -7,7 +7,7 @@ export class Reformat {
         this.content = [...component.content];
     }
 
-    private _sort() {
+    private _sortByDependencies(): Array<Content> {
         // try to bring the components in order
         let deps = new DefaultMap<string, Array<string>>(() => new Array());
         let froms = new Array<string>();
@@ -32,7 +32,7 @@ export class Reformat {
                 newDeps = [];
                 for (let c of currentDeps) {
                     let ds = deps.get(c);
-                    if (ds !== undefined) {
+                    if (ds) {
                         for (let d of ds) {
                             // only add elements that are not already contained
                             if (v.indexOf(d) === -1 && newDeps.indexOf(d) === -1) {
@@ -52,7 +52,7 @@ export class Reformat {
             }
         }
 
-        let nodes = Array.from(deps.keys()).
+        return Array.from(deps.keys()).
             sort((s1: string, s2: string) => {
                 var result = pointedCounts.get(s1)! - pointedCounts.get(s2)!;
                 if (result === 0) {
@@ -66,10 +66,11 @@ export class Reformat {
                 return result;
 
             });
+    }
 
-        let others = this.content.filter((c: Content) => {
-            return !(c instanceof Line);
-        });
+    private _initialSort() :  Array<Content> {
+        let nodes = this._sortByDependencies();
+
         let comb = (c: CombinedDirection): number => {
             switch (c) {
                 case CombinedDirection.Right:
@@ -84,7 +85,7 @@ export class Reformat {
                     return 100;
             }
         };
-        let orig = this.content.filter((c: Content) => {
+        return this.content.filter((c: Content) => {
             return (c instanceof Line);
         }).sort((a: Content, b: Content) => {
             if (a instanceof Line && b instanceof Line) {
@@ -98,6 +99,14 @@ export class Reformat {
                 return result;
             }
             return 0;
+        });
+
+    }
+
+    private _sort() {
+        let orig = this._initialSort();
+        let others = this.content.filter((c: Content) => {
+            return !(c instanceof Line);
         });
         var sorted = new Array<Content>();
         var idx = 0;

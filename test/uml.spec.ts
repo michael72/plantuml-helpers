@@ -16,7 +16,7 @@ describe('Arrow class', () => {
     it('should parse an arrow', () => {
         let arrow = uml.Arrow.fromString("->");
         expect(arrow).to.not.be.undefined;
-        if (arrow !== undefined) {
+        if (arrow) {
             arrow.direction.should.equal(uml.ArrowDirection.Right);
             arrow.left.should.equal("");
             arrow.line.should.equal("-");
