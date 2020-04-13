@@ -73,8 +73,8 @@
 		"lint": "eslint src --ext ts",
 		"watch": "tsc -watch -p ./",
 		"pretest": "npm run compile && npm run lint",
-		"test": "mocha",
-		"coverage": "nyc npm run test"
+		"test": "nyc mocha",
+		"posttest": "nyc report --reporter=json"
 	},
 	"devDependencies": {
 		"@types/chai": "^4.2.11",
@@ -87,6 +87,7 @@
 		"chai": "^4.2.0",
 		"eslint": "^6.8.0",
 		"glob": "^7.1.6",
+		"codecov": "^3.6.5",
 		"mocha": "^7.1.1",
 		"ts-node": "^8.8.2",
 		"typescript": "^3.8.3",
