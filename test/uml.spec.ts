@@ -54,43 +54,59 @@ describe('Arrow class', () => {
 });
 
 describe("Line class", () => {
-    it ('should parse a simple component line', () => {
+    it('should parse a simple component line', () => {
         let line = "A -> B";
         let parsed = uml.Line.fromString(line)!;
-        equalArr(parsed.sides, ["",""]);
-        equalArr(parsed.multiplicities, ["",""]);
+        equalArr(parsed.sides, ["", ""]);
+        equalArr(parsed.multiplicities, ["", ""]);
         equalArr(parsed.components, ["A", "B"]);
         parsed.arrow.direction.should.equal(uml.ArrowDirection.Right);
         parsed.toString().should.equal(line);
     });
 
-    it ('should reverse a complex component line', () => {
+    it('should reverse a complex component line', () => {
         let line = '   (CompA) "1-2" <|~~o "0:*" [CompB] : funny arrow ';
         let parsed = uml.Line.fromString(line)!;
         let expected = '   [CompB] "0:*" o~~|> "1-2" (CompA) : funny arrow ';
         parsed.reverse().toString().should.equal(expected);
     });
 
-    it ('should preserve a hidden horizontal line', () => {
+    it('should preserve a hidden horizontal line', () => {
         let line = 'A -[hidden] B';
         let parsed = uml.Line.fromString(line)!;
         let expected = 'B -[hidden] A';
         parsed.reverse().toString().should.equal(expected);
-
     });
 
-    it ('should preserve a hidden vertical line', () => {
+    it('should preserve a hidden vertical line', () => {
         let line = 'B -[hidden]- C';
         let parsed = uml.Line.fromString(line)!;
         let expected = 'C -[hidden]- B';
         parsed.reverse().toString().should.equal(expected);
     });
 
-    it ('should preserve an elongated line', () => {
+    it('should preserve an elongated line', () => {
         let line = 'A ---> B';
         let parsed = uml.Line.fromString(line)!;
         let expected = 'B <--- A';
         parsed.reverse().toString().should.equal(expected);
     });
+
+    it('should preserve an elongated line also when rotating', () => {
+        let line = 'A .... B';
+        let parsed = uml.Line.fromString(line)!;
+        // right and down is default
+        parsed.combinedDirection().should.equal(uml.CombinedDirection.Down);
+        // check left
+        parsed.setCombinedDirection(uml.CombinedDirection.Left);
+        parsed.toString().should.equal("B . A");
+        // check right
+        parsed.setCombinedDirection(uml.CombinedDirection.Right);
+        parsed.toString().should.equal("A . B");
+        // check up - now the length should be restored
+        parsed.setCombinedDirection(uml.CombinedDirection.Up);
+        parsed.toString().should.equal("B .... A");
+    });
+
 });
 

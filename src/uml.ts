@@ -38,11 +38,13 @@ export class Arrow {
 
     private constructor(public left: string,
         public line: string,
-        public length: number,
+        public sizeVert: number,
         public tag: string,
         public right: string,
         public direction: ArrowDirection,
         public layout: Layout) { }
+
+    static ArrowLines = ["-", ".", "=", "~"];
 
     static fromString(arrow: string): Arrow | undefined {
         let idxTag = arrow.indexOf("[");
@@ -52,25 +54,22 @@ export class Arrow {
             tag = arrow.substring(idxTag, idxTagEnd);
             arrow = arrow.substring(0, idxTag) + arrow.substring(idxTagEnd);
         }
-        let find = (search: Array<string>) => {
-            return search.find(s => arrow.indexOf(s) !== -1);
-        };
-        let line = find(["-", ".", "=", "~"]);
+        let line = this.ArrowLines.find(s => arrow.indexOf(s) >= 0);
         if (!line) {
             // arrow line was not found
             return;
         }
         let arr = arrow.split(line);
         let [left, right] = this._leftRight(arr);
-        let head = find([">", "<", "\\", "/"]);
-        let direction = head === "<"
+        let direction = left.indexOf("<") >= 0
             // right direction is default - also for undirected arrows
             ? ArrowDirection.Left : ArrowDirection.Right;
-        let layout = arr.length === 2
+        let layout = arr.length <= 2
             ? Layout.Horizontal : Layout.Vertical;
 
-
-        return new this(left === line ? "" : left, line, Math.max(2, arr.length - 1), tag, right === line ? "" : right, direction, layout);
+        // in case of horizontal arrow 1 is used - otherwise 2 or higher
+        let arrowSizeVert = Math.max(2, arr.length - 1);
+        return new this(left === line ? "" : left, line, arrowSizeVert, tag, right === line ? "" : right, direction, layout);
     }
 
     static _leftRight(arr: Array<string>): [string, string] {
@@ -96,7 +95,8 @@ export class Arrow {
     toString(): string {
         var mid = this.line + this.tag;
         if (this.layout === Layout.Vertical) {
-            mid += this.line.repeat(this.length - 1);
+            // tag is place at the end or in the middle of the arrow
+            mid += this.line.repeat(this.sizeVert - 1);
         }
         return this.left + mid + this.right;
     }
@@ -106,17 +106,8 @@ export class Arrow {
     }
 
     reverse(): Arrow {
-        return new Arrow(this._revHead(this.right), this.line, this.length, this.tag, this._revHead(this.left),
+        return new Arrow(this._revHead(this.right), this.line, this.sizeVert, this.tag, this._revHead(this.left),
             opposite(this.direction), this.layout);
-    }
-
-    rotate(): Arrow {
-        return new Arrow(this.left, this.line, this.layout === Layout.Horizontal ? 2 : this.length, this.tag, this.right,
-            this.direction, rotate(this.layout));
-    }
-
-    head(): string {
-        return this.direction === ArrowDirection.Right ? this.right : this.left;
     }
 
     combinedDirection(): CombinedDirection {
@@ -201,6 +192,7 @@ function toString(content: Content | Array<Content>): string {
     }
     return content instanceof Line ? content.toString() : content;
 }
+
 
 export class Component {
 
