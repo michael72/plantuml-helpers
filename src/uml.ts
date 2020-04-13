@@ -22,10 +22,6 @@ export enum Layout {
     Vertical
 }
 
-export function rotate(layout: Layout): Layout {
-    return layout === Layout.Horizontal ? Layout.Vertical : Layout.Horizontal;
-}
-
 function layoutOf(combined: CombinedDirection): Layout {
     return (combined === CombinedDirection.Up || combined === CombinedDirection.Down) ? Layout.Vertical : Layout.Horizontal;
 }
@@ -35,7 +31,6 @@ function directionOf(combined: CombinedDirection): ArrowDirection {
 }
 
 export class Arrow {
-
     private constructor(public left: string,
         public line: string,
         public sizeVert: number,
@@ -51,8 +46,10 @@ export class Arrow {
         var tag = "";
         if (idxTag !== -1) {
             let idxTagEnd = arrow.lastIndexOf("]") + 1;
-            tag = arrow.substring(idxTag, idxTagEnd);
-            arrow = arrow.substring(0, idxTag) + arrow.substring(idxTagEnd);
+            if (idxTagEnd !== 0) {
+                tag = arrow.substring(idxTag, idxTagEnd);
+                arrow = arrow.substring(0, idxTag) + arrow.substring(idxTagEnd);
+            }
         }
         let line = this.ArrowLines.find(s => arrow.indexOf(s) >= 0);
         if (!line) {
@@ -60,7 +57,7 @@ export class Arrow {
             return;
         }
         let arr = arrow.split(line);
-        let [left, right] = this._leftRight(arr);
+        let left = arr[0];
         let direction = left.indexOf("<") >= 0
             // right direction is default - also for undirected arrows
             ? ArrowDirection.Left : ArrowDirection.Right;
@@ -69,27 +66,7 @@ export class Arrow {
 
         // in case of horizontal arrow 1 is used - otherwise 2 or higher
         let arrowSizeVert = Math.max(2, arr.length - 1);
-        return new this(left === line ? "" : left, line, arrowSizeVert, tag, right === line ? "" : right, direction, layout);
-    }
-
-    static _leftRight(arr: Array<string>): [string, string] {
-        var left = "";
-        var right = "";
-        if (arr.length > 0) {
-            left = arr[0];
-            if (arr.length === 1) {
-                // arrow has either no tail or head part
-                if (left[0] === arr[0][0]) {
-                    // arrow starts with line
-                    left = "";
-                    right = arr[0];
-                }
-            }
-            else {
-                right = arr[arr.length - 1];
-            }
-        }
-        return [left, right];
+        return new this(left, line, arrowSizeVert, tag, arr[arr.length-1], direction, layout);
     }
 
     toString(): string {
@@ -124,6 +101,7 @@ export class Line {
     /** Regex to find an arrow in the current line. */
     static regex: RegExp = /(\s*)(\S+)(?:\s+("[^"]+"))?\s*(\S*[-~=.]\S*)\s*(?:("[^"]+")\s+)?(\S+)(.*)/;
     // example:                    A "1"                  ->          "2"          B  : foo
+    private attached?: Array<string>;
 
     constructor(public components: Array<string>,
         public arrow: Arrow,
@@ -131,28 +109,35 @@ export class Line {
         public sides: Array<string>) {
     }
 
-    static fromString(line: String): Line | undefined {
+    static fromString(line: string): Line | undefined {
         let m = line.match(this.regex);
         if (!m) {
             return;
         }
         let a = 4; // arrow-index
-        let arrow = Arrow.fromString(m[a]);
-        if (!arrow) {
-            return;
-        }
         let mirror = (idx: number): Array<string> => {
             let left = m![a - idx];
             let right = m![a + idx];
             return [left ? left : "", right ? right : ""];
         };
-        return new this(mirror(2), arrow, mirror(1), mirror(3));
+        return new this(mirror(2), Arrow.fromString(m[a])!, mirror(1), mirror(3));
     }
 
+    attach(line: string) {
+        if (!this.attached) {
+            this.attached = new Array<string>();
+        }
+        this.attached.push(line);
+    }
     toString(): string {
-        return this.sides[0] + [this.components[0], this.multiplicities[0], this.arrow.toString(),
+        var content = this.sides[0] + [this.components[0], this.multiplicities[0], this.arrow.toString(),
         this.multiplicities[1], this.components[1]].
             filter((s: string) => s.length > 0).join(" ") + this.sides[1];
+
+        if (this.attached) {
+            content += "\n" + this.attached.join("\n");
+        }
+        return content;
     }
 
     reverse(): Line {
@@ -187,7 +172,7 @@ function toString(content: Array<Content>, tab?: string): string;
 function toString(content: Content | Array<Content>): string {
     if (content instanceof Array) {
         return content
-            .map((s: Content) => { return toString(s).trim(); })
+            .map((s: Content) => { return toString(s); })
             .join("\n");
     }
     return content instanceof Line ? content.toString() : content;
@@ -201,7 +186,7 @@ export class Component {
         public name?: string) {
     }
 
-    static regexTitle: RegExp = /(\s*)(\S+)\s+"(\S+)"\s*{?\s*/;
+    static regexTitle: RegExp = /\s*(\S+)\s+"(\S+)"\s*({?)\s*/;
 
     static fromString(s: string): Component {
         var arr = s.split("\n");
@@ -209,21 +194,38 @@ export class Component {
         var type: string | undefined;
         var name: string | undefined;
         if (m) {
-            arr = arr.slice(m[3] === "{" ? 1 : 2, arr.length - 1);
+            let offset = m[3] === "{" ? 1 : 2;
+            var rightOffset = 0;
+            while (rightOffset < arr.length && arr[arr.length - rightOffset - 1].trim().length === 0) {
+                rightOffset += 1;
+            }
+            arr = arr.slice(offset, arr.length - rightOffset - 1);
             type = m[1];
             name = m[2];
         }
-        let content = arr.map((s: string): Content => {
+        var prevLine: Line | undefined;
+        let content = new Array<Content>();
+        arr.forEach((s: string) => {
             let line = Line.fromString(s);
-            return line ? line : s;
+            if (line instanceof Line) {
+                prevLine = line;
+                content.push(line);
+            } else {
+                if (prevLine) {
+                    prevLine!.attach(s);
+                } else {
+                    content.push(s);
+                }
+            }
         });
+
         return new this(content, type, name);
     }
 
     toString(): string {
         if (this.type) {
             let header = `${this.type} "${this.name}" {\n`;
-            let footer = "\n}";
+            let footer = "\n}\n";
             return header + toString(this.content) + footer;
         }
         return toString(this.content);

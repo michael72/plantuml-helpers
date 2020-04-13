@@ -15,16 +15,15 @@ export class Reformat {
             if (line instanceof Line) {
                 let [from, to] = line.components;
                 deps.getDef(from).push(to);
-                froms.push(from);
+                if (froms.indexOf(from) === -1) {
+                    froms.push(from);
+                }
             }
         });
 
         let pointedCounts = new DefaultMap<string, number>(() => 0);
         for (let [k, v] of deps.entries()) {
             pointedCounts.set(k, 0);
-            if (froms.indexOf(k) === -1) {
-                froms.push(k);
-            }
             // add transitive dependencies
             var newDeps = v;
             while (newDeps.length !== 0) {
@@ -68,23 +67,20 @@ export class Reformat {
             });
     }
 
-    private _initialSort() :  Array<Content> {
+    private _initialSort(): Array<Line> {
         let nodes = this._sortByDependencies();
-        
-        return this.content.filter((c: Content) => {
+        return <Array<Line>>this.content.filter((c: Content) => {
             return (c instanceof Line);
-        }).sort((a: Content, b: Content) => {
-            if (a instanceof Line && b instanceof Line) {
-                var result = nodes.indexOf(a.components[0]) - nodes.indexOf(b.components[0]);
+        }).sort((c1: Content, c2: Content) => {
+            let [a, b] = [<Line>c1, <Line>c2];
+            var result = nodes.indexOf(a.components[0]) - nodes.indexOf(b.components[0]);
+            if (result === 0) {
+                result = a.combinedDirection() - b.combinedDirection();
                 if (result === 0) {
-                    result = a.combinedDirection() - b.combinedDirection();
-                    if (result === 0) {
-                        result = nodes.indexOf(a.components[1]) - nodes.indexOf(b.components[1]);
-                    }
+                    result = nodes.indexOf(a.components[1]) - nodes.indexOf(b.components[1]);
                 }
-                return result;
             }
-            return 0;
+            return result;
         });
 
     }
@@ -96,21 +92,22 @@ export class Reformat {
         let others = this.content.filter((c: Content) => {
             return !(c instanceof Line);
         });
-        var sorted = new Array<Content>();
+        var sorted = new Array<Line>();
         var idx = 0;
+
+        // now sort in the original sorted elements using already present 
+        // elements: left side of arrow first, then right side.
         while (orig.length !== 0) {
             if (idx === sorted.length) {
+                // take the first element of the original list
                 sorted = sorted.concat(orig.splice(0, 1));
             }
-            let elem = sorted[idx];
-            if (elem instanceof Line) {
-                for (let c of elem.components) {
-                    for (let oidx = 0; oidx < orig.length; ++oidx) {
-                        let o = orig[oidx];
-                        if (o instanceof Line && o.components[0] === c) {
-                            sorted = sorted.concat(orig.splice(oidx, 1));
-                            --oidx;
-                        }
+            for (let c of sorted[idx].components) {
+                for (let oidx = 0; oidx < orig.length; ++oidx) {
+                    // sort in the elements that are already in the list
+                    if (orig[oidx].components[0] === c || orig[oidx].components[1] === c) {
+                        sorted = sorted.concat(orig.splice(oidx, 1));
+                        --oidx;
                     }
                 }
             }

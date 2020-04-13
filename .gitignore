@@ -4,5 +4,5 @@ node_modules
 .metals/
 *.vsix
 *-lock.json
-
-
+.nyc_output/
+coverage/
