@@ -2,7 +2,7 @@
 
 This is a small helper for editing PlantUML files.
 
-[![Build Status](https://travis-ci.org/michael72/plantuml-helpers.svg?branch=master)](https://travis-ci.org/michael72/plantuml-helpers) [![Coverage Status](https://coveralls.io/repos/github/michael72/plantuml-helpers/badge.svg?branch=master)](https://coveralls.io/github/michael72/plantuml-helpers?branch=master)
+[![Build Status](https://travis-ci.org/michael72/plantuml-helpers.svg?branch=master)](https://travis-ci.org/michael72/plantuml-helpers)
 
 ## Features
 
