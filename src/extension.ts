@@ -40,7 +40,7 @@ function autoFormatContent(textEditor: vscode.TextEditor) {
 	}
 }
 
-function rotateSelected(textEditor: vscode.TextEditor, dir: rotate.Direction) {
+function rotateSelected(textEditor: vscode.TextEditor, dir: rotate.RotateDirection) {
 	if (textEditor) {
 		const document = textEditor.document;
 		textEditor.edit(editBuilder => {
@@ -60,13 +60,13 @@ function rotateSelected(textEditor: vscode.TextEditor, dir: rotate.Direction) {
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
 	let swapLine = vscode.commands.registerTextEditorCommand('pumlhelper.swapLine', (textEditor: vscode.TextEditor, _: vscode.TextEditorEdit) => {
-		rotateSelected(textEditor, rotate.Direction.Swap);
+		rotateSelected(textEditor, rotate.RotateDirection.Swap);
 	});
 	let rotateLeft = vscode.commands.registerTextEditorCommand('pumlhelper.rotateLineLeft', (textEditor: vscode.TextEditor, _: vscode.TextEditorEdit) => {
-		rotateSelected(textEditor, rotate.Direction.Left);
+		rotateSelected(textEditor, rotate.RotateDirection.Left);
 	});
 	let rotateRight = vscode.commands.registerTextEditorCommand('pumlhelper.rotateLineRight', (textEditor: vscode.TextEditor, _: vscode.TextEditorEdit) => {
-		rotateSelected(textEditor, rotate.Direction.Right);
+		rotateSelected(textEditor, rotate.RotateDirection.Right);
 	});
 	let autoFormat = vscode.commands.registerTextEditorCommand('pumlhelper.autoFormat', (textEditor: vscode.TextEditor, _: vscode.TextEditorEdit) => {
 		autoFormatContent(textEditor);

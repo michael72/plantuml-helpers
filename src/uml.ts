@@ -1,12 +1,12 @@
 import { reverse, reverseHead } from './helpers';
 
-
+/** Combined direction is ordered clockwise. */
 export enum CombinedDirection {
     None,
-    Left,
     Right,
-    Up,
-    Down
+    Down,
+    Left,
+    Up
 }
 
 export enum ArrowDirection {

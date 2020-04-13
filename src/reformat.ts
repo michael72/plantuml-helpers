@@ -70,28 +70,14 @@ export class Reformat {
 
     private _initialSort() :  Array<Content> {
         let nodes = this._sortByDependencies();
-
-        let comb = (c: CombinedDirection): number => {
-            switch (c) {
-                case CombinedDirection.Right:
-                    return 1;
-                case CombinedDirection.Down:
-                    return 2;
-                case CombinedDirection.Left:
-                    return 3;
-                case CombinedDirection.Up:
-                    return 4;
-                default:
-                    return 100;
-            }
-        };
+        
         return this.content.filter((c: Content) => {
             return (c instanceof Line);
         }).sort((a: Content, b: Content) => {
             if (a instanceof Line && b instanceof Line) {
                 var result = nodes.indexOf(a.components[0]) - nodes.indexOf(b.components[0]);
                 if (result === 0) {
-                    result = comb(a.combinedDirection()) - comb(b.combinedDirection());
+                    result = a.combinedDirection() - b.combinedDirection();
                     if (result === 0) {
                         result = nodes.indexOf(a.components[1]) - nodes.indexOf(b.components[1]);
                     }
