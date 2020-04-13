@@ -39,7 +39,7 @@ export class Arrow {
     private constructor(public left: string,
         public line: string,
         public length: number,
-        public tag: string, 
+        public tag: string,
         public right: string,
         public direction: ArrowDirection,
         public layout: Layout) { }
@@ -49,7 +49,7 @@ export class Arrow {
         var tag = "";
         if (idxTag !== -1) {
             let idxTagEnd = arrow.lastIndexOf("]") + 1;
-            tag = arrow.substring(idxTag, idxTagEnd); 
+            tag = arrow.substring(idxTag, idxTagEnd);
             arrow = arrow.substring(0, idxTag) + arrow.substring(idxTagEnd);
         }
         let find = (search: Array<string>) => {
@@ -94,8 +94,8 @@ export class Arrow {
     }
 
     toString(): string {
-        var mid = this.line + this.tag; 
-        if (this.layout === Layout.Vertical) { 
+        var mid = this.line + this.tag;
+        if (this.layout === Layout.Vertical) {
             mid += this.line.repeat(this.length - 1);
         }
         return this.left + mid + this.right;
@@ -124,18 +124,6 @@ export class Arrow {
             return this.direction === ArrowDirection.Left ? CombinedDirection.Left : CombinedDirection.Right;
         } else {
             return this.direction === ArrowDirection.Left ? CombinedDirection.Up : CombinedDirection.Down;
-        }
-    }
-    setCombinedDirection(dir: CombinedDirection) {
-        let current = this.combinedDirection();
-        if (current !== dir) {
-            if (layoutOf(dir) !== this.layout) {
-                this.layout = rotate(this.layout);
-            }
-            if (directionOf(dir) !== this.direction) {
-                [this.left, this.right] = [this._revHead(this.right), this._revHead(this.left)];
-                this.direction = opposite(this.direction);
-            }
         }
     }
 }
@@ -192,14 +180,11 @@ export class Line {
     }
     setCombinedDirection(dir: CombinedDirection) {
         let oldDir = this.arrow.direction;
-        this.arrow.setCombinedDirection(dir);
-        if (oldDir !== this.arrow.direction) {
-            // swap sides
-            this.components = this.components.reverse();
-            this.multiplicities = this.multiplicities.reverse();
-            // preserve arrow direction in label
-            this.sides[1] = reverseHead(this.sides[1]);
+
+        if (oldDir !== directionOf(dir)) {
+            Object.assign(this, this.reverse());
         }
+        this.arrow.layout = layoutOf(dir);
     }
 }
 
