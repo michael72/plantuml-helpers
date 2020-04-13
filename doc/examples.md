@@ -25,7 +25,7 @@ We start with an unsorted version.
 
 #### Sorted
 
-Now we do execute the `PlantUML-Helpers Auto Format UML` command. This only auto formats all arrows that are aligned right. All others are left out. Initially you could also execute the `PlantUML-Helpers Reformat UML` command - which reverts *all* arrows to the defaults. The defaults are: "up" for inheritance and "right" for all others.
+Now we execute the `PlantUML-Helpers Auto Format UML` command. This auto formats all arrows and changes their format - if they should be horizontal or vertical. All others are left out. The defaults are: "up" for inheritance (or at least vertical) and "right" for compositional arrays.
 
 The first automatic formatting delivers this result:
 ```plantuml
@@ -110,7 +110,9 @@ One lesson to (maybe) also learn here: if you have trouble drawing the dependenc
 
 #### Alternative Version
 
-Whether you like the first auto formatted version more or think this one is cleaner is up to you. The first auto formatted version could also be formatted nicely when just elongating the line between `[Camera]` and `[Commands]`. The elongating trick often works nicely - try that!
+Whether you like the first auto formatted version more or think this one is cleaner is up to you. The first auto formatted version could also be formatted nicely when just elongating the line between `[Camera]` and `[Commands]` pulling `[Commands]` down and leaving space for the other components. 
+
+The elongating trick often works nicely - try that!
 
 ```plantuml
 @startuml
