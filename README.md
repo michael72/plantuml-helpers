@@ -5,6 +5,8 @@ This is a small helper for editing PlantUML files.
 [![codecov](https://codecov.io/gh/michael72/plantuml-helpers/branch/master/graph/badge.svg)](https://codecov.io/gh/michael72/plantuml-helpers)
 [![Build Status](https://travis-ci.org/michael72/plantuml-helpers.svg?branch=master)](https://travis-ci.org/michael72/plantuml-helpers)
 
+![Sample](doc/puml-helpers.gif)
+
 ## Features
 
 Changes the arrows in Plant-UML diagrams from horizonatal to vertical and vice versa. It can also swap the arrow direction with also swapping the content. This is helpful when changing the order in which the elements are drawn.
