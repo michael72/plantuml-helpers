@@ -1,10 +1,14 @@
-.vscode/**
-.vscode-test/**
 out/test/**
 src/**
+test/**
+doc/**
+coverage/**
 .gitignore
 vsc-extension-quickstart.md
 **/tsconfig.json
-**/.eslintrc.json
+**/package-lock.json
+**/*.vsix
 **/*.map
 **/*.ts
+.*
+.*/**
