@@ -14,12 +14,11 @@ before_install:
 
 install: 
   - npm install
-  - npm install codecov -g
   - npm run vscode:prepublish
 
 script:
   - npm t
-  - codecov -f coverage/*.json
+  - npm run codecov -f coverage/*.json
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
