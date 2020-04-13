@@ -14,8 +14,8 @@ export enum RotateDirection {
 }
 
 export function rotateDirection(c: CombinedDirection, r: RotateDirection) : CombinedDirection {
-	// combined direction is numbers 1 - 4, hence subtracting 1, + 4, modulo 4 (which is &3), and adding 1 again
-	return ((c + r + 3) & 3) + 1;
+	// combined direction is numbers 0 - 3, hence adding 4 (to ensure positive number) and modulo 4 (which is &3)
+	return ((c + r + 4) & 3);
 }
 
 /**  rotate line of plantuml code preserving the dependency.

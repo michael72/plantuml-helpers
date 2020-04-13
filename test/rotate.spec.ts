@@ -1,5 +1,8 @@
 import { equal } from "assert";
+import { should } from 'chai';
 import * as r from "../src/rotate";
+
+should();
 
 describe('Rotate', () => {
 
@@ -16,7 +19,7 @@ describe('Rotate', () => {
 		// spaces are added automatically 
 		equal(r.rotateLine("A->B", r.RotateDirection.Swap), "B <- A");	  
 		// spaces may also be removed
-		equal(r.rotateLine("A ..  B", r.RotateDirection.Right), "A . B");	  
+		equal(r.rotateLine("A ..  B", r.RotateDirection.Right), "B . A");	  
 	});
 
 	it('should rotate an asymetrical arrow', () => {
@@ -28,5 +31,9 @@ describe('Rotate', () => {
 		// o-|> isn't a real arrow, but just for testing...
 		equal(r.rotateLine('A "0" o-|> "1-2" B', r.RotateDirection.Swap), 'B "1-2" <|-o "0" A');
 		equal(r.rotateLine('(IBar) "*" <-o "1" [Foo]', r.RotateDirection.Right), '(IBar) "*" <--o "1" [Foo]'); 
+	});
+
+	it ('should keep arrow direction in labels', () => {
+		r.rotateLine('Car *- Wheel : have 4 >', r.RotateDirection.Swap).should.equal('Wheel -* Car : have 4 <');
 	});
 });

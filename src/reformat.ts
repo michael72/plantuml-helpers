@@ -91,6 +91,8 @@ export class Reformat {
 
     private _sort() {
         let orig = this._initialSort();
+        // leave all content that is not explicitly an arrow connection
+        // before the arrow lines that are being sorted
         let others = this.content.filter((c: Content) => {
             return !(c instanceof Line);
         });

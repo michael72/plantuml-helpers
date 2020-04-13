@@ -46,7 +46,7 @@ export class DefaultMap<K, V> extends Map<K, V> {
 	 */
 	public getDef(key: K): V {
 		let v = super.get(key);
-		if (!v) {
+		if (v === undefined) {
 			let newValue = this.defaultVal();
 			super.set(key, newValue);
 			return newValue;

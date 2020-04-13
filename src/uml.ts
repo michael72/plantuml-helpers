@@ -2,7 +2,6 @@ import { reverse, reverseHead } from './helpers';
 
 /** Combined direction is ordered clockwise. */
 export enum CombinedDirection {
-    None,
     Right,
     Down,
     Left,
@@ -10,13 +9,12 @@ export enum CombinedDirection {
 }
 
 export enum ArrowDirection {
-    None,
     Left,
     Right
 }
 
 export function opposite(direction: ArrowDirection): ArrowDirection {
-    return direction === ArrowDirection.Right ? ArrowDirection.Left : (direction === ArrowDirection.Left ? ArrowDirection.Right : ArrowDirection.None);
+    return direction === ArrowDirection.Right ? ArrowDirection.Left : ArrowDirection.Right;
 }
 
 export enum Layout {
@@ -65,8 +63,9 @@ export class Arrow {
         let arr = arrow.split(line);
         let [left, right] = this._leftRight(arr);
         let head = find([">", "<", "\\", "/"]);
-        let direction = head === ">"
-            ? ArrowDirection.Right : (head === "<" ? ArrowDirection.Left : ArrowDirection.None);
+        let direction = head === "<"
+            // right direction is default - also for undirected arrows
+            ? ArrowDirection.Left : ArrowDirection.Right;
         let layout = arr.length === 2
             ? Layout.Horizontal : Layout.Vertical;
 
@@ -122,11 +121,9 @@ export class Arrow {
 
     combinedDirection(): CombinedDirection {
         if (this.layout === Layout.Horizontal) {
-            return this.direction === ArrowDirection.Left ? CombinedDirection.Left :
-                (this.direction === ArrowDirection.Right ? CombinedDirection.Right : CombinedDirection.None);
+            return this.direction === ArrowDirection.Left ? CombinedDirection.Left : CombinedDirection.Right;
         } else {
-            return this.direction === ArrowDirection.Left ? CombinedDirection.Up :
-                (this.direction === ArrowDirection.Right ? CombinedDirection.Down : CombinedDirection.None);
+            return this.direction === ArrowDirection.Left ? CombinedDirection.Up : CombinedDirection.Down;
         }
     }
     setCombinedDirection(dir: CombinedDirection) {
@@ -143,8 +140,9 @@ export class Arrow {
     }
 }
 
+
 export class Line {
-    /// Regex to find an arrow in the current line.
+    /** Regex to find an arrow in the current line. */
     static regex: RegExp = /(\s*)(\S+)(?:\s+("[^"]+"))?\s*(\S*[-~=.]\S*)\s*(?:("[^"]+")\s+)?(\S+)(.*)/;
     // example:                    A "1"                  ->          "2"          B  : foo
 
@@ -184,7 +182,9 @@ export class Line {
             swap(this.components),
             this.arrow.reverse(),
             swap(this.multiplicities),
-            this.sides);
+            // the label section (on the right side) might contain an arrow as well
+            // this has to be turned around as well!
+            [this.sides[0], reverseHead(this.sides[1])]);
     }
 
     combinedDirection(): CombinedDirection {
@@ -197,6 +197,8 @@ export class Line {
             // swap sides
             this.components = this.components.reverse();
             this.multiplicities = this.multiplicities.reverse();
+            // preserve arrow direction in label
+            this.sides[1] = reverseHead(this.sides[1]);
         }
     }
 }
