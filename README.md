@@ -2,7 +2,7 @@
 
 This is a small helper for editing PlantUML files.
 
-[![codecov](https://codecov.io/gh/codecov/example-typescript/branch/master/graph/badge.svg)](https://codecov.io/gh/codecov/example-typescript)
+[![codecov](https://codecov.io/gh/michael72/plantuml-helpers/branch/master/graph/badge.svg)](https://codecov.io/gh/michael72/plantuml-helpers)
 [![Build Status](https://travis-ci.org/michael72/plantuml-helpers.svg?branch=master)](https://travis-ci.org/michael72/plantuml-helpers)
 
 ## Features
