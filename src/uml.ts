@@ -31,6 +31,7 @@ function directionOf(combined: CombinedDirection): ArrowDirection {
 }
 
 export class Arrow {
+    static regexTag: RegExp = /[lrud\[\]]+/; // any [...] or l(eft), r(ight), u(p) or d(own) - o would not work (a-z)
     private constructor(public left: string,
         public line: string,
         public sizeVert: number,
@@ -42,21 +43,17 @@ export class Arrow {
     static ArrowLines = ["-", ".", "=", "~"];
 
     static fromString(arrow: string): Arrow | undefined {
-        let idxTag = arrow.indexOf("[");
-        var tag = "";
-        if (idxTag !== -1) {
-            let idxTagEnd = arrow.lastIndexOf("]") + 1;
-            if (idxTagEnd !== 0) {
-                tag = arrow.substring(idxTag, idxTagEnd);
-                arrow = arrow.substring(0, idxTag) + arrow.substring(idxTagEnd);
-            }
-        }
         let line = this.ArrowLines.find(s => arrow.indexOf(s) >= 0);
         if (!line) {
             // arrow line was not found
             return;
         }
         let arr = arrow.split(line);
+        var tag = "";
+        let tag_idx = arr.findIndex(s => s.length > 0 && s.match(this.regexTag));
+        if (tag_idx !== -1) {
+            [tag, arr[tag_idx]] = [arr[tag_idx], tag];
+        }
         let left = arr[0];
         let direction = left.indexOf("<") >= 0
             // right direction is default - also for undirected arrows
@@ -66,7 +63,7 @@ export class Arrow {
 
         // in case of horizontal arrow 1 is used - otherwise 2 or higher
         let arrowSizeVert = Math.max(2, arr.length - 1);
-        return new this(left, line, arrowSizeVert, tag, arr[arr.length-1], direction, layout);
+        return new this(left, line, arrowSizeVert, tag, arr[arr.length - 1], direction, layout);
     }
 
     toString(): string {
@@ -120,7 +117,16 @@ export class Line {
             let right = m![a + idx];
             return [left ? left : "", right ? right : ""];
         };
-        return new this(mirror(2), Arrow.fromString(m[a])!, mirror(1), mirror(3));
+        let result = new this(mirror(2), Arrow.fromString(m[a])!, mirror(1), mirror(3));
+        if (result.arrow.tag.length > 0) {
+            // check explicit direction set in arrow - e.g. -up->
+            let idx = "rdlu".indexOf(result.arrow.tag[0]);
+            if (idx !== -1) {
+                result.arrow.tag = "";
+                result.setCombinedDirection(idx);
+            }
+        }
+        return result;
     }
 
     attach(line: string) {

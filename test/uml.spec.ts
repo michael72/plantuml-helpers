@@ -12,6 +12,7 @@ let equalArr = (actual: Array<string>, expected: Array<string>) => {
 };
 
 describe('Uml spec', () => {
+
     describe('Arrow class', () => {
 
         it('should parse an arrow', () => {
@@ -60,13 +61,14 @@ describe('Uml spec', () => {
         it('should parse a damaged arrow', () => {
             let parsed = uml.Arrow.fromString("-[")!;
             parsed.line.should.equal("-");
-            parsed.right.should.equal("[");
-            equal(parsed.tag, "");
+            parsed.right.should.equal("");
+            equal(parsed.tag, "[");
         });
 
     });
 
     describe("Line class", () => {
+
         it('should parse a simple component line', () => {
             let line = "A -> B";
             let parsed = uml.Line.fromString(line)!;
@@ -120,6 +122,43 @@ describe('Uml spec', () => {
             parsed.setCombinedDirection(uml.CombinedDirection.Up);
             parsed.toString().should.equal("B .... A");
         });
+
+        it('should preserve explicit direction left', () => {
+            for (let s of ['left', 'le', 'l']) {
+                let line = `A -${s}-> B`;
+                let parsed = uml.Line.fromString(line)!;
+                let expected = "B <- A";
+                parsed.toString().should.equal(expected);
+            }
+        });
+
+        it('should preserve explicit direction up', () => {
+            for (let s of ['up', 'u']) {
+                let line = `A -${s}-> B`;
+                let parsed = uml.Line.fromString(line)!;
+                let expected = "B <-- A";
+                parsed.toString().should.equal(expected);
+            }
+        });
+
+        it('should preserve explicit direction right', () => {
+            for (let s of ['right', 'ri', 'r']) {
+                let line = `A -${s}-> B`;
+                let parsed = uml.Line.fromString(line)!;
+                let expected = "A -> B";
+                parsed.toString().should.equal(expected);
+            }
+        });
+
+        it('should preserve explicit direction down', () => {
+            for (let s of ['down', 'do', 'd']) {
+                let line = `A -${s}-> B`;
+                let parsed = uml.Line.fromString(line)!;
+                let expected = "A --> B";
+                parsed.toString().should.equal(expected);
+            }
+        });
+
     });
     describe("Component class", () => {
         it("should parse a package", () => {
