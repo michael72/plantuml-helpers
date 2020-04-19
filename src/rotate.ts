@@ -13,7 +13,7 @@ export enum RotateDirection {
 	Swap = 2
 }
 
-export function rotateDirection(c: CombinedDirection, r: RotateDirection) : CombinedDirection {
+export function rotateDirection(c: CombinedDirection, r: RotateDirection): CombinedDirection {
 	// combined direction is numbers 0 - 3, hence adding 4 (to ensure positive number) and modulo 4 (which is &3)
 	return ((c + r + 4) & 3);
 }
@@ -28,7 +28,7 @@ B <- D : left
 @enduml 
 */
 export function rotateLine(line: string, dir: RotateDirection): string {
-	let umlLine = Line.fromString(line);
+	const umlLine = Line.fromString(line);
 	if (umlLine === undefined) {
 		return line;
 	}

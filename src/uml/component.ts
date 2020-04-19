@@ -25,24 +25,24 @@ export class Component {
     ) {
     }
 
-    static regexTitle: RegExp = /\s*(\S+)\s+([^{\s]*)\s*(<<\S+>>)?\s*(#\S+)?\s*({?)\s*/;
+    static regexTitle = /\s*(\S+)\s+([^{\s]*)\s*(<<\S+>>)?\s*(#\S+)?\s*({?)\s*/;
 
     static fromString(s: string): Component {
         // empty lines are being removed
-        var arr = s.split("\n").filter((line: string) => { return line.length > 0; });
+        let arr = s.split("\n").filter((line: string) => { return line.length > 0; });
         if (arr.length === 0) {
             return new this(new Array<string>());
         }
-        var type: string | undefined;
-        var name: string | undefined;
-        var printName: string | undefined;
-        var stereotype: string | undefined;
-        var color: string | undefined;
+        let type: string | undefined;
+        let name: string | undefined;
+        let printName: string | undefined;
+        let stereotype: string | undefined;
+        let color: string | undefined;
 
-        let m = arr[0].match(this.regexTitle);
+        const m = arr[0].match(this.regexTitle);
         // for a package the curly brace must be either in the current or in the next line
         if (m && arr.length > 1 && (m[5] || arr[1].indexOf("{") !== -1)) {
-            let offset = m[5] === "{" ? 1 : 2;
+            const offset = m[5] === "{" ? 1 : 2;
             arr = arr.slice(offset, arr.length - 1);
             type = m[1];
             printName = m[2];
@@ -53,16 +53,16 @@ export class Component {
             stereotype = m[3];
             color = m[4];
         }
-        var prevLine: Line | undefined;
-        let content = new Array<Content>();
+        let prevLine: Line | undefined;
+        const content = new Array<Content>();
         arr.forEach((s: string) => {
-            let line = Line.fromString(s);
+            const line = Line.fromString(s);
             if (line instanceof Line) {
                 prevLine = line;
                 content.push(line);
             } else {
                 if (prevLine) {
-                    prevLine!.attach(s);
+                    prevLine.attach(s);
                 } else {
                     content.push(s);
                 }
@@ -74,7 +74,7 @@ export class Component {
 
     toString(): string {
         if (this.type) {
-            var header = this.type;
+            let header = this.type;
             [this.printName, this.stereotype, this.color].forEach(
                 (s: string | undefined) => { if (s) { header += " " + s; } });
             return header + " {\n" + toString(this.content) + "\n}\n";

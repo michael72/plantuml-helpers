@@ -104,4 +104,15 @@ describe("Line class", () => {
         }
     });
 
+    it("should parse a component with arrow with no spaces", () => {
+        for (let [left, right] of [["A", "B"], ["A", "ABC"], ["ABC", "ABC"], ["ABC", "A"]]) {
+            for (let arrow of ['->', '<-', '-->', '<--']) {
+                let line = `${left}${arrow}${right}`;
+                let expected = `${left} ${arrow} ${right}`;
+                let parsed = Line.fromString(line)!;
+                parsed.toString().should.equal(expected);
+            }
+        }
+    });
+
 });

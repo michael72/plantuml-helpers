@@ -31,6 +31,7 @@ export function reverse(s: string): string {
  * A default value can not be used as it would always return
  * the same reference.
  */
+// eslint-disable-next-line no-undef
 export class DefaultMap<K, V> extends Map<K, V> {
 	/** Saves the default value callback */
 	private defaultVal: () => V;
@@ -45,14 +46,15 @@ export class DefaultMap<K, V> extends Map<K, V> {
 	 * @returns the value - either the saved or default. 
 	 */
 	public getDef(key: K): V {
-		let v = super.get(key);
+		const v = super.get(key);
 		if (v === undefined) {
-			let newValue = this.defaultVal();
+			const newValue = this.defaultVal();
 			super.set(key, newValue);
 			return newValue;
+		} else {
+			// value was already added
+			return v;
 		}
-		// value was already added
-		return v!;
 	}
 }
 

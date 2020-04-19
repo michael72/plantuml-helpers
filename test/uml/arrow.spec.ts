@@ -24,18 +24,18 @@ describe('Arrow class', () => {
     });
 
     it('should parse a left arrow', () => {
-        let arrow = Arrow.fromString("<~~");
-        equal(arrow?.direction, ArrowDirection.Left);
-        equal(arrow?.left, "<");
-        equal(arrow?.line, "~");
-        equal(arrow?.right, "");
-        equal(arrow?.layout, Layout.Vertical);
+        let arrow = Arrow.fromString("<~~")!;
+        equal(arrow.direction, ArrowDirection.Left);
+        equal(arrow.left, "<");
+        equal(arrow.line, "~");
+        equal(arrow.right, "");
+        equal(arrow.layout, Layout.Vertical);
     });
 
     it('should convert an arrow to a string', () => {
         let arrows = ["->", "-->", "<-", "<~", "<|-", "o->>"];
         arrows.forEach((arrow: string) => {
-            equal(Arrow.fromString(arrow)?.toString(), arrow, "converting '" + arrow + "' failed");
+            equal(Arrow.fromString(arrow)!.toString(), arrow, "converting '" + arrow + "' failed");
         });
     });
 
@@ -44,16 +44,16 @@ describe('Arrow class', () => {
             = [["->", "<-"], ["<~~", "~~>"], ["<|-", "-|>"], ["o->", "<-o"]];
         arrows.forEach((arrowOp: [string, string]) => {
             let [fwd, rev] = arrowOp;
-            equal(Arrow.fromString(fwd)?.reverse().toString(), rev);
-            equal(Arrow.fromString(rev)?.reverse().toString(), fwd);
+            equal(Arrow.fromString(fwd)!.reverse().toString(), rev);
+            equal(Arrow.fromString(rev)!.reverse().toString(), fwd);
         });
     });
 
     it('should parse a damaged arrow', () => {
         let parsed = Arrow.fromString("-[")!;
         parsed.line.should.equal("-");
-        parsed.right.should.equal("");
-        equal(parsed.tag, "[");
+        parsed.right.should.equal("[");
+        equal(parsed.tag, "");
     });
 
 });

@@ -9,18 +9,12 @@ export enum CombinedDirection {
     Up
 }
 
-function layoutOf(combined: CombinedDirection): Layout {
-    return (combined === CombinedDirection.Up || combined === CombinedDirection.Down) ? Layout.Vertical : Layout.Horizontal;
-}
-
-function directionOf(combined: CombinedDirection): ArrowDirection {
-    return (combined === CombinedDirection.Up || combined === CombinedDirection.Left) ? ArrowDirection.Left : ArrowDirection.Right;
-}
-
 export class Line {
     /** Regex to find an arrow in the current line. */
-    static regex: RegExp = /(\s*)(\S+)(?:\s+("[^"]+"))?\s*(\S*[-~=.]\S*)\s*(?:("[^"]+")\s+)?(\S+)(.*)/;
-    // example:                    A "1"                  ->          "2"          B  : foo
+    static REGEX = /(\s*)([^-~=."><\\/\s]+)(?:\s+("[^"]+"))?\s*(\S*[^A-Za-np-z_\s]+)\s*(?:("[^"]+")\s+)?([^-~=."><\\/\s]+)(\s*(?::.*)?)/;
+    // example:                 A                  "1"           ->                          "2"          B  : foo
+    static DIRECTIONS = "rdlu"; // corresponds to enum order in CombinedDirection - first letter only
+
     private attached?: Array<string>;
 
     constructor(public components: Array<string>,
@@ -30,20 +24,24 @@ export class Line {
     }
 
     static fromString(line: string): Line | undefined {
-        let m = line.match(this.regex);
+        const m = line.match(this.REGEX);
         if (!m) {
             return;
         }
-        let a = 4; // arrow-index
-        let mirror = (idx: number): Array<string> => {
-            let left = m![a - idx];
-            let right = m![a + idx];
+        const a = 4; // arrow-index
+        const arrow = Arrow.fromString(m[a]);
+        if (!arrow) {
+            return;
+        }
+        const mirror = (idx: number): Array<string> => {
+            const left = m[a - idx];
+            const right = m[a + idx];
             return [left ? left : "", right ? right : ""];
         };
-        let result = new this(mirror(2), Arrow.fromString(m[a])!, mirror(1), mirror(3));
+        const result = new this(mirror(2), arrow, mirror(1), mirror(3));
         if (result.arrow.tag.length > 0) {
             // check explicit direction set in arrow - e.g. -up->
-            let idx = "rdlu".indexOf(result.arrow.tag[0]);
+            const idx = this.DIRECTIONS.indexOf(result.arrow.tag[0]);
             if (idx !== -1) {
                 result.arrow.tag = "";
                 result.setCombinedDirection(idx);
@@ -52,14 +50,15 @@ export class Line {
         return result;
     }
 
-    attach(line: string) {
+    attach(line: string): void {
         if (!this.attached) {
             this.attached = new Array<string>();
         }
         this.attached.push(line);
     }
+
     toString(): string {
-        var content = this.sides[0] + [this.components[0], this.multiplicities[0], this.arrow.toString(),
+        let content = this.sides[0] + [this.components[0], this.multiplicities[0], this.arrow.toString(),
         this.multiplicities[1], this.components[1]].
             filter((s: string) => s.length > 0).join(" ") + this.sides[1];
 
@@ -70,7 +69,7 @@ export class Line {
     }
 
     reverse(): Line {
-        let swap = (what: Array<string>) => { return [what[1], what[0]]; };
+        const swap = (what: Array<string>): Array<string> => { return [what[1], what[0]]; };
         return new Line(
             swap(this.components),
             this.arrow.reverse(),
@@ -87,8 +86,15 @@ export class Line {
             return this.arrow.direction === ArrowDirection.Left ? CombinedDirection.Up : CombinedDirection.Down;
         }
     }
-    setCombinedDirection(dir: CombinedDirection) {
-        let oldDir = this.arrow.direction;
+
+    setCombinedDirection(dir: CombinedDirection): void {
+        const oldDir = this.arrow.direction;
+        const layoutOf = (combined: CombinedDirection): Layout => {
+            return (combined === CombinedDirection.Up || combined === CombinedDirection.Down) ? Layout.Vertical : Layout.Horizontal;
+        };
+        const directionOf = (combined: CombinedDirection): ArrowDirection => {
+            return (combined === CombinedDirection.Up || combined === CombinedDirection.Left) ? ArrowDirection.Left : ArrowDirection.Right;
+        };
 
         if (oldDir !== directionOf(dir)) {
             Object.assign(this, this.reverse());

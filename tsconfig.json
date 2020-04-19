@@ -16,6 +16,15 @@
 		"noUnusedParameters": true, /* Report errors on unused parameters. */
 		"noUnusedLocals": true
 	},
+	"rules": {
+		"@typescript-eslint/member-naming": [
+			"error",
+			{
+				"private": "^__",
+				"protected": "^_"
+			}
+		]
+	},
 	"include": [
 		"src/**/*"
 	],
