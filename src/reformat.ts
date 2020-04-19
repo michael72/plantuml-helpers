@@ -1,5 +1,7 @@
 import { DefaultMap } from './helpers';
-import { Component, Content, Line, CombinedDirection, Layout } from './uml';
+import { Layout } from './uml/arrow';
+import { Component, Content } from './uml/component';
+import { Line, CombinedDirection } from './uml/line';
 
 export class Reformat {
     private content: Array<Content>;

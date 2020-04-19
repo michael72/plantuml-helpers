@@ -1,4 +1,4 @@
-import {Line, CombinedDirection} from './uml';
+import {Line, CombinedDirection} from './uml/line';
 
 /** Contains functions to rotate the visual representation of the content of a plantuml line.
 The visual represent depends on
