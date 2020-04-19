@@ -176,12 +176,12 @@ describe('Uml spec', () => {
             parsed.toString().should.equal(original);
         });
         it("should parse a package - } in next line", () => {
-            let original = 'package "bla"\n' +
+            let original = 'package bla <<something>>\n' +
                 '{\n' +
                 "  [A]\n" +
                 "}";
             // { is moved up when converting back to string - hence:
-            let expected = 'package "bla" {\n' +
+            let expected = 'package bla <<something>> {\n' +
                 "  [A]\n" +
                 "}\n";
             let parsed = uml.Component.fromString(original);
@@ -189,6 +189,14 @@ describe('Uml spec', () => {
             parsed.type!.should.equal("package");
             parsed.content.length.should.equal(1);
             parsed.toString().should.equal(expected);
+        });
+        it("should parse an empty package", () => {
+             // kind of a special case (normally there is content): needs an extra blank line
+            let original = 'package {\n\n}\n';
+            let parsed = uml.Component.fromString(original);
+            let actual = parsed.toString();
+
+            actual.should.equal(original);
         });
     });
 });
