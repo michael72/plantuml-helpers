@@ -15,21 +15,22 @@ function toString(content: Content | Array<Content>): string {
 }
 
 export class Component {
-
     constructor(public content: Array<Content>,
         public type?: string,
         public name?: string,
         public stereotype?: string,
         public color?: string,
-        private printName?: string
+        private printName?: string,
+        private children?: Array<Component>
     ) {
     }
 
-    static regexTitle = /\s*(\S+)\s+([^{\s]*)\s*(<<\S+>>)?\s*(#\S+)?\s*({?)\s*/;
+    static regexTitle = /\s*(package|namespace|node|folder|frame|cloud|database)\s+([^{\s]*)\s*(<<\S+>>)?\s*(#\S+)?\s*({?)\s*/;
 
-    static fromString(s: string): Component {
+    static fromString(s: string | Array<string>): Component {
         // empty lines are being removed
-        let arr = s.split("\n").filter((line: string) => { return line.length > 0; });
+        let arr = (typeof s === 'string' ? s.split("\n") : s)
+            .filter((line: string) => { return line.length > 0; });
         if (arr.length === 0) {
             return new this(new Array<string>());
         }
@@ -55,21 +56,40 @@ export class Component {
         }
         let prevLine: Line | undefined;
         const content = new Array<Content>();
-        arr.forEach((s: string) => {
+        const children = new Array<Component>();
+        for (let i = 0; i < arr.length; ++i) {
+            const s = arr[i];
             const line = Line.fromString(s);
             if (line instanceof Line) {
                 prevLine = line;
                 content.push(line);
             } else {
-                if (prevLine) {
+                if (s.match(this.regexTitle)) {
+                    // parse child element until closing bracket
+                    let brackets = 1;
+                    for (let j = i + 1; j < arr.length; ++j) {
+                        if (arr[j].trim() === "}") {
+                            --brackets;
+                            if (brackets === 0) {
+                                children.push(this.fromString(arr.slice(i + 1, j + 1)));
+                            }
+                        }
+                        else if (arr[j].match(this.regexTitle)) {
+                            ++brackets;
+                        }
+                    }
+                }
+                else if (prevLine) {
                     prevLine.attach(s);
                 } else {
                     content.push(s);
                 }
             }
-        });
 
-        return new this(content, type, name, color, stereotype, printName);
+        }
+
+        return new this(content, type, name, color, stereotype, printName, 
+                children.length > 0 ? children : undefined);
     }
 
     toString(): string {
@@ -77,7 +97,14 @@ export class Component {
             let header = this.type;
             [this.printName, this.stereotype, this.color].forEach(
                 (s: string | undefined) => { if (s) { header += " " + s; } });
-            return header + " {\n" + toString(this.content) + "\n}\n";
+            let result = header + " {\n" + toString(this.content);
+            if (this.children) {
+                this.children.forEach((child: Component) => {
+                    result += "\n" + child.toString();
+                });
+            }
+            result += "\n}\n";
+            return result;
         }
         return toString(this.content);
     }

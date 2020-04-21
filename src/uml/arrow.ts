@@ -6,10 +6,6 @@ export enum ArrowDirection {
     Right
 }
 
-export function opposite(direction: ArrowDirection): ArrowDirection {
-    return direction === ArrowDirection.Right ? ArrowDirection.Left : ArrowDirection.Right;
-}
-
 export enum Layout {
     Horizontal,
     Vertical
@@ -66,7 +62,7 @@ export class Arrow {
 
     reverse(): Arrow {
         return new Arrow(this._revHead(this.right), this.line, this.sizeVert, this.tag, this._revHead(this.left),
-            opposite(this.direction), this.layout);
+            this.direction === ArrowDirection.Right ? ArrowDirection.Left : ArrowDirection.Right, this.layout);
     }
 
 }
