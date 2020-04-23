@@ -34,11 +34,55 @@ describe("Component class", () => {
         parsed.toString().should.equal(expected);
     });
     it("should parse an empty package", () => {
-        // kind of a special case (normally there is content): needs an extra blank line
-        let original = 'package {\n\n}\n';
+        let original = 'package {\n}\n';
         let parsed = Component.fromString(original);
         let actual = parsed.toString();
 
         actual.should.equal(original);
+    });
+    it("should parse a nested component", () => {
+        let original = 'package "a" {\n' +
+            ' component A\n' +
+            ' interface IA\n' +
+            ' package "b" {\n' +
+            '   interface IB\n' +
+            '   component B\n' +
+            ' }\n' +
+            ' package "c" {\n' +
+            '   interface IC\n' +
+            '   component C\n' +
+            '  package inner {\n' +
+            '  }\n' +
+            ' }\n' +
+            '\n' +
+            ' IA <|-- A\n' +
+            ' IB <|-- B\n' +
+            ' IC <|-- C\n' +
+            '\n' +
+            ' A o-> IB\n' +
+            ' B o-> IC\n' +
+            '}\n';
+        let parsed = Component.fromString(original);
+        let actual = parsed.toString();
+        const expected = 'package "a" {\n' +
+            '  component A\n' +
+            '  interface IA\n' +
+            '  package "b" {\n' +
+            '    interface IB\n' +
+            '    component B\n' +
+            '  }\n' +
+            '  package "c" {\n' +
+            '    interface IC\n' +
+            '    component C\n' +
+            '    package inner {\n' +
+            '    }\n' +
+            '  }\n' +
+            '  IA <|-- A\n' +
+            '  IB <|-- B\n' +
+            '  IC <|-- C\n' +
+            '  A o-> IB\n' +
+            '  B o-> IC\n' +
+            '}\n';
+        actual.should.equal(expected);
     });
 });

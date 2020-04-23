@@ -71,7 +71,9 @@ export class Component {
                         if (arr[j].trim() === "}") {
                             --brackets;
                             if (brackets === 0) {
-                                children.push(this.fromString(arr.slice(i + 1, j + 1)));
+                                children.push(this.fromString(arr.slice(i, j + 1)));
+                                i = j;
+                                break;
                             }
                         }
                         else if (arr[j].match(this.regexTitle)) {
@@ -92,18 +94,35 @@ export class Component {
                 children.length > 0 ? children : undefined);
     }
 
-    toString(): string {
+    static DEFAULT_TAB = "  ";
+
+    toString(tab?: string): string {
         if (this.type) {
+            let t = tab === undefined ? "" : tab;
             let header = this.type;
             [this.printName, this.stereotype, this.color].forEach(
                 (s: string | undefined) => { if (s) { header += " " + s; } });
-            let result = header + " {\n" + toString(this.content);
+            let result = t + header.trimLeft() + " {\n";
+            t += Component.DEFAULT_TAB;
+            const idx = this.content.findIndex((c: Content) => { return c instanceof Line; });
+            if (idx > 0 || idx === -1) {
+                result += t + this.content.slice(0, idx === -1 ? this.content.length : idx).map((s: Content) => { return toString(s).trimLeft();}).join("\n" + t);
+            }
+            result = result.trimRight();
             if (this.children) {
                 this.children.forEach((child: Component) => {
-                    result += "\n" + child.toString();
+                    result += "\n" + child.toString(t).trimRight();
                 });
             }
-            result += "\n}\n";
+            if (idx !== -1) {
+                if (result.length > 0) {
+                    result += "\n";
+                }
+                result += t + this.content.slice(idx).map((s: Content) => { return s.toString().trimLeft();}).join("\n" + t);
+            }
+
+            t = t.substring(Component.DEFAULT_TAB.length);
+            result = result.trimRight() + "\n" + t + "}\n";
             return result;
         }
         return toString(this.content);
