@@ -87,12 +87,12 @@ describe("Reformat", () => {
 	});
 
 	it("should leave forward declarations at the beginning", () => {
-		let original = "[A]\n" +
-			"note right: this is A\n" +
+		let original = "[A] as compA\n" +
+			"note right: this is compA\n" +
 			"A *--> B\n" +
 			"D *-> A\n";
-		let expected = "[A]\n" +
-			"note right: this is A\n" +
+		let expected = "component A as compA\n" +
+			"note right: this is compA\n" +
 			"D *-> A\n" + 
 			"A *-> B\n";
 

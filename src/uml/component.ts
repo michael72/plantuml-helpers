@@ -1,6 +1,38 @@
 import { Line } from './line';
 
-export type Content = Line | string;
+export class Definition {
+    static regexDef = /^\s*(\(\)|interface)\s+((?:"[^"]+")|[^"\s]+)(?:\s+as\s+(\S+))?\s*$/;
+    static regexComp = /^\s*(component\s+)?((?:\[[^\]]+\])|[^[\]\s]+)(?:\s+as\s+(\S+))?\s*$/;
+
+    constructor(public type: string, public name: string, public alias?: string) {
+    }
+    static fromString(line: string): Definition | undefined {
+        let m = line.match(Definition.regexDef);
+        const shorten = (s: string, by: string): string => {
+            if (s[0] === by) {
+                return s.substring(1, s.length - 1);
+            }
+            return s;
+        };
+        if (m) {
+            return new this("interface", shorten(m[2], '"'), m[3]);
+        }
+        else {
+            m = line.match(Definition.regexComp);
+            if (m && (m[1] || m[2][0] === '[')) {
+                return new this("component", shorten(m[2], "["), m[3]);
+            }
+        }
+        return;
+    }
+
+    toString(): string {
+        const comp = `${this.type} ${this.name}`;
+        return this.alias ? comp + " as " + this.alias : comp;
+    }
+}
+
+export type Content = Line | Definition | string;
 
 function toString(content: Content): string;
 function toString(content: Array<Content>, tab?: string): string;
@@ -11,7 +43,7 @@ function toString(content: Content | Array<Content>): string {
             .map((s: Content) => { return toString(s); })
             .join("\n");
     }
-    return content instanceof Line ? content.toString() : content;
+    return (content instanceof Line || content instanceof Definition) ? content.toString() : content;
 }
 
 export class Component {
@@ -21,7 +53,7 @@ export class Component {
         public stereotype?: string,
         public color?: string,
         private printName?: string,
-        private children?: Array<Component>
+        public children?: Array<Component>
     ) {
     }
 
@@ -60,11 +92,14 @@ export class Component {
         for (let i = 0; i < arr.length; ++i) {
             const s = arr[i];
             const line = Line.fromString(s);
-            if (line instanceof Line) {
+            if (line) {
                 prevLine = line;
                 content.push(line);
             } else {
-                if (s.match(this.regexTitle)) {
+                const def = Definition.fromString(s);
+                if (def) {
+                  content.push(def);  
+                } else if (s.match(this.regexTitle)) {
                     // parse child element until closing bracket
                     let brackets = 1;
                     for (let j = i + 1; j < arr.length; ++j) {
@@ -90,8 +125,8 @@ export class Component {
 
         }
 
-        return new this(content, type, name, color, stereotype, printName, 
-                children.length > 0 ? children : undefined);
+        return new this(content, type, name, color, stereotype, printName,
+            children.length > 0 ? children : undefined);
     }
 
     static DEFAULT_TAB = "  ";
@@ -106,7 +141,7 @@ export class Component {
             t += Component.DEFAULT_TAB;
             const idx = this.content.findIndex((c: Content) => { return c instanceof Line; });
             if (idx > 0 || idx === -1) {
-                result += t + this.content.slice(0, idx === -1 ? this.content.length : idx).map((s: Content) => { return toString(s).trimLeft();}).join("\n" + t);
+                result += t + this.content.slice(0, idx === -1 ? this.content.length : idx).map((s: Content) => { return toString(s).trimLeft(); }).join("\n" + t);
             }
             result = result.trimRight();
             if (this.children) {
@@ -118,7 +153,7 @@ export class Component {
                 if (result.length > 0) {
                     result += "\n";
                 }
-                result += t + this.content.slice(idx).map((s: Content) => { return s.toString().trimLeft();}).join("\n" + t);
+                result += t + this.content.slice(idx).map((s: Content) => { return s.toString().trimLeft(); }).join("\n" + t);
             }
 
             t = t.substring(Component.DEFAULT_TAB.length);
