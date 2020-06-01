@@ -1,19 +1,17 @@
 import { DefaultMap } from './helpers';
 import { Layout } from './uml/arrow';
-import { Component, Content } from './uml/component';
+import { Component, Content, Definition } from './uml/component';
 import { Line, CombinedDirection } from './uml/line';
 
 export class Reformat {
-    private content: Array<Content>;
     constructor(private component: Component) {
-        this.content = [...component.content];
     }
 
     private _sortByDependencies(): Array<Content> {
         // try to bring the components in order
         const deps = new DefaultMap<string, Array<string>>(() => []);
         const froms = new Array<string>();
-        this.content.forEach((line: Content) => {
+        this.component.content.forEach((line: Content) => {
             if (line instanceof Line) {
                 const [from, to] = line.components;
                 deps.getDef(from).push(to);
@@ -73,7 +71,7 @@ export class Reformat {
 
     private _initialSort(): Array<Line> {
         const nodes = this._sortByDependencies();
-        return this.content.filter((c: Content) => {
+        return this.component.content.filter((c: Content) => {
             return c instanceof Line;
         }).sort((c1: Content, c2: Content) => {
             const [a, b] = [c1 as Line, c2 as Line];
@@ -93,7 +91,7 @@ export class Reformat {
         const orig = this._initialSort();
         // leave all content that is not explicitly an arrow connection
         // before the arrow lines that are being sorted
-        const others = this.content.filter((c: Content) => {
+        const others = this.component.content.filter((c: Content) => {
             return !(c instanceof Line);
         });
         let sorted = new Array<Line>();
@@ -117,11 +115,106 @@ export class Reformat {
             }
             idx += 1;
         }
-        this.content = others.concat(sorted);
+        this.component.content = others.concat(sorted);
+    }
+
+    /// collect the content of type `Line`, remove it from the actual content 
+    // and return it
+    private _extractLines(comp: Component): Array<Line> {
+        let lines = new Array<Line>();
+        const newContent = new Array<Content>();
+        comp.content.forEach((c: Content) => {
+            if (c instanceof Line) {
+                lines.push(c);
+            } else {
+                newContent.push(c);
+            }
+        });
+        // recursive call
+        if (comp.children) {
+            comp.children.forEach((c: Component) => {
+                lines = lines.concat(this._extractLines(c));
+            });
+        }
+        if (lines.length > 0) {
+            comp.content = newContent;
+        }
+        return lines;
+    }
+
+    private _componentNames(comp: Component): Map<string, string> {
+        let components = new Map<string, string>();
+        comp.content.forEach((line: Content) => {
+            if (line instanceof Line) {
+                for (const c of line.components) {
+                    if (c[0] === '[') {
+                        const name = c.substr(1, c.length - 2);
+                        if (!components.has(name)) {
+                            components.set(name, c);
+                        }
+                    }
+                }
+            }
+            else if (line instanceof Definition) {
+                if (line.alias) {
+                    const alias = line.isComponent() ? `[${line.alias}]` : line.alias;
+                    components.set(line.name, alias);
+                    components.set(line.alias, alias);
+                }
+                else {
+                    const name = line.isComponent() ? `[${line.name}]` : line.name;
+                    components.set(line.name, name);
+                }
+            }
+        });
+        if (comp.children !== undefined) {
+            comp.children.forEach((c: Component) => {
+                components = new Map<string, string>([...components, ...(this._componentNames(c))]);
+            });
+        }
+
+        return components;
+    }
+
+    // add [] brackets to defined components - remove them otherwise 
+    private _addBracketsToComponents(): void {
+        const componentNames = this._componentNames(this.component);
+        this.component.content.forEach((line: Content) => {
+            if (line instanceof Line) {
+                for (let i = 0; i < line.components.length; ++i) {
+                    let c = line.components[i];
+                    if (c[0] == '[') {
+                        c = c.substr(1, c.length - 2);
+                    }
+                    const name = componentNames.get(c);
+                    if (name !== undefined) {
+                        line.components[i] = name;
+                    }
+                }
+            }
+        });
+    }
+
+
+    private _extractComponents(lines: Array<Line>): void {
+        this.component.content = this.component.content.concat(lines);
+    }
+
+    containsDefinition(): boolean {
+        return this.component.content.find((c: Content) => { return c instanceof Definition; }) !== undefined;
+    }
+
+    restructure(): void {
+        if (this.component.children || this.containsDefinition()) {
+            const lines = this._extractLines(this.component);
+            this._extractComponents(lines);
+        }
+        this._addBracketsToComponents();
     }
 
     autoFormat(): Component {
-        this.content.forEach((c: Content) => {
+        this.restructure();
+        this.component.content.forEach((c: Content) => {
             if (c instanceof Line) {
                 if (c.arrow.right === "|>" || c.arrow.left === "<|") {
                     if (c.arrow.layout !== Layout.Vertical) {
@@ -139,11 +232,10 @@ export class Reformat {
             }
         });
         this._sort();
-        return new Component(this.content, this.component.type, this.component.name);
+        return new Component(this.component.content, this.component.children, this.component.type, this.component.name);
     }
 
 }
-
 
 const regex = /(.*\S+)(\s*)/s;
 

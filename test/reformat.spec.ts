@@ -4,30 +4,30 @@ should();
 
 describe("Reformat", () => {
 
-	it ("should not crash when sorting an empty string", () => {
+	it("should not crash when sorting an empty string", () => {
 		expect(reformat.autoFormatTxt("")).to.be.equal("");
 	});
 
-	it ("should not crash when no sortable content", () => {
-		let chk = "Hello World!";
+	it("should not crash when no sortable content", () => {
+		const chk = "Hello World!";
 		expect(reformat.autoFormatTxt(chk)).to.be.equal(chk);
 	});
 
 	it("should order depending lines from -> to", () => {
-		let lines = ['[B] -> [C]', '[A] -> [B]'];
-		let orig = lines.join("\n");
-		let expected = lines.reverse().join("\n");
+		const lines = ['[B] -> [C]', '[A] -> [B]'];
+		const orig = lines.join("\n");
+		const expected = lines.reverse().join("\n");
 		expect(reformat.autoFormatTxt(orig)).to.be.equal(expected);
 	});
 
 	it("should leave the order intact when there is nothing to sort", () => {
-		let lines = ['[C] -> [B]', '[A] -> [B]'];
-		let orig = lines.join("\n");
+		const lines = ['[C] -> [B]', '[A] -> [B]'];
+		const orig = lines.join("\n");
 		expect(reformat.autoFormatTxt(orig)).to.be.equal(orig);
 	});
 
 	it("should draw inheritance vertical up, others horizontal", () => {
-		let original =
+		const original =
 			"[Src] o-> [MyDerived2]\n" +
 			"[Derived] o-> Db\n" +
 			"[Foo] -|> IFoo\n" +
@@ -39,7 +39,7 @@ describe("Reformat", () => {
 			"[MyDerived1] -|> [Base]\n" +
 			"[Derived] -|> IBase\n";
 
-		let expected =
+		const expected =
 			"IFoo o-> IBase\n" +
 			"IFoo <|-- [Foo]\n" +
 			"IBase <-o [Base]\n" +
@@ -51,7 +51,7 @@ describe("Reformat", () => {
 			"[Proxy] o-> [MyDerived1]\n" +
 			"[Src] o-> [MyDerived2]\n";
 
-		let actual = reformat.autoFormatTxt(original);
+		const actual = reformat.autoFormatTxt(original);
 		expect(actual).to.be.equal(expected);
 
 	});
@@ -60,43 +60,97 @@ describe("Reformat", () => {
 		reformat.autoFormatTxt("A -|> B ").should.equal("B <|-- A ");
 	});
 
-	it ("should leave inheritance down when it is down", () => {
+	it("should leave inheritance down when it is down", () => {
 		reformat.autoFormatTxt("A --|> B").should.equal("A --|> B");
 	});
 
 	it("should auto format composition horizontal right", () => {
-		let original = "A *--> B\n" +
+		const original = "A *--> B\n" +
 			"D o--> A";
-		let expected = "D o-> A\n" +
+		const expected = "D o-> A\n" +
 			"A *-> B";
-		let actual = reformat.autoFormatTxt(original);
+		const actual = reformat.autoFormatTxt(original);
 		actual.should.equal(expected);
 	});
 
 	it("should leave notes at their positions", () => {
-		let original = "A *--> B\n" +
+		const original = "A *--> B\n" +
 			"note right: this is A\n" +
 			"note left: and another note\n" +
 			"D *-> A\n";
-		let expected = "D *-> A\n" +
+		const expected = "D *-> A\n" +
 			"A *-> B\n" +
 			"note right: this is A\n" +
 			"note left: and another note\n";
-		let actual = reformat.autoFormatTxt(original);
+		const actual = reformat.autoFormatTxt(original);
 		actual.should.equal(expected);
 	});
 
 	it("should leave forward declarations at the beginning", () => {
-		let original = "[A] as compA\n" +
+		const original = "[A] as compA\n" +
 			"note right: this is compA\n" +
 			"A *--> B\n" +
 			"D *-> A\n";
-		let expected = "component A as compA\n" +
+		const expected = "component A as compA\n" +
 			"note right: this is compA\n" +
-			"D *-> A\n" + 
-			"A *-> B\n";
+			"D *-> [compA]\n" +
+			"[compA] *-> B\n";
 
-		let actual = reformat.autoFormatTxt(original);
+		const actual = reformat.autoFormatTxt(original);
+		actual.should.equal(expected);
+	});
+
+	it("should add brackets on components where applicable", () => {
+		const original = "[A] as compA\n" +
+			"component B\n" +
+			"interface IC\n" +
+			"A -> B\n" +
+			"compA -> [IC]\n";
+		const expected = "component A as compA\n" +
+			"component B\n" +
+			"interface IC\n" +
+			"[compA] -> [B]\n" +
+			"[compA] -> IC\n";
+		const actual = reformat.autoFormatTxt(original);
+		actual.should.equal(expected);
+	});
+
+	it("should re-arrange the package structure", () => {
+		const original = "package foo {\n" +
+			"component A\n" +
+			"interface IA\n" +
+			"IA <|-- A\n" +
+			"package inner {\n" +
+			"interface IC as InterC\n" +
+			"component C\n" +
+			"IC <|-- C\n" +
+			"}\n" +
+			"package inner2 {\n" +
+			"}\n" +
+			"}\n" +
+			"package bar {\n" +
+			"interface B\n" + 
+			"}\n" +
+			"A o-> B\n" +
+			"A *-> C\n";
+		const expected = "package foo {\n" + 
+		"  component A\n" + 
+		"  interface IA\n" + 
+		"  package inner {\n" + 
+		"    interface IC as InterC\n" + 
+		"    component C\n" + 
+		"  }\n" + 
+		"  package inner2 {\n" +
+		"  }\n" +
+		"}\n" + 
+		"package bar {\n" + 
+		"  interface B\n" + 
+		"}\n" + 
+		"IA <|-- [A]\n" + 
+		"[A] o-> B\n" + 
+		"[A] *-> [C]\n" + 
+		"InterC <|-- [C]\n";
+		const actual = reformat.autoFormatTxt(original);
 		actual.should.equal(expected);
 	});
 

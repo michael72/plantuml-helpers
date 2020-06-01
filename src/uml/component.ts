@@ -30,6 +30,9 @@ export class Definition {
         const comp = `${this.type} ${this.name}`;
         return this.alias ? comp + " as " + this.alias : comp;
     }
+    isComponent(): boolean {
+        return this.type === "component";
+    }
 }
 
 export type Content = Line | Definition | string;
@@ -48,35 +51,50 @@ function toString(content: Content | Array<Content>): string {
 
 export class Component {
     constructor(public content: Array<Content>,
+        public children?: Array<Component>,
         public type?: string,
         public name?: string,
         public stereotype?: string,
         public color?: string,
-        private printName?: string,
-        public children?: Array<Component>
+        private printName?: string
     ) {
     }
 
     static regexTitle = /\s*(package|namespace|node|folder|frame|cloud|database)\s+([^{\s]*)\s*(<<\S+>>)?\s*(#\S+)?\s*({?)\s*/;
 
     static fromString(s: string | Array<string>): Component {
-        // empty lines are being removed
-        let arr = (typeof s === 'string' ? s.split("\n") : s)
+        const children = new Array<Component>();
+        const arr = (typeof s === 'string' ? s.split("\n") : s)
             .filter((line: string) => { return line.length > 0; });
-        if (arr.length === 0) {
-            return new this(new Array<string>());
+        const parent = new Component(new Array<Content>());
+        for (let i = 0; i < arr.length; ++i) {
+            const [comp, new_i] = this._fromString(arr, parent.content, i);
+            i = new_i;
+            children.push(comp);
         }
+        if (children.length === 1) {
+            return children[0];
+        }
+        parent.children = children;
+        return parent;
+    }
+
+    private static _fromString(arr: Array<string>, parentContent: Array<Content>, start: number): [Component, number] {
+        // empty lines are being removed
         let type: string | undefined;
         let name: string | undefined;
         let printName: string | undefined;
         let stereotype: string | undefined;
         let color: string | undefined;
 
-        const m = arr[0].match(this.regexTitle);
+        let i = start;
+        const m = arr[i].match(this.regexTitle);
         // for a package the curly brace must be either in the current or in the next line
         if (m && arr.length > 1 && (m[5] || arr[1].indexOf("{") !== -1)) {
-            const offset = m[5] === "{" ? 1 : 2;
-            arr = arr.slice(offset, arr.length - 1);
+            ++i;
+            if (m[5] !== "{") {
+                ++i;
+            }
             type = m[1];
             printName = m[2];
             if (printName) {
@@ -89,7 +107,7 @@ export class Component {
         let prevLine: Line | undefined;
         const content = new Array<Content>();
         const children = new Array<Component>();
-        for (let i = 0; i < arr.length; ++i) {
+        for (; i < arr.length; ++i) {
             const s = arr[i];
             const line = Line.fromString(s);
             if (line) {
@@ -98,23 +116,15 @@ export class Component {
             } else {
                 const def = Definition.fromString(s);
                 if (def) {
-                  content.push(def);  
+                    content.push(def);
                 } else if (s.match(this.regexTitle)) {
                     // parse child element until closing bracket
-                    let brackets = 1;
-                    for (let j = i + 1; j < arr.length; ++j) {
-                        if (arr[j].trim() === "}") {
-                            --brackets;
-                            if (brackets === 0) {
-                                children.push(this.fromString(arr.slice(i, j + 1)));
-                                i = j;
-                                break;
-                            }
-                        }
-                        else if (arr[j].match(this.regexTitle)) {
-                            ++brackets;
-                        }
-                    }
+                    const [child, next] = this._fromString(arr, parentContent, i);
+                    children.push(child);
+                    i = next;
+                }
+                else if (s.trim() == "}") {
+                    break;
                 }
                 else if (prevLine) {
                     prevLine.attach(s);
@@ -122,45 +132,55 @@ export class Component {
                     content.push(s);
                 }
             }
-
         }
 
-        return new this(content, type, name, color, stereotype, printName,
-            children.length > 0 ? children : undefined);
+        return [new this(content, children.length > 0 ? children : undefined, type, name, color, stereotype, printName), i];
     }
 
     static DEFAULT_TAB = "  ";
 
-    toString(tab?: string): string {
+    toStringTab(tab: string): string {
         if (this.type) {
-            let t = tab === undefined ? "" : tab;
+            let t = tab;
             let header = this.type;
             [this.printName, this.stereotype, this.color].forEach(
                 (s: string | undefined) => { if (s) { header += " " + s; } });
             let result = t + header.trimLeft() + " {\n";
             t += Component.DEFAULT_TAB;
             const idx = this.content.findIndex((c: Content) => { return c instanceof Line; });
-            if (idx > 0 || idx === -1) {
+            if (idx !== 0) {
                 result += t + this.content.slice(0, idx === -1 ? this.content.length : idx).map((s: Content) => { return toString(s).trimLeft(); }).join("\n" + t);
             }
             result = result.trimRight();
             if (this.children) {
                 this.children.forEach((child: Component) => {
-                    result += "\n" + child.toString(t).trimRight();
+                    result += "\n" + child.toStringTab(t).trimRight();
                 });
             }
             if (idx !== -1) {
-                if (result.length > 0) {
-                    result += "\n";
-                }
-                result += t + this.content.slice(idx).map((s: Content) => { return s.toString().trimLeft(); }).join("\n" + t);
+                result += "\n" + t + this.content.slice(idx).map((s: Content) => { return s.toString().trimLeft(); }).join("\n" + t);
             }
 
             t = t.substring(Component.DEFAULT_TAB.length);
             result = result.trimRight() + "\n" + t + "}\n";
             return result;
         }
-        return toString(this.content);
+
+        let result = "";
+        if (this.children) {
+            this.children.forEach((child: Component) => {
+                if (result.length > 0) {
+                    result += "\n";
+                }
+                result += child.toStringTab(tab).trimRight();
+            });
+        }
+        result += toString(this.content);
+        return result;
+    }
+
+    toString(): string {
+        return this.toStringTab("");
     }
 
 }

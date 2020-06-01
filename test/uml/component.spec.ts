@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { Component, Definition } from '../../src/uml/component';
 
 import { should } from 'chai';
@@ -7,43 +8,52 @@ should();
 describe("Component", () => {
     describe("Component class", () => {
     it("should parse a package", () => {
-        let original =
+        const original =
             'package "fun" {\n' +
             "  component A\n" +
             "  note right: this is A\n" +
             "  A *--> B\n" +
             "  D *-> A\n" +
             "}\n";
-        let parsed = Component.fromString(original);
+        const parsed = Component.fromString(original);
         parsed.name!.should.equal("fun");
         parsed.type!.should.equal("package");
         parsed.content.length.should.equal(4);
         parsed.toString().should.equal(original);
     });
-    it("should parse a package - } in next line", () => {
-        let original = 'package bla <<something>>\n' +
-            '{\n' +
-            "  [A]\n" +
-            "}";
+    it("should parse a package with `}` in next line", () => {
+        const original = ["package bla <<something>>", '{', "[A]", '}'];
         // { is moved up when converting back to string - hence:
-        let expected = 'package bla <<something>> {\n' +
+        const expected = 'package bla <<something>> {\n' +
             "  component A\n" +
             "}\n";
-        let parsed = Component.fromString(original);
+        const parsed = Component.fromString(original);
         parsed.name!.should.equal("bla");
         parsed.type!.should.equal("package");
         parsed.content.length.should.equal(1);
         parsed.toString().should.equal(expected);
     });
     it("should parse an empty package", () => {
-        let original = 'package {\n}\n';
-        let parsed = Component.fromString(original);
-        let actual = parsed.toString();
+        const original = 'package {\n}\n';
+        const parsed = Component.fromString(original);
+        const actual = parsed.toString();
 
         actual.should.equal(original);
     });
+    it("should parse two sibling packages", () => {
+        const original = 'package a {\n' + 
+            '  component A\n' +
+            '}\n' +
+            'package b {\n' +
+            '  [A] -> [B]\n' +
+            '}';
+        const expected = original;
+        const parsed = Component.fromString(original);
+        const actual = parsed.toString();
+        actual.should.equal(expected);
+    });
     it("should parse a nested component", () => {
-        let original = 'package "a" {\n' +
+        const original = 'package "a" {\n' +
             ' component A\n' +
             ' interface IA\n' +
             ' package "b" {\n' +
@@ -64,8 +74,8 @@ describe("Component", () => {
             ' A o-> IB\n' +
             ' B o-> IC\n' +
             '}\n';
-        let parsed = Component.fromString(original);
-        let actual = parsed.toString();
+        const parsed = Component.fromString(original);
+        const actual = parsed.toString();
         const expected = 'package "a" {\n' +
             '  component A\n' +
             '  interface IA\n' +
