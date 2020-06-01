@@ -1,17 +1,17 @@
 {
   "cache": false,
-  "check-coverage": false,
+  "check-coverage": true,
   "extension": [
     ".ts"
   ],
   "include": [
-    "src/**/*.ts"
+    "src/*.ts",
+    "src/uml/*.ts"
   ],
   "exclude": [
-    "coverage/**",
-    "node_modules/**",
     "**/*.d.ts",
-    "**/*.test.ts"
+    "**/*.spec.ts",
+    "**/*.js"
   ],
   "sourceMap": true,
   "reporter": [
