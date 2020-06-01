@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { Arrow, ArrowDirection, Layout } from '../../src/uml/arrow';
 
 import { equal } from 'assert';

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { Line, CombinedDirection } from '../../src/uml/line';
 import { ArrowDirection } from '../../src/uml/arrow';
 
