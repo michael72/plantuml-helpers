@@ -5,7 +5,7 @@
 	"version": "0.2.3",
 	"publisher": "michael72",
 	"engines": {
-		"vscode": "^1.42.0"
+		"vscode": "^1.45.1"
 	},
 	"license": "SEE LICENSE IN LICENSE.txt",
 	"bugs": {
