@@ -174,6 +174,9 @@ export class Component {
                 }
                 result += child.toStringTab(tab).trimRight();
             });
+            if (this.content.length > 0) {
+                result += "\n";
+            }
         }
         result += toString(this.content);
         return result;

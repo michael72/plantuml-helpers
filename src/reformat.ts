@@ -65,7 +65,6 @@ export class Reformat {
                     }
                 }
                 return result;
-
             });
     }
 
@@ -144,18 +143,30 @@ export class Reformat {
 
     private _componentNames(comp: Component): Map<string, string> {
         let components = new Map<string, string>();
+        const lineComponents = new Set<string>();
+        const lineInterfaces = new Set<string>();
         comp.content.forEach((line: Content) => {
             if (line instanceof Line) {
                 for (const c of line.components) {
                     if (c[0] === '[') {
                         const name = c.substr(1, c.length - 2);
                         if (!components.has(name)) {
-                            components.set(name, c);
+                            lineComponents.add(name);
+                        }
+                    } else {
+                        if (!components.has(c)) {
+                            lineInterfaces.add(c);
                         }
                     }
                 }
             }
             else if (line instanceof Definition) {
+                if (line.isComponent()) {
+                    lineComponents.delete(line.name);
+                }
+                else {
+                    lineInterfaces.delete(line.name);
+                }
                 if (line.alias) {
                     const alias = line.isComponent() ? `[${line.alias}]` : line.alias;
                     components.set(line.name, alias);
@@ -169,16 +180,33 @@ export class Reformat {
         });
         if (comp.children !== undefined) {
             comp.children.forEach((c: Component) => {
-                components = new Map<string, string>([...components, ...(this._componentNames(c))]);
+                const childComponents = this._componentNames(c);
+                for (const n of childComponents.keys()) {
+                    lineComponents.delete(n);
+                }
+                components = new Map<string, string>([...components, ...childComponents]);
             });
+        }
+        if (comp.name !== undefined) {
+            for (const lc of lineInterfaces) {
+                if (!components.has(lc)) {
+                    const def = new Definition("interface", lc);
+                    comp.content = [def, ...comp.content];
+                    components.set(lc, lc);                    
+                }
+            }
+            for (const lc of lineComponents) {
+                const def = new Definition("component", lc);
+                comp.content = [def, ...comp.content];
+                components.set(lc, `[${lc}]`);
+            }
         }
 
         return components;
     }
 
     // add [] brackets to defined components - remove them otherwise 
-    private _addBracketsToComponents(): void {
-        const componentNames = this._componentNames(this.component);
+    private _renameComponents(componentNames : Map<string,string>): void {
         this.component.content.forEach((line: Content) => {
             if (line instanceof Line) {
                 for (let i = 0; i < line.components.length; ++i) {
@@ -205,11 +233,12 @@ export class Reformat {
     }
 
     restructure(): void {
+        const componentNames = this._componentNames(this.component);
         if (this.component.children || this.containsDefinition()) {
             const lines = this._extractLines(this.component);
             this._extractComponents(lines);
         }
-        this._addBracketsToComponents();
+        this._renameComponents(componentNames);
     }
 
     autoFormat(): Component {
@@ -232,9 +261,59 @@ export class Reformat {
             }
         });
         this._sort();
+        this._sortPackages(this.component);
         return new Component(this.component.content, this.component.children, this.component.type, this.component.name);
     }
 
+    private _contains(c: Component, name: string): boolean {
+        for (const d of c.content) {
+            /* istanbul ignore else */
+            if (d instanceof Definition) {
+                if (d.name === name || d.alias === name) {
+                    return true;
+                }
+            }
+        }
+        if (c.children !== undefined) {
+            for (const child of c.children) {
+                return this._contains(child, name);
+            }
+        }
+        return false;
+    }
+
+    private _sortPackages(component: Component) {
+        if (component.children !== undefined) {
+            const children = component.children;
+            children.forEach((child: Component) => {
+                this._sortPackages(child);
+            });
+            component.children = children.sort((c1: Component, c2: Component) => {
+                // sort package definitions last that contain component definitions
+                // which are used in lines first.
+                for (const l of this.component.content) {
+                    /* istanbul ignore else */
+                    if (l instanceof Line) {
+                        for (let c of l.components) {
+                            if (c[0] == '[') {
+                                c = c.substr(1, c.length - 2);
+                            }
+                            // reversed sort
+                            if (this._contains(c1, c)) {
+                                return 1;
+                            }
+                            if (this._contains(c2, c)) {
+                                return -1;
+                            }
+                        }
+                    }
+                }
+                // should not come here
+                /* istanbul ignore next */
+                throw new Error("component not found");
+            });
+        }
+    }
 }
 
 const regex = /(.*\S+)(\s*)/s;

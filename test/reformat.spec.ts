@@ -1,4 +1,4 @@
-import { expect, should } from 'chai';
+import { expect, should } from "chai";
 import * as reformat from "../src/reformat";
 should();
 
@@ -14,14 +14,14 @@ describe("Reformat", () => {
 	});
 
 	it("should order depending lines from -> to", () => {
-		const lines = ['[B] -> [C]', '[A] -> [B]'];
+		const lines = ["[B] -> [C]", "[A] -> [B]"];
 		const orig = lines.join("\n");
 		const expected = lines.reverse().join("\n");
 		expect(reformat.autoFormatTxt(orig)).to.be.equal(expected);
 	});
 
 	it("should leave the order intact when there is nothing to sort", () => {
-		const lines = ['[C] -> [B]', '[A] -> [B]'];
+		const lines = ["[C] -> [B]", "[A] -> [B]"];
 		const orig = lines.join("\n");
 		expect(reformat.autoFormatTxt(orig)).to.be.equal(orig);
 	});
@@ -115,41 +115,80 @@ describe("Reformat", () => {
 		actual.should.equal(expected);
 	});
 
+	it("should reverse sort packages depending on content dependencencies", () => {
+		const original = "package b {\n" +
+			"  component B\n" +
+			"}\n" +
+			"package c {\n" +
+			"  component C\n" +
+			"}\n" +
+			"package a {\n" +
+			"  component A\n" +
+			"}\n" +
+			"[B] -> [C]\n" +
+			"[A] -> [B]\n";
+		const expected = "package c {\n" +
+			"  component C\n" +
+			"}\n" +
+			"package b {\n" +
+			"  component B\n" +
+			"}\n" +
+			"package a {\n" +
+			"  component A\n" +
+			"}\n" +
+			"[A] -> [B]\n" +
+			"[B] -> [C]\n";
+		const actual = reformat.autoFormatTxt(original);
+		expect(actual).to.be.equal(expected);
+	});
+
 	it("should re-arrange the package structure", () => {
 		const original = "package foo {\n" +
-			"component A\n" +
-			"interface IA\n" +
-			"IA <|-- A\n" +
+			"IA <|-- [A]\n" +
 			"package inner {\n" +
+			"package ii2 {\n" +
 			"interface IC as InterC\n" +
+			"}\n" +
+			"package ii1 {\n" +
 			"component C\n" +
+			"}\n" +
 			"IC <|-- C\n" +
 			"}\n" +
 			"package inner2 {\n" +
+			"interface D\n" +
 			"}\n" +
 			"}\n" +
 			"package bar {\n" +
-			"interface B\n" + 
+			"interface B\n" +
 			"}\n" +
 			"A o-> B\n" +
-			"A *-> C\n";
-		const expected = "package foo {\n" + 
-		"  component A\n" + 
-		"  interface IA\n" + 
-		"  package inner {\n" + 
-		"    interface IC as InterC\n" + 
-		"    component C\n" + 
-		"  }\n" + 
-		"  package inner2 {\n" +
-		"  }\n" +
-		"}\n" + 
-		"package bar {\n" + 
-		"  interface B\n" + 
-		"}\n" + 
-		"IA <|-- [A]\n" + 
-		"[A] o-> B\n" + 
-		"[A] *-> [C]\n" + 
-		"InterC <|-- [C]\n";
+			"A *-> C\n" +
+			"D <|-- C\n" + 
+			"[E] o-> F\n";
+		const expected = "package bar {\n" +
+			"  interface B\n" +
+			"}\n" +
+			"package foo {\n" +
+			"  component A\n" +
+			"  interface IA\n" +
+			"  package inner2 {\n" +
+			"    interface D\n" +
+			"  }\n" +
+			"  package inner {\n" +
+			"    package ii2 {\n" +
+			"      interface IC as InterC\n" +
+			"    }\n" +
+			"    package ii1 {\n" +
+			"      component C\n" +
+			"    }\n" +
+			"  }\n" +
+			"}\n" +
+			"IA <|-- [A]\n" +
+			"[A] o-> B\n" +
+			"[A] *-> [C]\n" +
+			"InterC <|-- [C]\n" + 
+			"D <|-- [C]\n" +
+			"[E] o-> F\n";
 		const actual = reformat.autoFormatTxt(original);
 		actual.should.equal(expected);
 	});
