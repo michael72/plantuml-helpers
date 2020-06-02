@@ -15,5 +15,10 @@
       "@typescript-eslint/eslint-plugin"
     ],
     "rules": {
+      "no-shadow": "error",
+      "no-continue": "error",
+      "no-mixed-operators": "error",
+      "no-multi-assign": "error",
+      "no-negated-condition": "error"
     }
   }

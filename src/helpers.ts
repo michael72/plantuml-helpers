@@ -8,7 +8,7 @@
  * @return the reverted arrow
  */
 function _reverseChar(arrow: string, left: string, right: string): string {
-	return (arrow.indexOf(left) !== -1) ? arrow.replace(left, right) : arrow.replace(right, left);
+	return arrow.includes(left) ? arrow.replace(left, right) : arrow.replace(right, left);
 }
 
 export function reverseHead(head: string): string {
