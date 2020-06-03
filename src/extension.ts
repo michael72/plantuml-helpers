@@ -11,11 +11,12 @@ function autoFormatContent(textEditor: vscode.TextEditor): void {
 			textEditor.selections.forEach(sel => {
 				let range = sel;
 				if (sel.isEmpty || sel.isSingleLine) {
+					// select whole block (all code inside @startuml / @enduml - including all packages)
 					let line = sel.active.line;
 					let last = line;
-					while (line > 0) {
+					while (line >= 0) {
 						const text = document.lineAt(line).text.trim();
-						if (text === "@startuml" || text === "```plantuml" || text.indexOf("{") !== -1) {
+						if (text.startsWith("@startuml") || text === "```plantuml") {
 							line += 1;
 							break;
 						}
@@ -23,16 +24,19 @@ function autoFormatContent(textEditor: vscode.TextEditor): void {
 					}
 					while (last < document.lineCount) {
 						const text = document.lineAt(last).text.trim();
-						if (text === "@enduml" || text === "```" || text.indexOf("}") !== -1) {
+						if (text === "@enduml" || text === "```") {
 							last -= 1;
 							break;
 						}
 						last += 1;
 					}
+					if (last == document.lineCount || line < 0) {
+						vscode.window.showErrorMessage('No PlantUML found in current selection!');
+						return;
+					}
 
 					range = new vscode.Selection(line, 0, last, document.lineAt(last).range.end.character);
 				}
-				// TODO select whole block (all code inside @startuml / @enduml - including all packages)
 				editBuilder.replace(range, reformat.autoFormatTxt(document.getText(range)));
 			});
 		}); // apply the (accumulated) replacement(s) (if multiple cursors/selections)
