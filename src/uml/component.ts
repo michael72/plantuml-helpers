@@ -54,18 +54,27 @@ export class Component {
         public children?: Array<Component>,
         public type?: string,
         public name?: string,
-        public stereotype?: string,
-        public color?: string,
+        public suffix?: string, // content between name and opening brace: could be color, stereotype and/or link etc.
         private printName?: string
     ) {
     }
 
-    static regexTitle = /\s*(package|namespace|node|folder|frame|cloud|database)\s+([^{\s]*)\s*(<<\S+>>)?\s*(#\S+)?\s*({?)\s*/;
+    static regexTitle = /\s*(package|namespace|node|folder|frame|cloud|database|class|component|interface)\s+([^{\s]*)\s*([^{]*)?{.*/;
 
     static fromString(s: string | Array<string>): Component {
         const children = new Array<Component>();
-        const arr = (typeof s === 'string' ? s.split("\n") : s)
-            .filter((line: string) => { return line.length > 0; });
+        let arr = typeof s === 'string' ? s.split("\n") : s;
+        // pre-filter: remove single open braces { and put them at the end of the previous line
+        for (let i = 0; i < arr.length; ++i) {
+            if (i > 0 && arr[i].trim().startsWith('{')) {
+                arr[i-1] += ' ' + arr[i];
+                arr[i] = '';
+            }
+            arr[i] = arr[i].trimRight();
+        }
+        // post-filter: remove empty lines
+        arr = arr.filter((line: string) => { return line.length > 0; });
+
         const parent = new Component(new Array<Content>());
         for (let i = 0; i < arr.length; ++i) {
             const [comp, new_i] = this._fromString(arr, parent.content, i);
@@ -84,25 +93,22 @@ export class Component {
         let type: string | undefined;
         let name: string | undefined;
         let printName: string | undefined;
-        let stereotype: string | undefined;
-        let color: string | undefined;
+        let suffix: string | undefined;
 
         let i = start;
         const m = arr[i].match(this.regexTitle);
         // for a package the curly brace must be either in the current or in the next line
-        if (m && arr.length > 1 && (m[5] || arr[1].indexOf("{") !== -1)) {
+        if (m && arr.length > 1) {
             ++i;
-            if (m[5] !== "{") {
-                ++i;
-            }
             type = m[1];
             printName = m[2];
             if (printName) {
                 // remove quotes
                 name = (printName[0] === '"') ? printName.substring(1, printName.length - 1) : printName;
             }
-            stereotype = m[3];
-            color = m[4];
+            if (m[3]) {
+                suffix = m[3].trimRight();
+            }
         }
         let prevLine: Line | undefined;
         const content = new Array<Content>();
@@ -134,7 +140,7 @@ export class Component {
             }
         }
 
-        return [new this(content, children.length > 0 ? children : undefined, type, name, color, stereotype, printName), i];
+        return [new this(content, children.length > 0 ? children : undefined, type, name, suffix, printName), i];
     }
 
     static DEFAULT_TAB = "  ";
@@ -143,7 +149,7 @@ export class Component {
         if (this.type) {
             let t = tab;
             let header = this.type;
-            [this.printName, this.stereotype, this.color].forEach(
+            [this.printName, this.suffix].forEach(
                 (s: string | undefined) => { if (s) { header += " " + s; } });
             let result = t + header.trimLeft() + " {\n";
             t += Component.DEFAULT_TAB;

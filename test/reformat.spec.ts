@@ -193,4 +193,19 @@ describe("Reformat", () => {
 		actual.should.equal(expected);
 	});
 
+	it("should re-format nested components", ()=> {
+		const original = "class Foo <<bla>> #red-green {\n" + 
+		"  A -> B\n" +
+		"}\n" +
+		"A -> C\n";
+		const expected = "class Foo <<bla>> #red-green {\n" +
+		"  class B\n" + 
+		"  class A\n" +
+		"}\n" +
+		"A -> B\n" +
+		"A -> C\n";
+		const actual = reformat.autoFormatTxt(original);
+		actual.should.equal(expected); 
+	});
+
 });

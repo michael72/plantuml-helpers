@@ -124,6 +124,8 @@ export class Reformat {
         const newContent = new Array<Content>();
         comp.content.forEach((c: Content) => {
             if (c instanceof Line) {
+                // remove leading spaces
+                c.sides[0] = c.sides[0].trimLeft();
                 lines.push(c);
             } else {
                 newContent.push(c);
@@ -188,9 +190,20 @@ export class Reformat {
             });
         }
         if (comp.name !== undefined) {
+
+            let hasComponents = lineComponents.size > 0;
+            for (const v of components.values()) {
+                if (v.startsWith('[')) {
+                    hasComponents = true;
+                    break;
+                }
+            }
+            // hasComponents -> is component diagram, otherwise: class diagram
+            const defaultItem = hasComponents ? "interface" : "class";
+
             for (const lc of lineInterfaces) {
                 if (!components.has(lc)) {
-                    const def = new Definition("interface", lc);
+                    const def = new Definition(defaultItem, lc);
                     comp.content = [def, ...comp.content];
                     components.set(lc, lc);                    
                 }
@@ -310,7 +323,8 @@ export class Reformat {
                 }
                 // should not come here
                 /* istanbul ignore next */
-                throw new Error("component not found");
+                //throw new Error("component not found");
+                return -1;
             });
         }
     }
