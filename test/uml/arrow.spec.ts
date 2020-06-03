@@ -34,7 +34,7 @@ describe('Arrow class', () => {
     });
 
     it('should convert an arrow to a string', () => {
-        const arrows = ["->", "-->", "<-", "<~", "<|-", "o->>"];
+        const arrows = ["->", "-->", "<-", "<~", "<|-", "o->>", "..>>"];
         arrows.forEach((arrow: string) => {
             equal(Arrow.fromString(arrow)!.toString(), arrow, "converting '" + arrow + "' failed");
         });
@@ -42,7 +42,7 @@ describe('Arrow class', () => {
 
     it('should reverse an arrow', () => {
         const arrows: Array<[string, string]>
-            = [["->", "<-"], ["<~~", "~~>"], ["<|-", "-|>"], ["o->", "<-o"]];
+            = [["..>>", "<<.."], ["->", "<-"], ["<~~", "~~>"], ["<|-", "-|>"], ["o->", "<-o"]];
         arrows.forEach((arrowOp: [string, string]) => {
             const [fwd, rev] = arrowOp;
             equal(Arrow.fromString(fwd)!.reverse().toString(), rev);

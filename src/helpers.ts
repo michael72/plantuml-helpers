@@ -1,18 +1,32 @@
+
+/**
+ * Perform string replacement for all occurrences of a search string.
+ *  
+ * @param target string to work on
+ * @param search the string to be replaced
+ * @param repl the replacement
+ * @return the replaced target string.
+ */
+function _replaceAll(target: string, search: string, repl: string): string {
+	const i = target.indexOf(search);
+	return i === -1 ? target : target.slice(0, i) + repl + _replaceAll(target.slice(i + search.length, target.length), search, repl);
+}
+
 /**
  * Replaces the characters that indicate the arrow drawn to the left by the characters
  * that go right - or vice versa. Example: replaces `>` by `<` in `->`
  * 
- * @param arrow the actual arrow where the charactes are replace 
+ * @param arrow the actual arrow where the characters are replace 
  * @param left representation of a character pointing in left direction
  * @param right opposite representation of left parameter
  * @return the reverted arrow
  */
-function _reverseChar(arrow: string, left: string, right: string): string {
-	return arrow.includes(left) ? arrow.replace(left, right) : arrow.replace(right, left);
+function _reverseAll(arrow: string, left: string, right: string): string {
+	return arrow.includes(left) ? _replaceAll(arrow, left, right) : _replaceAll(arrow, right, left);
 }
 
 export function reverseHead(head: string): string {
-	return _reverseChar(head, ">", "<");
+	return _reverseAll(head, ">", "<");
 }
 
 /**
