@@ -163,7 +163,7 @@ describe("Reformat", () => {
 			"}\n" +
 			"A o-> B\n" +
 			"A *-> C\n" +
-			"D <|-- C\n" + 
+			"D <|-- C\n" +
 			"[E] o-> F\n";
 		const expected = "package bar {\n" +
 			"  interface B\n" +
@@ -186,26 +186,47 @@ describe("Reformat", () => {
 			"IA <|-- [A]\n" +
 			"[A] o-> B\n" +
 			"[A] *-> [C]\n" +
-			"InterC <|-- [C]\n" + 
+			"InterC <|-- [C]\n" +
 			"D <|-- [C]\n" +
 			"[E] o-> F\n";
 		const actual = reformat.autoFormatTxt(original);
 		actual.should.equal(expected);
 	});
 
-	it("should re-format nested components", ()=> {
-		const original = "class Foo <<bla>> #red-green {\n" + 
-		"  A -> B\n" +
-		"}\n" +
-		"A -> C\n";
+	it("should re-format nested components", () => {
+		const original = "class Foo <<bla>> #red-green {\n" +
+			"  A -> B\n" +
+			"}\n" +
+			"A -> C\n";
 		const expected = "class Foo <<bla>> #red-green {\n" +
-		"  class B\n" + 
-		"  class A\n" +
-		"}\n" +
-		"A -> B\n" +
-		"A -> C\n";
+			"  class B\n" +
+			"  class A\n" +
+			"}\n" +
+			"A -> B\n" +
+			"A -> C\n";
 		const actual = reformat.autoFormatTxt(original);
-		actual.should.equal(expected); 
+		actual.should.equal(expected);
+	});
+
+	it("should reformat nested with global classes", () => {
+		const original = "class BaseClass\n" +
+			"package net_dummy #DDDDDD {\n" +
+			"  BaseClass <|-- DPerson\n" +
+			"}\n" +
+			"package net_foo {\n" +
+			"  BaseClass <|-- Person\n" +
+			"}\n";
+		const expected = "package net_foo {\n" +
+			"  class Person\n" +
+			"}\n" +
+			"package net_dummy #DDDDDD {\n" +
+			"  class DPerson\n" +
+			"}\n" +
+			"class BaseClass\n" +
+			"BaseClass <|-- DPerson\n" +
+			"BaseClass <|-- Person\n";
+		const actual = reformat.autoFormatTxt(original);
+		actual.should.equal(expected);
 	});
 
 });

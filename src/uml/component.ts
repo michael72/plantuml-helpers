@@ -3,6 +3,7 @@ import { Line } from './line';
 export class Definition {
     static regexDef = /^\s*(\(\)|interface)\s+((?:"[^"]+")|[^"\s]+)(?:\s+as\s+(\S+))?\s*$/;
     static regexComp = /^\s*(component\s+)?((?:\[[^\]]+\])|[^[\]\s]+)(?:\s+as\s+(\S+))?\s*$/;
+    static regexOther = /^\s*(class|enum)\s+((?:\[[^\]]+\])|[^[\]\s]+)(?:\s+as\s+(\S+))?\s*$/;
 
     constructor(public type: string, public name: string, public alias?: string) {
     }
@@ -21,6 +22,12 @@ export class Definition {
             m = line.match(Definition.regexComp);
             if (m && (m[1] || m[2][0] === '[')) {
                 return new this("component", shorten(m[2], "["), m[3]);
+            }
+            else {
+                m = line.match(Definition.regexOther);
+                if (m) {
+                    return new this(m[1], shorten(m[2], '"'), m[3]);
+                }
             }
         }
         return;
@@ -59,7 +66,7 @@ export class Component {
     ) {
     }
 
-    static regexTitle = /\s*(package|namespace|node|folder|frame|cloud|database|class|component|interface)\s+([^{\s]*)\s*([^{]*)?{.*/;
+    static regexTitle = /\s*(package|namespace|node|folder|frame|cloud|database|class|component|interface|enum|annotation)\s+([^{\s]*)\s*([^{]*)?{.*/;
 
     static fromString(s: string | Array<string>): Component {
         const children = new Array<Component>();

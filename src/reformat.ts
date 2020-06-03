@@ -143,7 +143,7 @@ export class Reformat {
         return lines;
     }
 
-    private _componentNames(comp: Component): Map<string, string> {
+    private _componentNames(comp: Component, parentComponents?: Map<string, string>): Map<string, string> {
         let components = new Map<string, string>();
         const lineComponents = new Set<string>();
         const lineInterfaces = new Set<string>();
@@ -182,7 +182,7 @@ export class Reformat {
         });
         if (comp.children !== undefined) {
             comp.children.forEach((c: Component) => {
-                const childComponents = this._componentNames(c);
+                const childComponents = this._componentNames(c, components);
                 for (const n of childComponents.keys()) {
                     lineComponents.delete(n);
                 }
@@ -190,7 +190,6 @@ export class Reformat {
             });
         }
         if (comp.name !== undefined) {
-
             let hasComponents = lineComponents.size > 0;
             for (const v of components.values()) {
                 if (v.startsWith('[')) {
@@ -202,7 +201,7 @@ export class Reformat {
             const defaultItem = hasComponents ? "interface" : "class";
 
             for (const lc of lineInterfaces) {
-                if (!components.has(lc)) {
+                if (!components.has(lc) && (parentComponents === undefined || !parentComponents.has(lc))) {
                     const def = new Definition(defaultItem, lc);
                     comp.content = [def, ...comp.content];
                     components.set(lc, lc);                    
