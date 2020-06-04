@@ -213,20 +213,20 @@ describe("Reformat", () => {
 			"package net.dummy #DDDDDD {\n" +
 			"  BaseClass <|-- DPerson\n" +
 			"}\n" +
-			'package "net foo" as net_foo {\n' +
+			'package "net foo" {\n' +
 			"  BaseClass <|-- Person\n" +
 			"}\n" +
 			'"net foo" -- net.dummy\n';
-		const expected = 'package "net foo" as net_foo {\n' +
+		const expected = 'package "net foo" {\n' +
 			"  class Person\n" +
 			"}\n" +
 			"package net.dummy #DDDDDD {\n" +
 			"  class DPerson\n" +
 			"}\n" +
 			"class BaseClass\n" +
-			"net_foo -- net.dummy\n" +
 			"BaseClass <|-- DPerson\n" +
-			"BaseClass <|-- Person\n";
+			"BaseClass <|-- Person\n" +
+			'"net foo" -- net.dummy\n';
 		const actual = reformat.autoFormatTxt(original);
 		actual.should.equal(expected);
 	});
