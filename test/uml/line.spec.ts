@@ -124,5 +124,4 @@ describe("Line class", () => {
         parsed.arrow.line.should.equal("-");
         parsed.toString().should.equal(line);
     });
-
 });

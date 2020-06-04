@@ -210,19 +210,21 @@ describe("Reformat", () => {
 
 	it("should reformat nested with global classes", () => {
 		const original = "class BaseClass\n" +
-			"package net_dummy #DDDDDD {\n" +
+			"package net.dummy #DDDDDD {\n" +
 			"  BaseClass <|-- DPerson\n" +
 			"}\n" +
-			"package net_foo {\n" +
+			'package "net foo" as net_foo {\n' +
 			"  BaseClass <|-- Person\n" +
-			"}\n";
-		const expected = "package net_foo {\n" +
+			"}\n" +
+			'"net foo" -- net.dummy\n';
+		const expected = 'package "net foo" as net_foo {\n' +
 			"  class Person\n" +
 			"}\n" +
-			"package net_dummy #DDDDDD {\n" +
+			"package net.dummy #DDDDDD {\n" +
 			"  class DPerson\n" +
 			"}\n" +
 			"class BaseClass\n" +
+			"net_foo -- net.dummy\n" +
 			"BaseClass <|-- DPerson\n" +
 			"BaseClass <|-- Person\n";
 		const actual = reformat.autoFormatTxt(original);

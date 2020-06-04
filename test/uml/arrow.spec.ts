@@ -56,6 +56,5 @@ describe('Arrow class', () => {
         parsed.right.should.equal("[");
         equal(parsed.tag, "");
     });
-
 });
 

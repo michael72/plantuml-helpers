@@ -322,14 +322,13 @@ export class Reformat {
                 }
                 // should not come here
                 /* istanbul ignore next */
-                //throw new Error("component not found");
-                return -1;
+                throw new Error("component not found");
             });
         }
     }
 }
 
-const regex = /(.*\S+)(\s*)/s;
+const regex = /(.*\S+)(\s*)$/s;
 
 export function autoFormatTxt(txt: string): string {
     const m = txt.match(regex);
