@@ -116,4 +116,13 @@ describe("Line class", () => {
         }
     });
 
+    it('should parse a line with quotes and dots as components', () => {
+        const line = '"net foo" -- net.dummy';
+        const parsed = Line.fromString(line)!;
+        parsed.components[0].should.equal('"net foo"');
+        parsed.components[1].should.equal("net.dummy");
+        parsed.arrow.line.should.equal("-");
+        parsed.toString().should.equal(line);
+    });
+
 });
