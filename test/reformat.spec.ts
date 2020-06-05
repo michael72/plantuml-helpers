@@ -231,4 +231,19 @@ describe("Reformat", () => {
 		actual.should.equal(expected);
 	});
 
+	it("should reformat nested empty components", () => {
+		const original = "package foo {\n" +
+			"  component A {\n" +
+			"  }\n" +
+			"}\n" +
+			"A --|> IA\n";
+		const expected = "package foo {\n" +
+		"  component A {\n" +
+		"  }\n" +
+		"}\n" +
+		"[A] --|> IA\n";
+		const actual = reformat.autoFormatTxt(original);
+		actual.should.equal(expected);
+	})
+
 });

@@ -147,6 +147,13 @@ export class Reformat {
         let components = new Map<string, string>();
         const lineComponents = new Set<string>();
         const lineInterfaces = new Set<string>();
+        if (comp.name) {
+            if (comp.type === "component") {
+                components.set(comp.name, `[${comp.name}]`);
+            } else {
+                components.set(comp.name, comp.name);
+            }
+        }    
         comp.content.forEach((line: Content) => {
             if (line instanceof Line) {
                 for (const c of line.components) {
@@ -278,6 +285,9 @@ export class Reformat {
     }
 
     private _contains(c: Component, name: string): boolean {
+        if (c.name === name) {
+            return true;
+        }
         for (const d of c.content) {
             /* istanbul ignore else */
             if (d instanceof Definition) {
