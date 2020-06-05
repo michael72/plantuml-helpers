@@ -8,8 +8,8 @@
  * @return the replaced target string.
  */
 function _replaceAll(target: string, search: string, repl: string): string {
-	const i = target.indexOf(search);
-	return i === -1 ? target : target.slice(0, i) + repl + _replaceAll(target.slice(i + search.length, target.length), search, repl);
+    const i = target.indexOf(search);
+    return i === -1 ? target : target.slice(0, i) + repl + _replaceAll(target.slice(i + search.length, target.length), search, repl);
 }
 
 /**
@@ -22,11 +22,11 @@ function _replaceAll(target: string, search: string, repl: string): string {
  * @return the reverted arrow
  */
 function _reverseAll(arrow: string, left: string, right: string): string {
-	return arrow.includes(left) ? _replaceAll(arrow, left, right) : _replaceAll(arrow, right, left);
+    return arrow.includes(left) ? _replaceAll(arrow, left, right) : _replaceAll(arrow, right, left);
 }
 
 export function reverseHead(head: string): string {
-	return _reverseAll(head, ">", "<");
+    return _reverseAll(head, ">", "<");
 }
 
 /**
@@ -35,7 +35,7 @@ export function reverseHead(head: string): string {
  * @return the reversed string
  */
 export function reverse(s: string): string {
-	return s.split("").reverse().join("");
+    return s.split("").reverse().join("");
 }
 
 /**
@@ -47,28 +47,28 @@ export function reverse(s: string): string {
  */
 // eslint-disable-next-line no-undef
 export class DefaultMap<K, V> extends Map<K, V> {
-	/** Saves the default value callback */
-	private defaultVal: () => V;
-	public constructor(defaultVal: () => V) {
-		super();
-		this.defaultVal = defaultVal;
-	}
+    /** Saves the default value callback */
+    private defaultVal: () => V;
+    public constructor(defaultVal: () => V) {
+        super();
+        this.defaultVal = defaultVal;
+    }
 	/** Gets the value for the given key or the default value, 
 	 * if none was yet added. Also adds the default value to the map.
 	 * In comparison to get() it also returns the actual type, not undefined.
 	 * @param key the search key to find its value.
 	 * @returns the value - either the saved or default. 
 	 */
-	public getDef(key: K): V {
-		const v = super.get(key);
-		if (v === undefined) {
-			const newValue = this.defaultVal();
-			super.set(key, newValue);
-			return newValue;
-		} else {
-			// value was already added
-			return v;
-		}
-	}
+    public getDef(key: K): V {
+        const v = super.get(key);
+        if (v === undefined) {
+            const newValue = this.defaultVal();
+            super.set(key, newValue);
+            return newValue;
+        } else {
+            // value was already added
+            return v;
+        }
+    }
 }
 

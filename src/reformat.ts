@@ -153,7 +153,7 @@ export class Reformat {
             } else {
                 components.set(comp.name, comp.name);
             }
-        }    
+        }
         comp.content.forEach((line: Content) => {
             if (line instanceof Line) {
                 for (const c of line.components) {
@@ -211,7 +211,7 @@ export class Reformat {
                 if (!components.has(lc) && (parentComponents === undefined || !parentComponents.has(lc))) {
                     const def = new Definition(defaultItem, lc);
                     comp.content = [def, ...comp.content];
-                    components.set(lc, lc);                    
+                    components.set(lc, lc);
                 }
             }
             for (const lc of lineComponents) {
@@ -225,7 +225,7 @@ export class Reformat {
     }
 
     // add [] brackets to defined components - remove them otherwise 
-    private _renameComponents(componentNames : Map<string,string>): void {
+    private _renameComponents(componentNames: Map<string, string>): void {
         this.component.content.forEach((line: Content) => {
             if (line instanceof Line) {
                 for (let i = 0; i < line.components.length; ++i) {

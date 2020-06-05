@@ -14,8 +14,8 @@ export class Line {
     static REGEX = /^(\s*)((?:"[^"]+")|[^-~="><\\/\s]+)(?:\s+("[^"]+"))?\s*(\S*[^A-Za-np-z_\s]+)\s*(?:("[^"]+")\s+)?((?:"[^"]+")|[^-~="><\\/\s]+)(\s*(?::.*)?)$/;
     // example:                 A                  "1"           ->                          "2"          B  : foo
 
-    /** corresponds to enum order in CombinedDirection - first letter only */    
-	static DIRECTIONS = "rdlu"; 
+    /** corresponds to enum order in CombinedDirection - first letter only */
+    static DIRECTIONS = "rdlu";
 
     private attached?: Array<string>;
 
