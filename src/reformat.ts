@@ -11,7 +11,7 @@ export class Reformat {
         // try to bring the components in order
         const deps = new DefaultMap<string, Array<string>>(() => []);
         const froms = new Array<string>();
-        this.component.content.forEach((line: Content) => {
+        for (const line of this.component.content) {
             if (line instanceof Line) {
                 const [from, to] = line.components;
                 deps.getDef(from).push(to);
@@ -19,7 +19,7 @@ export class Reformat {
                     froms.push(from);
                 }
             }
-        });
+        }
 
         const pointedCounts = new DefaultMap<string, number>(() => 0);
         for (const [k, v] of deps.entries()) {
@@ -27,7 +27,7 @@ export class Reformat {
             // add transitive dependencies
             let newDeps = v;
             while (newDeps.length !== 0) {
-                const currentDeps = [...newDeps];
+                const currentDeps = newDeps;
                 newDeps = [];
                 for (const c of currentDeps) {
                     const ds = deps.get(c);
@@ -122,7 +122,7 @@ export class Reformat {
     private _extractLines(comp: Component): Array<Line> {
         let lines = new Array<Line>();
         const newContent = new Array<Content>();
-        comp.content.forEach((c: Content) => {
+        for (const c of comp.content) {
             if (c instanceof Line) {
                 // remove leading spaces
                 c.sides[0] = c.sides[0].trimLeft();
@@ -130,12 +130,12 @@ export class Reformat {
             } else {
                 newContent.push(c);
             }
-        });
+        }
         // recursive call
         if (comp.children) {
-            comp.children.forEach((c: Component) => {
+            for (const c of comp.children) {
                 lines = lines.concat(this._extractLines(c));
-            });
+            }
         }
         if (lines.length > 0) {
             comp.content = newContent;
@@ -154,7 +154,7 @@ export class Reformat {
                 components.set(comp.name, comp.name);
             }
         }
-        comp.content.forEach((line: Content) => {
+        for (const line of comp.content) {
             if (line instanceof Line) {
                 for (const c of line.components) {
                     if (c[0] === '[') {
@@ -186,15 +186,15 @@ export class Reformat {
                     components.set(line.name, name);
                 }
             }
-        });
+        }
         if (comp.children !== undefined) {
-            comp.children.forEach((c: Component) => {
+            for (const c of comp.children) {
                 const childComponents = this._componentNames(c, components);
                 for (const n of childComponents.keys()) {
                     lineComponents.delete(n);
                 }
                 components = new Map<string, string>([...components, ...childComponents]);
-            });
+            }
         }
         if (comp.name !== undefined) {
             let hasComponents = lineComponents.size > 0;
@@ -226,7 +226,7 @@ export class Reformat {
 
     // add [] brackets to defined components - remove them otherwise 
     private _renameComponents(componentNames: Map<string, string>): void {
-        this.component.content.forEach((line: Content) => {
+        for (const line of this.component.content) {
             if (line instanceof Line) {
                 for (let i = 0; i < line.components.length; ++i) {
                     let c = line.components[i];
@@ -239,7 +239,7 @@ export class Reformat {
                     }
                 }
             }
-        });
+        }
     }
 
 
@@ -262,7 +262,7 @@ export class Reformat {
 
     autoFormat(): Component {
         this.restructure();
-        this.component.content.forEach((c: Content) => {
+        for (const c of this.component.content) {
             if (c instanceof Line) {
                 if (c.arrow.right === "|>" || c.arrow.left === "<|") {
                     if (c.arrow.layout !== Layout.Vertical) {
@@ -278,7 +278,7 @@ export class Reformat {
                     }
                 }
             }
-        });
+        }
         this._sort();
         this._sortPackages(this.component);
         return new Component(this.component.content, this.component.children, this.component.type, this.component.name);
@@ -307,9 +307,9 @@ export class Reformat {
     private _sortPackages(component: Component) {
         if (component.children !== undefined) {
             const children = component.children;
-            children.forEach((child: Component) => {
+            for (const child of children) {
                 this._sortPackages(child);
-            });
+            }
             component.children = children.sort((c1: Component, c2: Component) => {
                 // sort package definitions last that contain component definitions
                 // which are used in lines first.

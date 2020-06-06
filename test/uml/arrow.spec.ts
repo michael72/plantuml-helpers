@@ -35,9 +35,9 @@ describe('Arrow class', () => {
 
     it('should convert an arrow to a string', () => {
         const arrows = ["->", "-->", "<-", "<~", "<|-", "o->>", "..>>"];
-        arrows.forEach((arrow: string) => {
+        for (const arrow of arrows) {
             equal(Arrow.fromString(arrow)!.toString(), arrow, "converting '" + arrow + "' failed");
-        });
+        }
     });
 
     it('should reverse an arrow', () => {

@@ -71,11 +71,10 @@ export class Line {
     }
 
     reverse(): Line {
-        const swap = (what: Array<string>): Array<string> => { return [what[1], what[0]]; };
         return new Line(
-            swap(this.components),
+            [this.components[1], this.components[0]],
             this.arrow.reverse(),
-            swap(this.multiplicities),
+            [this.multiplicities[1], this.multiplicities[0]],
             // the label section (on the right side) might contain an arrow as well
             // this has to be turned around as well!
             [this.sides[0], reverseHead(this.sides[1])]);
@@ -91,16 +90,11 @@ export class Line {
 
     setCombinedDirection(dir: CombinedDirection): void {
         const oldDir = this.arrow.direction;
-        const layoutOf = (combined: CombinedDirection): Layout => {
-            return (combined === CombinedDirection.Up || combined === CombinedDirection.Down) ? Layout.Vertical : Layout.Horizontal;
-        };
-        const directionOf = (combined: CombinedDirection): ArrowDirection => {
-            return (combined === CombinedDirection.Up || combined === CombinedDirection.Left) ? ArrowDirection.Left : ArrowDirection.Right;
-        };
+        const direction = (dir === CombinedDirection.Up || dir === CombinedDirection.Left) ? ArrowDirection.Left : ArrowDirection.Right;
 
-        if (oldDir !== directionOf(dir)) {
+        if (oldDir !== direction) {
             Object.assign(this, this.reverse());
         }
-        this.arrow.layout = layoutOf(dir);
+        this.arrow.layout = (dir === CombinedDirection.Up || dir === CombinedDirection.Down) ? Layout.Vertical : Layout.Horizontal;
     }
 }

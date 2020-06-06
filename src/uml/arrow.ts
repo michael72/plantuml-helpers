@@ -23,15 +23,34 @@ export class Arrow {
 
     static ARROW_LINES = ["-", ".", "=", "~"];
 
+    private static _lineType(arrow: string): string | undefined {
+        for (const a of this.ARROW_LINES) {
+            if (arrow.indexOf(a) >= 0) {
+                return a;
+            }
+        }
+        return;
+    }
+
+    private static _tagIndex(arr: Array<string>): number {
+        for (let i = 0; i < arr.length; ++i) {
+            const s = arr[i];
+            if (s && s.match(this.REGEX_TAG)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     static fromString(arrow: string): Arrow | undefined {
-        const line = this.ARROW_LINES.find(s => arrow.indexOf(s) >= 0);
+        const line = this._lineType(arrow);
         if (!line) {
             // arrow line was not found
             return;
         }
         const arr = arrow.split(line);
         let tag = "";
-        const tagIdx = arr.findIndex(s => s.length > 0 && s.match(this.REGEX_TAG));
+        const tagIdx = this._tagIndex(arr);
         if (tagIdx !== -1) {
             [tag, arr[tagIdx]] = [arr[tagIdx], tag];
         }

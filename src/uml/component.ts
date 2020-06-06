@@ -3,23 +3,26 @@ import { Line } from './line';
 export class Definition {
     static regexDef = /^\s*(\(\)|interface)\s+((?:"[^"]+")|[^"\s]+)(?:\s+as\s+(\S+))?\s*$/;
     static regexComp = /^\s*(component\s+)?((?:\[[^\]]+\])|[^[\]\s]+)(?:\s+as\s+(\S+))?\s*$/;
-    static regexOther = /^\s*(class|enum)\s+((?:\[[^\]]+\])|[^[\]\s]+)(?:\s+as\s+(\S+))?\s*$/;
+    static regexOther = /^\s*(class|enum)\s+([^[\]\s]+)(?:\s+as\s+(\S+))?\s*$/;
 
     constructor(public type: string, public name: string, public alias?: string) {
     }
     static fromString(line: string): Definition | undefined {
-        let m = line.match(Definition.regexDef);
         const shorten = (s: string, by: string): string => {
             if (s[0] === by) {
                 return s.substring(1, s.length - 1);
             }
             return s;
         };
+        let m = line.match(Definition.regexDef);
+        // check interface definition
         if (m) {
             return new this("interface", shorten(m[2], '"'), m[3]);
         }
         else {
+            // check for component
             m = line.match(Definition.regexComp);
+            // TODO
             if (m && (m[1] || m[2][0] === '[')) {
                 return new this("component", shorten(m[2], "["), m[3]);
             }
@@ -69,7 +72,6 @@ export class Component {
     static regexTitle = /\s*(package|namespace|node|folder|frame|cloud|database|class|component|interface|enum|annotation)\s+([^{\s]*)\s*([^{]*)?{.*/;
 
     static fromString(s: string | Array<string>): Component {
-        const children = new Array<Component>();
         let arr = typeof s === 'string' ? s.split("\n") : s;
         // pre-filter: remove single open braces { and put them at the end of the previous line
         for (let i = 0; i < arr.length; ++i) {
@@ -82,13 +84,15 @@ export class Component {
         // post-filter: remove empty lines
         arr = arr.filter((line: string) => { return line.length > 0; });
 
+        // multiple components in sequence
         const parent = new Component(new Array<Content>());
+        const children = new Array<Component>();
         for (let i = 0; i < arr.length; ++i) {
             const [comp, new_i] = this._fromString(arr, parent.content, i);
             i = new_i;
             children.push(comp);
         }
-        if (children.length === 1) {
+        if (children.length == 1) {
             return children[0];
         }
         parent.children = children;
@@ -152,12 +156,13 @@ export class Component {
 
     static DEFAULT_TAB = "  ";
 
-    toStringTab(tab: string): string {
+    private _toStringTab(tab: string): string {
         if (this.type) {
             let t = tab;
             let header = this.type;
-            [this.printName, this.suffix].forEach(
-                (s: string | undefined) => { if (s) { header += " " + s; } });
+            for (const s of [this.printName, this.suffix]) {
+                if (s) { header += " " + s; }
+            }
             let result = t + header.trimLeft() + " {\n";
             t += Component.DEFAULT_TAB;
             const idx = this.content.findIndex((c: Content) => { return c instanceof Line; });
@@ -166,9 +171,9 @@ export class Component {
             }
             result = result.trimRight();
             if (this.children) {
-                this.children.forEach((child: Component) => {
-                    result += "\n" + child.toStringTab(t).trimRight();
-                });
+                for (const child of this.children) {
+                    result += "\n" + child._toStringTab(t).trimRight();
+                }
             }
             if (idx !== -1) {
                 result += "\n" + t + this.content.slice(idx).map((s: Content) => { return s.toString().trimLeft(); }).join("\n" + t);
@@ -181,12 +186,12 @@ export class Component {
 
         let result = "";
         if (this.children) {
-            this.children.forEach((child: Component) => {
+            for (const child of this.children) {
                 if (result.length > 0) {
                     result += "\n";
                 }
-                result += child.toStringTab(tab).trimRight();
-            });
+                result += child._toStringTab(tab).trimRight();
+            }
             if (this.content.length > 0) {
                 result += "\n";
             }
@@ -196,7 +201,7 @@ export class Component {
     }
 
     toString(): string {
-        return this.toStringTab("");
+        return this._toStringTab("");
     }
 
 }

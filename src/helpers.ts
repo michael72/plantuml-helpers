@@ -31,11 +31,13 @@ export function reverseHead(head: string): string {
 
 /**
  * Reverses the whole string. `abcd` gets `dcba`.
- * @param s the string to revers
+ * @param s the string to reverse
  * @return the reversed string
  */
 export function reverse(s: string): string {
-    return s.split("").reverse().join("");
+    let o = '';
+    for (let i = s.length - 1; i >= 0; o += s.charAt(i--));
+    return o;
 }
 
 /**

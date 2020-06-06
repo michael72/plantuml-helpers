@@ -8,7 +8,7 @@ function autoFormatContent(textEditor: vscode.TextEditor): void {
     if (textEditor) {
         const document = textEditor.document;
         textEditor.edit(editBuilder => {
-            textEditor.selections.forEach(sel => {
+            for (const sel of textEditor.selections) {
                 let range = sel;
                 if (sel.isEmpty || sel.isSingleLine) {
                     // select whole block (all code inside @startuml / @enduml - including all packages)
@@ -38,7 +38,7 @@ function autoFormatContent(textEditor: vscode.TextEditor): void {
                     range = new vscode.Selection(line, 0, last, document.lineAt(last).range.end.character);
                 }
                 editBuilder.replace(range, reformat.autoFormatTxt(document.getText(range)));
-            });
+            }
         }); // apply the (accumulated) replacement(s) (if multiple cursors/selections)
     }
 }
@@ -47,14 +47,14 @@ function rotateSelected(textEditor: vscode.TextEditor, dir: rotate.RotateDirecti
     if (textEditor) {
         const document = textEditor.document;
         textEditor.edit(editBuilder => {
-            textEditor.selections.forEach(sel => {
+            for (const sel of textEditor.selections) {
                 const range = sel.isEmpty || sel.isSingleLine ? document.lineAt(sel.active.line).range || sel : sel;
                 const lines = document.getText(range);
                 const rotated = lines.split("\n").map(line => {
                     return rotate.rotateLine(line, dir);
                 });
                 editBuilder.replace(range, rotated.join("\n"));
-            });
+            }
         }); // apply the (accumulated) replacement(s) (if multiple cursors/selections)
     }
 }
@@ -74,9 +74,9 @@ export function activate(context: vscode.ExtensionContext): void {
     const autoFormat = vscode.commands.registerTextEditorCommand('pumlhelper.autoFormat', (textEditor: vscode.TextEditor) => {
         autoFormatContent(textEditor);
     });
-    [swapLine, rotateLeft, rotateRight, autoFormat].forEach(s => {
+    for (const s of [swapLine, rotateLeft, rotateRight, autoFormat]) {
         context.subscriptions.push(s);
-    });
+    }
 }
 
 export function deactivate(): void {
