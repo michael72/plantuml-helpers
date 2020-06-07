@@ -2,7 +2,7 @@
 	"name": "plantuml-helpers",
 	"displayName": "PlantUmlHelpers",
 	"description": "Editor extension that helps facilitate editing and creation of PlantUML diagrams",
-	"version": "0.4.0",
+	"version": "0.4.1",
 	"publisher": "michael72",
 	"engines": {
 		"vscode": "^1.45.1"
