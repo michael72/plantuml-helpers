@@ -120,12 +120,21 @@ export class Reformat {
     /// collect the content of type `Line`, remove it from the actual content 
     // and return it
     private _extractLines(comp: Component): Array<Line> {
+        const isNamespace = comp.type === "namespace";
         let lines = new Array<Line>();
         const newContent = new Array<Content>();
         for (const c of comp.content) {
             if (c instanceof Line) {
                 // remove leading spaces
                 c.sides[0] = c.sides[0].trimLeft();
+                if (isNamespace) {
+                    for (let i = 0; i < c.components.length; ++i) {
+                        const name = c.components[i];
+                        if (name.lastIndexOf('.') < 1) {
+                            c.components[i] = name.startsWith(".") ? name.substr(1) : comp.name + '.' + name;
+                        }
+                    }
+                }
                 lines.push(c);
             } else {
                 newContent.push(c);
@@ -154,10 +163,21 @@ export class Reformat {
                 components.set(comp.name, comp.name);
             }
         }
+        const isNamespace = comp.type === "namespace";
         for (const line of comp.content) {
             if (line instanceof Line) {
-                for (const c of line.components) {
-                    if (c[0] === '[') {
+                for (let i = 0; i < line.components.length; ++i) {
+                    let c = line.components[i];
+                    if (isNamespace) {
+                        if (c.startsWith(".")) {
+                            c = c.substr(1);
+                            if (c.indexOf(".") !== -1) {
+                                // rename .a.b.c to a.b.c
+                                line.components[i] = c;
+                            }
+                        }
+                    }
+                    if (c.startsWith("[")) {
                         const name = c.substr(1, c.length - 2);
                         if (!components.has(name)) {
                             lineComponents.add(name);
@@ -172,22 +192,20 @@ export class Reformat {
             else if (line instanceof Definition) {
                 if (line.isComponent()) {
                     lineComponents.delete(line.name);
-                }
-                else {
+                } else {
                     lineInterfaces.delete(line.name);
                 }
                 if (line.alias) {
                     const alias = line.isComponent() ? `[${line.alias}]` : line.alias;
                     components.set(line.name, alias);
                     components.set(line.alias, alias);
-                }
-                else {
+                } else {
                     const name = line.isComponent() ? `[${line.name}]` : line.name;
                     components.set(line.name, name);
                 }
             }
         }
-        if (comp.children !== undefined) {
+        if (comp.children) {
             for (const c of comp.children) {
                 const childComponents = this._componentNames(c, components);
                 for (const n of childComponents.keys()) {
@@ -196,7 +214,7 @@ export class Reformat {
                 components = new Map<string, string>([...components, ...childComponents]);
             }
         }
-        if (comp.name !== undefined) {
+        if (comp.name) {
             let hasComponents = lineComponents.size > 0;
             for (const v of components.values()) {
                 if (v.startsWith('[')) {
@@ -207,17 +225,27 @@ export class Reformat {
             // hasComponents -> is component diagram, otherwise: class diagram
             const defaultItem = hasComponents ? "interface" : "class";
 
-            for (const lc of lineInterfaces) {
-                if (!components.has(lc) && (parentComponents === undefined || !parentComponents.has(lc))) {
-                    const def = new Definition(defaultItem, lc);
-                    comp.content = [def, ...comp.content];
-                    components.set(lc, lc);
+            for (let name of lineInterfaces) {
+                if (!components.has(name) && (parentComponents === undefined || !parentComponents.has(name))) {
+                    if (isNamespace) {
+                        const idx = name.indexOf('.');
+                        if (idx !== -1) {
+                            name = "";
+                        }
+                    }
+                    else {
+                        components.set(name, name);
+                    }
+                    if (name) {
+                        const def = new Definition(defaultItem, name);
+                        comp.content = [def, ...comp.content];
+                    }
                 }
             }
-            for (const lc of lineComponents) {
-                const def = new Definition("component", lc);
+            for (const name of lineComponents) {
+                const def = new Definition("component", name);
                 comp.content = [def, ...comp.content];
-                components.set(lc, `[${lc}]`);
+                components.set(name, `[${name}]`);
             }
         }
 
@@ -285,7 +313,7 @@ export class Reformat {
     }
 
     private _contains(c: Component, name: string): boolean {
-        if (c.name === name) {
+        if (c.name === name || (c.name !== undefined && c.type === "namespace" && name.startsWith(c.name))) {
             return true;
         }
         for (const d of c.content) {

@@ -3,7 +3,7 @@ import { Line } from './line';
 export class Definition {
     static regexDef = /^\s*(\(\)|interface)\s+((?:"[^"]+")|[^"\s]+)(?:\s+as\s+(\S+))?\s*$/;
     static regexComp = /^\s*(component\s+)?((?:\[[^\]]+\])|[^[\]\s]+)(?:\s+as\s+(\S+))?\s*$/;
-    static regexOther = /^\s*(class|enum)\s+([^[\]\s]+)(?:\s+as\s+(\S+))?\s*$/;
+    static regexClass = /^\s*(class|enum)\s+([^[\]\s]+)(?:\s+as\s+(\S+))?\s*$/;
 
     constructor(public type: string, public name: string, public alias?: string) {
     }
@@ -22,12 +22,11 @@ export class Definition {
         else {
             // check for component
             m = line.match(Definition.regexComp);
-            // TODO
             if (m && (m[1] || m[2][0] === '[')) {
                 return new this("component", shorten(m[2], "["), m[3]);
             }
             else {
-                m = line.match(Definition.regexOther);
+                m = line.match(Definition.regexClass);
                 if (m) {
                     return new this(m[1], shorten(m[2], '"'), m[3]);
                 }
@@ -88,7 +87,7 @@ export class Component {
         const parent = new Component(new Array<Content>());
         const children = new Array<Component>();
         for (let i = 0; i < arr.length; ++i) {
-            const [comp, new_i] = this._fromString(arr, parent.content, i);
+            const [comp, new_i] = this._fromString(arr, i);
             i = new_i;
             children.push(comp);
         }
@@ -99,7 +98,7 @@ export class Component {
         return parent;
     }
 
-    private static _fromString(arr: Array<string>, parentContent: Array<Content>, start: number): [Component, number] {
+    private static _fromString(arr: Array<string>, start: number): [Component, number] {
         // empty lines are being removed
         let type: string | undefined;
         let name: string | undefined;
@@ -108,7 +107,7 @@ export class Component {
 
         let i = start;
         const m = arr[i].match(this.regexTitle);
-        // for a package the curly brace must be either in the current or in the next line
+
         if (m && arr.length > 1) {
             ++i;
             type = m[1];
@@ -121,24 +120,27 @@ export class Component {
                 suffix = m[3].trimRight();
             }
         }
+
         let prevLine: Line | undefined;
         const content = new Array<Content>();
         const children = new Array<Component>();
+
         for (; i < arr.length; ++i) {
             const s = arr[i];
-            const line = Line.fromString(s);
-            if (line) {
-                prevLine = line;
-                content.push(line);
-            } else {
-                const def = Definition.fromString(s);
-                if (def) {
-                    content.push(def);
-                } else if (s.match(this.regexTitle)) {
-                    // parse child element until closing bracket
-                    const [child, next] = this._fromString(arr, parentContent, i);
-                    children.push(child);
-                    i = next;
+            const def = Definition.fromString(s);
+            if (def) {
+                content.push(def);
+            } else if (s.match(this.regexTitle)) {
+                // parse child element until closing bracket
+                const [child, next] = this._fromString(arr, i);
+                children.push(child);
+                i = next;
+            }
+            else {
+                const line = Line.fromString(s);
+                if (line) {
+                    prevLine = line;
+                    content.push(line);
                 }
                 else if (s.trim() == "}") {
                     break;

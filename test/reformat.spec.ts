@@ -244,6 +244,44 @@ describe("Reformat", () => {
             "[A] --|> IA\n";
         const actual = reformat.autoFormatTxt(original);
         actual.should.equal(expected);
-    })
+    });
+
+    it("should support namespaces", () => {
+        const original = `         
+class BaseClass
+namespace net.foo {
+  net.dummy.Person  <|- Person
+  .BaseClass <|-- Person
+  .net.dummy.Meeting o-- Person
+}
+namespace net.dummy #DDDDDD {
+  class Person
+  .BaseClass <|-- Person
+  Meeting o-- Person
+  .BaseClass <|-- Meeting
+}
+IBase <|-- BaseClass
+BaseClass <|-- net.unused.Person
+`
+        const expected = `namespace net.dummy #DDDDDD {
+  class Meeting
+  class Person
+}
+namespace net.foo {
+  class Person
+}
+class BaseClass
+IBase <|-- BaseClass
+BaseClass <|-- net.unused.Person
+BaseClass <|-- net.foo.Person
+BaseClass <|-- net.dummy.Meeting
+BaseClass <|-- net.dummy.Person
+net.dummy.Meeting o- net.foo.Person
+net.dummy.Person <|-- net.foo.Person
+net.dummy.Meeting o- net.dummy.Person
+`
+        const actual = reformat.autoFormatTxt(original);
+        actual.should.equal(expected);
+    });
 
 });
