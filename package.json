@@ -90,7 +90,7 @@
 		"codecov": "^3.7.0",
 		"mocha": "^8.0.1",
 		"ts-node": "^8.10.2",
-		"typescript": "^3.9.3",
+		"typescript": "^4.0.2",
 		"vscode-test": "^1.4.0",
 		"nyc": "^15.0.1"
 	}
