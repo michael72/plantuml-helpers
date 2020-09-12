@@ -17,17 +17,17 @@ export class Definition {
       }
       return s;
     };
-    let m = line.match(Definition.regexDef);
+    let m = Definition.regexDef.exec(line);
     // check interface definition
     if (m) {
       return new this("interface", shorten(m[2], '"'), m[3]);
     } else {
       // check for component
-      m = line.match(Definition.regexComp);
+      m = Definition.regexComp.exec(line);
       if (m && (m[1] || m[2][0] === "[")) {
         return new this("component", shorten(m[2], "["), m[3]);
       } else {
-        m = line.match(Definition.regexClass);
+        m = Definition.regexClass.exec(line);
         if (m) {
           return new this(m[1], shorten(m[2], '"'), m[3]);
         }
@@ -38,7 +38,7 @@ export class Definition {
 
   toString(): string {
     const comp = `${this.type} ${this.name}`;
-    return this.alias ? comp + " as " + this.alias : comp;
+    return this.alias != null && this.alias ? comp + " as " + this.alias : comp;
   }
   isComponent(): boolean {
     return this.type === "component";
@@ -117,7 +117,7 @@ export class Component {
     let suffix: string | undefined;
 
     let i = start;
-    const m = arr[i].match(this.regexTitle);
+    const m = this.regexTitle.exec(arr[i]);
 
     if (m && arr.length > 1) {
       // found a component definition
@@ -145,7 +145,7 @@ export class Component {
       const def = Definition.fromString(s);
       if (def) {
         content.push(def);
-      } else if (s.match(this.regexTitle)) {
+      } else if (this.regexTitle.exec(s)) {
         // parse child element until closing bracket
         const [child, next] = this._fromString(arr, i);
         children = children ? children : [];
@@ -172,11 +172,11 @@ export class Component {
   static DEFAULT_TAB = "  ";
 
   private _toStringTab(tab: string): string {
-    if (this.type) {
+    if (this.type != null && this.type) {
       let t = tab;
       let header = this.type;
       for (const s of [this.printName, this.suffix]) {
-        if (s) {
+        if (s != null && s) {
           header += " " + s;
         }
       }

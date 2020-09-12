@@ -5,9 +5,9 @@ import * as rotate from "./rotate";
 import * as reformat from "./reformat";
 
 function autoFormatContent(textEditor: vscode.TextEditor): void {
-  if (textEditor) {
+  if (textEditor != null) {
     const document = textEditor.document;
-    textEditor.edit((editBuilder) => {
+    void textEditor.edit((editBuilder) => {
       for (const sel of textEditor.selections) {
         let range = sel;
         if (sel.isEmpty || sel.isSingleLine) {
@@ -38,7 +38,7 @@ function autoFormatContent(textEditor: vscode.TextEditor): void {
             last += 1;
           }
           if (last == document.lineCount || line < 0) {
-            vscode.window.showErrorMessage(
+            void vscode.window.showErrorMessage(
               "No PlantUML found in current selection!"
             );
             return;
@@ -64,13 +64,13 @@ function rotateSelected(
   textEditor: vscode.TextEditor,
   dir: rotate.RotateDirection
 ): void {
-  if (textEditor) {
+  if (textEditor != null) {
     const document = textEditor.document;
-    textEditor.edit((editBuilder) => {
+    void textEditor.edit((editBuilder) => {
       for (const sel of textEditor.selections) {
         const range =
           sel.isEmpty || sel.isSingleLine
-            ? document.lineAt(sel.active.line).range || sel
+            ? document.lineAt(sel.active.line).range
             : sel;
         const lines = document.getText(range);
         const rotated = lines.split("\n").map((line) => {

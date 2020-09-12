@@ -27,7 +27,7 @@ export class Line {
   ) {}
 
   static fromString(line: string): Line | undefined {
-    const m = line.match(this.REGEX);
+    const m = this.REGEX.exec(line);
     if (!m) {
       return;
     }

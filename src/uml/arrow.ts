@@ -36,7 +36,7 @@ export class Arrow {
   private static _tagIndex(arr: Array<string>): number {
     for (let i = 0; i < arr.length; ++i) {
       const s = arr[i];
-      if (s && s.match(this.REGEX_TAG)) {
+      if (this.REGEX_TAG.exec(s)) {
         return i;
       }
     }
@@ -45,7 +45,7 @@ export class Arrow {
 
   static fromString(arrow: string): Arrow | undefined {
     const line = this._lineType(arrow);
-    if (!line) {
+    if (line == null) {
       // arrow line was not found
       return;
     }

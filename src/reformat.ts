@@ -126,6 +126,7 @@ export class Reformat {
   private _extractLines(comp: Component): Array<Line> {
     const isNamespace = comp.type === "namespace";
     let lines = new Array<Line>();
+    const comp_name = comp.name == null ? "" : comp.name;
     const newContent = new Array<Content>();
     for (const c of comp.content) {
       if (c instanceof Line) {
@@ -137,7 +138,7 @@ export class Reformat {
             if (name.lastIndexOf(".") < 1) {
               c.components[i] = name.startsWith(".")
                 ? name.substr(1)
-                : comp.name + "." + name;
+                : comp_name + "." + name;
             }
           }
         }
@@ -165,7 +166,7 @@ export class Reformat {
     let components = new Map<string, string>();
     const lineComponents = new Set<string>();
     const lineInterfaces = new Set<string>();
-    if (comp.name) {
+    if (comp.name != null && comp.name) {
       if (comp.type === "component") {
         components.set(comp.name, `[${comp.name}]`);
       } else {
@@ -203,7 +204,7 @@ export class Reformat {
         } else {
           lineInterfaces.delete(line.name);
         }
-        if (line.alias) {
+        if (line.alias != null && line.alias) {
           const alias = line.isComponent() ? `[${line.alias}]` : line.alias;
           components.set(line.name, alias);
           components.set(line.alias, alias);
@@ -225,7 +226,7 @@ export class Reformat {
         ]);
       }
     }
-    if (comp.name) {
+    if (comp.name != null && comp.name) {
       let hasComponents = lineComponents.size > 0;
       for (const v of components.values()) {
         if (v.startsWith("[")) {
@@ -399,7 +400,7 @@ export class Reformat {
 const regex = /(.*\S+)(\s*)$/s;
 
 export function autoFormatTxt(txt: string): string {
-  const m = txt.match(regex);
+  const m = regex.exec(txt);
   let ending = "";
   if (m) {
     txt = m[1];

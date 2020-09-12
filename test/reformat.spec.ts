@@ -265,10 +265,16 @@ namespace net.dummy #DDDDDD {
   Meeting o-- Person
   .BaseClass <|-- Meeting
 }
+namespace {
+  class Foo;
+}
 IBase <|-- BaseClass
 BaseClass <|-- net.unused.Person
 `;
-    const expected = `namespace net.dummy #DDDDDD {
+    const expected = `namespace {
+  class Foo;
+}
+namespace net.dummy #DDDDDD {
   class Meeting
   class Person
 }
