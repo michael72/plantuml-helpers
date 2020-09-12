@@ -1,21 +1,29 @@
 {
-    "extends": [
-      "eslint:recommended",
-      "plugin:@typescript-eslint/recommended"
+  "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaVersion": 2020,
+    "sourceType": "module"
+  },
+  "plugins": ["@typescript-eslint/eslint-plugin"],
+  "rules": {
+    "no-shadow": [
+      "error",
+      {
+        "builtinGlobals": false,
+        "hoist": "functions",
+        /* TS enums do not (currently) work with shadow rule */
+        "allow": [
+          "RotateDirection",
+          "CombinedDirection",
+          "Layout",
+          "ArrowDirection"
+        ]
+      }
     ],
-    "parser": "@typescript-eslint/parser",
-    "parserOptions": {
-      "ecmaVersion": 2020,
-      "sourceType": "module"
-    },
-    "plugins": [
-      "@typescript-eslint/eslint-plugin"
-    ],
-    "rules": {
-      "no-shadow": "error",
-      "no-continue": "error",
-      "no-mixed-operators": "error",
-      "no-multi-assign": "error",
-      "no-negated-condition": "error"
-    }
+    "no-continue": "error",
+    "no-mixed-operators": "error",
+    "no-multi-assign": "error",
+    "no-negated-condition": "error"
   }
+}
