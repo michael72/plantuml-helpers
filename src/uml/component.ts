@@ -1,67 +1,5 @@
+import { compToString, toString, Content, Definition } from "./definition";
 import { Line } from "./line";
-
-export class Definition {
-  static regexDef = /^\s*(\(\)|interface)\s+((?:"[^"]+")|[^"\s]+)(?:\s+as\s+(\S+))?\s*$/;
-  static regexComp = /^\s*(component\s+)?((?:\[[^\]]+\])|[^[\]\s]+)(?:\s+as\s+(\S+))?\s*$/;
-  static regexClass = /^\s*(class|enum)\s+([^[\]\s]+)(?:\s+as\s+(\S+))?\s*$/;
-
-  constructor(
-    public type: string,
-    public name: string,
-    public alias?: string
-  ) {}
-  static fromString(line: string): Definition | undefined {
-    const shorten = (s: string, by: string): string => {
-      if (s[0] === by) {
-        return s.substring(1, s.length - 1);
-      }
-      return s;
-    };
-    let m = Definition.regexDef.exec(line);
-    // check interface definition
-    if (m) {
-      return new this("interface", shorten(m[2], '"'), m[3]);
-    } else {
-      // check for component
-      m = Definition.regexComp.exec(line);
-      if (m && (m[1] || m[2][0] === "[")) {
-        return new this("component", shorten(m[2], "["), m[3]);
-      } else {
-        m = Definition.regexClass.exec(line);
-        if (m) {
-          return new this(m[1], shorten(m[2], '"'), m[3]);
-        }
-      }
-    }
-    return;
-  }
-
-  toString(): string {
-    const comp = `${this.type} ${this.name}`;
-    return this.alias != null && this.alias ? comp + " as " + this.alias : comp;
-  }
-  isComponent(): boolean {
-    return this.type === "component";
-  }
-}
-
-export type Content = Line | Definition | string;
-
-function toString(content: Content): string;
-function toString(content: Array<Content>, tab?: string): string;
-
-function toString(content: Content | Array<Content>): string {
-  if (content instanceof Array) {
-    return content
-      .map((s: Content) => {
-        return toString(s);
-      })
-      .join("\n");
-  }
-  return content instanceof Line || content instanceof Definition
-    ? content.toString()
-    : content;
-}
 
 export class Component {
   constructor(
@@ -171,7 +109,7 @@ export class Component {
 
   static DEFAULT_TAB = "  ";
 
-  private _toStringTab(tab: string): string {
+  private _toStringTab(tab: string, lf: string): string {
     if (this.type != null && this.type) {
       let t = tab;
       let header = this.type;
@@ -180,7 +118,7 @@ export class Component {
           header += " " + s;
         }
       }
-      let result = t + header.trimLeft() + " {\n";
+      let result = t + header.trimLeft() + " {" + lf;
       t += Component.DEFAULT_TAB;
       const idx = this.content.findIndex((c: Content) => {
         return c instanceof Line;
@@ -191,30 +129,30 @@ export class Component {
           this.content
             .slice(0, idx === -1 ? this.content.length : idx)
             .map((s: Content) => {
-              return toString(s).trimLeft();
+              return compToString(s).trimLeft();
             })
             .join("\n" + t);
       }
       result = result.trimRight();
       if (this.children) {
         for (const child of this.children) {
-          result += "\n" + child._toStringTab(t).trimRight();
+          result += lf + child._toStringTab(t, lf).trimRight();
         }
       }
       if (idx !== -1) {
         result +=
-          "\n" +
+          lf +
           t +
           this.content
             .slice(idx)
             .map((s: Content) => {
-              return s.toString().trimLeft();
+              return compToString(s).trimLeft();
             })
-            .join("\n" + t);
+            .join(lf + t);
       }
 
       t = t.substring(Component.DEFAULT_TAB.length);
-      result = result.trimRight() + "\n" + t + "}\n";
+      result = result.trimRight() + lf + t + "}\n";
       return result;
     }
 
@@ -222,19 +160,19 @@ export class Component {
     if (this.children) {
       for (const child of this.children) {
         if (result.length > 0) {
-          result += "\n";
+          result += lf;
         }
-        result += child._toStringTab(tab).trimRight();
+        result += child._toStringTab(tab, lf).trimRight();
       }
       if (this.content.length > 0) {
-        result += "\n";
+        result += lf;
       }
     }
-    result += toString(this.content);
+    result += toString(this.content, lf);
     return result;
   }
 
-  toString(): string {
-    return this._toStringTab("");
+  toString(lf?: string): string {
+    return this._toStringTab("", lf == null ? "\n" : lf);
   }
 }

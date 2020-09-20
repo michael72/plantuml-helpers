@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { Component, Definition } from "../../src/uml/component";
+import { Component } from "../../src/uml/component";
+import { Definition } from "../../src/uml/definition";
 
 import { should } from "chai";
 import { equal } from "assert";

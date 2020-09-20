@@ -51,10 +51,23 @@ function autoFormatContent(textEditor: vscode.TextEditor): void {
             document.lineAt(last).range.end.character
           );
         }
-        editBuilder.replace(
-          range,
-          reformat.autoFormatTxt(document.getText(range))
-        );
+        const oldText = document.getText(range);
+        try {
+          const newText = reformat.autoFormatTxt(oldText);
+          if (oldText.trim() === newText.trim()) {
+            void vscode.window.showInformationMessage(
+              "The diagram was already sorted."
+            );
+          } else {
+            editBuilder.replace(range, newText);
+          }
+        } catch (e) {
+          if (e instanceof Error) {
+            void vscode.window.showErrorMessage(e.message);
+          } else {
+            throw e;
+          }
+        }
       }
     }); // apply the (accumulated) replacement(s) (if multiple cursors/selections)
   }

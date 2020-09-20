@@ -1,15 +1,27 @@
 import { expect, should } from "chai";
 import * as reformat from "../src/reformat";
+import { DiagramType } from "../src/uml/diagramtype";
 should();
 
 describe("Reformat", () => {
-  it("should not crash when sorting an empty string", () => {
-    expect(reformat.autoFormatTxt("")).to.be.equal("");
+  it("should throw an exception when sorting an empty string", () => {
+    expect(() => reformat.autoFormatTxt("")).to.throw(
+      reformat.UNKNOWN_DIAGRAM_TYPE
+    );
   });
 
-  it("should not crash when no sortable content", () => {
+  it("should throw an exception with no sortable content", () => {
     const chk = "Hello World!";
-    expect(reformat.autoFormatTxt(chk)).to.be.equal(chk);
+    expect(() => reformat.autoFormatTxt(chk)).to.throw(
+      reformat.UNKNOWN_DIAGRAM_TYPE
+    );
+  });
+
+  it("should throw an exception with an unsupported diagram type", () => {
+    const chk = "(Use Case)";
+    expect(() => reformat.autoFormatTxt(chk)).to.throw(
+      "Unsupported diagram type: " + DiagramType.UseCase.toString()
+    );
   });
 
   it("should order depending lines from -> to", () => {
@@ -293,5 +305,72 @@ net.dummy.Meeting o- net.dummy.Person
 `;
     const actual = reformat.autoFormatTxt(original);
     actual.should.equal(expected);
+  });
+
+  it("should order a sequence diagram by dependency and clean it up", () => {
+    const original = `participant B
+A -> B
+`;
+    const expected = `A -> B
+`;
+    const actual = reformat.autoFormatTxt(original);
+    actual.should.equal(expected);
+  });
+
+  it("should order a sequence diagram by dependency", () => {
+    const original = `actor B
+A -> B
+`;
+    const expected = `participant A
+actor B
+A -> B
+`;
+    const actual = reformat.autoFormatTxt(original);
+    actual.should.equal(expected);
+  });
+
+  it("should reformat sequence diagrams", () => {
+    const original = `A -> B
+B -> C
+D -> A
+`;
+
+    const expected = `participant D
+A -> B
+B -> C
+D -> A
+`;
+    const actual = reformat.autoFormatTxt(original);
+    actual.should.equal(expected);
+  });
+
+  it("should leave the order of disjoint participants", () => {
+    const original = `A -> B
+C -> D
+`;
+
+    const expected = `A -> B
+C -> D
+`;
+
+    const actual = reformat.autoFormatTxt(original);
+    actual.should.equal(expected);
+  });
+
+  it("should preserve line endings - only one", () => {
+    const original = "A -> B\r\nB -> C\r\n\r\n";
+    const expected = "A -> B\r\nB -> C\r\n";
+
+    const actual = reformat.autoFormatTxt(original);
+    actual.should.equal(expected);
+  });
+
+  it("should preserve notes", () => {
+    const original = `title Foo
+A -> B
+note left of A: this is an A
+`;
+    const actual = reformat.autoFormatTxt(original);
+    actual.should.equal(original);
   });
 });
