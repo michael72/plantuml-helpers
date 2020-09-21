@@ -7,6 +7,7 @@ coverage/**
 vsc-extension-quickstart.md
 **/tsconfig.json
 **/package-lock.json
+**/*.cpuprofile
 **/*.vsix
 **/*.map
 **/*.ts

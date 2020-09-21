@@ -13,12 +13,14 @@
     "**/*.spec.ts",
     "**/*.js"
   ],
-  "sourceMap": true,
+  "sourceMap": false,
+  "instrument": false,
   "reporter": [
     "html",
     "text",
-    "text-summary"
+    "text-summary",
+    "json",
+    "lcov"
   ],
-  "all": true,
-  "instrument": true
+  "all": true
 }

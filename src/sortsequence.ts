@@ -14,16 +14,7 @@ export class SortSequence {
     return this.component;
   }
 
-  _toKey(s: [string, string]): string {
-    return s[0] + "," + s[1];
-  }
-
-  _toTup(s: string): [string, string] {
-    const arr = s.split(",");
-    return [arr[0], arr[1]];
-  }
-
-  static _hasKey(c: Content, key: string): boolean {
+  private _hasKey(c: Content, key: string): boolean {
     if (c instanceof Line) {
       return c.components[0] === key || c.components[1] === key;
     }
@@ -33,70 +24,61 @@ export class SortSequence {
     return false;
   }
 
-  _reformat(): void {
-    const depcount = new DefaultMap<string, number>(() => 0);
-    const dcount = new DefaultMap<string, number>(() => 0);
+  private _reformat(): void {
+    const ordered = this._findMostDeps();
 
-    const items = new Array<string>();
-    this.component.content = this.component.content.filter((c: Content) => {
-      return !(c instanceof Definition && c.type === "participant");
-    });
+    // finally: bring the items in `this.component` in order
+    // the ordering shall be done as in `ordered`
+    // bring the definitions (if necessary) to the front
+    const newContent = new Array<Content>();
 
-    for (const content of this.component.content) {
-      if (content instanceof Definition) {
-        items.push(content.name);
-      } else if (content instanceof Line) {
-        for (const item of content.components) {
-          if (!items.includes(item)) {
-            items.push(item);
-          }
+    for (const key of ordered) {
+      const contained = newContent.some((c: Content) => {
+        return this._hasKey(c, key);
+      });
+
+      if (!contained) {
+        const first = this.component.content[0];
+        if (this._hasKey(first, key) || typeof first === "string") {
+          newContent.push(this.component.content.splice(0, 1)[0]);
+        } else {
+          newContent.push(new Definition("participant", key));
         }
-        const [from, to] = content.components;
-        const key = this._toKey([from, to]);
-        depcount.set(key, depcount.getDef(key) + 1);
-        dcount.set(from, dcount.getDef(from) + 1);
-        dcount.set(to, dcount.getDef(to) + 1);
-      } else {
-        // ignore
       }
     }
+    // set the ordered content
+    this.component.content = newContent.concat(this.component.content);
+  }
 
-    let bestTup: [string, string] = ["", ""];
-    let bestNumFrom = 0;
-    let bestNum = 0;
-    for (const [tup, num] of depcount.entries()) {
-      const from = tup[1];
-      if (
-        num > bestNum ||
-        (num == bestNum && bestNumFrom < dcount.getDef(from))
-      ) {
-        bestNum = num;
-        bestTup = this._toTup(tup);
-        bestNumFrom = dcount.getDef(from);
-      }
-    }
+  private _toKey(s: [string, string]): string {
+    return s[0] + "," + s[1];
+  }
 
-    const ordered = new Array<string>();
-    ordered.push(bestTup[0]);
-    ordered.push(bestTup[1]);
+  private _toTup(s: string): [string, string] {
+    const arr = s.split(",");
+    return [arr[0], arr[1]];
+  }
 
-    const remaining = new Set<string>();
-    for (const i of items) {
-      if (i != bestTup[0] && i != bestTup[1]) {
-        remaining.add(i);
-      }
-    }
+  private _findMostDeps(): Array<string> {
+    const [depCount, totalCount, items] = this._getCounts();
+    const ordered = this._strongestConnected(depCount, totalCount);
+    const remaining = new Set<string>(
+      items.filter((key: string) => {
+        return ordered.indexOf(key) == -1;
+      })
+    );
 
     // find the tuple with the most dependencies
-    bestTup = ["", ""];
+    const bestTup = ["", ""];
     const maxDeps = [0, 0];
+    // 1-2 elements are removed per loop
     while (remaining.size > 0) {
       for (const r of remaining) {
         let left = 0;
         let right = 0;
         for (const i of ordered) {
-          left += depcount.getDef(this._toKey([r, i]));
-          right += depcount.getDef(this._toKey([i, r]));
+          left += depCount.getDef(this._toKey([r, i]));
+          right += depCount.getDef(this._toKey([i, r]));
         }
         if (left > maxDeps[0] && left > right) {
           maxDeps[0] = left;
@@ -124,7 +106,7 @@ export class SortSequence {
           let deps = 0;
           for (const r2 of remaining) {
             if (r1 !== r2) {
-              deps += depcount.getDef(this._toKey([r1, r2]));
+              deps += depCount.getDef(this._toKey([r1, r2]));
             }
           }
           if (deps > bestVal) {
@@ -136,33 +118,61 @@ export class SortSequence {
         remaining.delete(best);
       }
     }
+    return ordered;
+  }
 
-    // finally: bring the items in `this.component` in order
-    // the ordering shall be done as in `ordered`
-    // bring the definitions (if necessary) to the front
-    const newContent = new Array<Content>();
+  private _getCounts(): [
+    DefaultMap<string, number>,
+    DefaultMap<string, number>,
+    Array<string>
+  ] {
+    const depCount = new DefaultMap<string, number>(() => 0);
+    const totalCount = new DefaultMap<string, number>(() => 0);
 
-    for (const key of ordered) {
-      const contained = newContent.some((c: Content) => {
-        return SortSequence._hasKey(c, key);
-      });
+    const items = new Array<string>();
+    this.component.content = this.component.content.filter((c: Content) => {
+      return !(c instanceof Definition && c.type === "participant");
+    });
 
-      if (!contained) {
-        const first = this.component.content[0];
-        if (first instanceof Line || first instanceof Definition) {
-          if (
-            !(first instanceof Line) ||
-            (first.components[0] != key && first.components[1] != key)
-          ) {
-            const newDef = new Definition("participant", key);
-            newContent.push(newDef);
+    for (const content of this.component.content) {
+      if (content instanceof Definition) {
+        items.push(content.name);
+      } else if (content instanceof Line) {
+        for (const item of content.components) {
+          if (!items.includes(item)) {
+            items.push(item);
           }
         }
-        newContent.push(first);
-        this.component.content.splice(0, 1);
+        const [from, to] = content.components;
+        const key = this._toKey([from, to]);
+        depCount.set(key, depCount.getDef(key) + 1);
+        totalCount.set(from, totalCount.getDef(from) + 1);
+        totalCount.set(to, totalCount.getDef(to) + 1);
+      } else {
+        // ignore
       }
     }
-    // set the ordered content
-    this.component.content = newContent.concat(this.component.content);
+    return [depCount, totalCount, items];
+  }
+
+  private _strongestConnected(
+    depCount: DefaultMap<string, number>,
+    totalCount: DefaultMap<string, number>
+  ): Array<string> {
+    let bestTup = ["", ""];
+    let bestNumFrom = 0;
+    let bestNum = 0;
+    for (const [tup, num] of depCount.entries()) {
+      const from = tup[1];
+      if (
+        num > bestNum ||
+        (num == bestNum && bestNumFrom < totalCount.getDef(from))
+      ) {
+        bestNum = num;
+        bestTup = this._toTup(tup);
+        bestNumFrom = totalCount.getDef(from);
+      }
+    }
+    return bestTup;
   }
 }
