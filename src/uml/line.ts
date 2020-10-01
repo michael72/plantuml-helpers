@@ -118,4 +118,30 @@ export class Line {
         ? Layout.Vertical
         : Layout.Horizontal;
   }
+
+  private _defaultDirection(): CombinedDirection | undefined {
+    if (this.arrow.isInheritance() && this.arrow.layout !== Layout.Vertical) {
+      // inheritance should be up (alternatively down)
+      return CombinedDirection.Up;
+    }
+    if (this.arrow.isComposition() && this.arrow.layout !== Layout.Horizontal) {
+      // inheritance should be right (alternatively left)
+      return CombinedDirection.Right;
+    }
+    return undefined;
+  }
+
+  setDefaultDirection(): void {
+    const defaultDir = this._defaultDirection();
+    if (defaultDir != undefined) {
+      this.setCombinedDirection(defaultDir);
+    }
+  }
+
+  componentNames(): string[] {
+    // remove outer brackets
+    return this.components.map((c) =>
+      c[0] == "[" ? c.substr(1, c.length - 2) : c
+    );
+  }
 }

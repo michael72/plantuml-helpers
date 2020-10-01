@@ -18,7 +18,7 @@ function autoFormatContent(textEditor: vscode.TextEditor): void {
             if (
               text.startsWith("@startuml") ||
               text === "```plantuml" ||
-              text.indexOf("{") !== -1
+              text.includes("{")
             ) {
               line += 1;
               break;
@@ -27,11 +27,7 @@ function autoFormatContent(textEditor: vscode.TextEditor): void {
           }
           while (last < document.lineCount) {
             const text = document.lineAt(last).text.trim();
-            if (
-              text === "@enduml" ||
-              text === "```" ||
-              text.indexOf("}") !== -1
-            ) {
+            if (text === "@enduml" || text === "```" || text.includes("}")) {
               last -= 1;
               break;
             }

@@ -129,6 +129,31 @@ describe("Reformat", () => {
     actual.should.equal(expected);
   });
 
+  it("should add brackets on components - simple case", () => {
+    const original = "A -> [B]\nB -> C\n";
+    const expected = "A -> [B]\n[B] -> C\n";
+    const actual = reformat.autoFormatTxt(original);
+    actual.should.equal(expected);
+  });
+
+  it("should sort the components with most outgoing transitive dependencies first", () => {
+    const original =
+      "component E\n" +
+      "[C] o-> D\n" +
+      "F o-> E\n" +
+      "B o-> C\n" +
+      "B <--o A\n";
+    // A is connected (transitively) to B,C and D, F is only connected to E -> A comes first
+    const expected =
+      "component E\n" +
+      "A o-> B\n" +
+      "B o-> [C]\n" +
+      "[C] o-> D\n" +
+      "F o-> [E]\n";
+    const actual = reformat.autoFormatTxt(original);
+    actual.should.equal(expected);
+  });
+
   it("should reverse sort packages depending on content dependencencies", () => {
     const original =
       "package b {\n" +

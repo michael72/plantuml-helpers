@@ -1,61 +1,23 @@
 import { DefaultMap } from "./helpers";
-import { Layout } from "./uml/arrow";
 import { Component } from "./uml/component";
 import { Content, Definition } from "./uml/definition";
-import { Line, CombinedDirection } from "./uml/line";
+import { Line } from "./uml/line";
 
 export class SortComponent {
   constructor(private component: Component) {}
 
   private _sortByDependencies(): Array<Content> {
     // try to bring the components in order
-    const deps = new DefaultMap<string, Array<string>>(() => []);
-    const froms = new Array<string>();
-    for (const line of this.component.content) {
-      if (line instanceof Line) {
-        const [from, to] = line.components;
-        deps.getDef(from).push(to);
-        if (froms.indexOf(from) === -1) {
-          froms.push(from);
-        }
-      }
-    }
+    const { deps, froms } = this._calcDependencies();
 
-    const pointedCounts = new DefaultMap<string, number>(() => 0);
-    for (const [k, v] of deps.entries()) {
-      pointedCounts.set(k, 0);
-      // add transitive dependencies
-      let newDeps = v;
-      while (newDeps.length !== 0) {
-        const currentDeps = newDeps;
-        newDeps = [];
-        for (const c of currentDeps) {
-          const ds = deps.get(c);
-          if (ds) {
-            for (const d of ds) {
-              // only add elements that are not already contained
-              if (v.indexOf(d) === -1 && newDeps.indexOf(d) === -1) {
-                newDeps.push(d);
-              }
-            }
-          }
-        }
-        for (const n of newDeps) {
-          v.push(n);
-        }
-      }
-    }
-    for (const v of deps.values()) {
-      for (const d of v) {
-        pointedCounts.set(d, pointedCounts.getDef(d) + 1);
-      }
-    }
+    const pointedCounts = this._calcPointedCounts(deps);
 
     return Array.from(deps.keys()).sort((s1: string, s2: string) => {
+      // sort objects to the beginning that are the least pointed to
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       let result = pointedCounts.get(s1)! - pointedCounts.get(s2)!;
       if (result === 0) {
-        // the more objects depend on the current key, the better
+        // more objects depend on the current key: sort to the end
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         result = deps.get(s2)!.length - deps.get(s1)!.length;
         if (result === 0) {
@@ -67,34 +29,84 @@ export class SortComponent {
     });
   }
 
+  private _calcPointedCounts(deps: DefaultMap<string, string[]>) {
+    const pointedCounts = new DefaultMap<string, number>(() => 0);
+    for (const [k, v] of deps.entries()) {
+      pointedCounts.set(k, 0);
+      // add transitive dependencies - meaning that if deps contains
+      // A -> B and B -> C then dependency A -> C should be added to deps
+      this._addTransitiveDeps(deps, v);
+    }
+    for (const v of deps.values()) {
+      for (const d of v) {
+        pointedCounts.set(d, pointedCounts.getDef(d) + 1);
+      }
+    }
+
+    return pointedCounts;
+  }
+
+  private _addTransitiveDeps(
+    deps: DefaultMap<string, string[]>,
+    safedDeps: string[]
+  ) {
+    // addedDeps will contain the newly added dependencies, which will be used in the next round again
+    let addedDeps = safedDeps;
+    while (addedDeps.length !== 0) {
+      addedDeps = addedDeps.flatMap((c) =>
+        Array.from(this._addItemDeps(deps.get(c), safedDeps))
+      );
+    }
+  }
+
+  private *_addItemDeps(
+    dependentComponents: string[] | undefined,
+    safedDeps: string[]
+  ): Generator<string> {
+    if (dependentComponents) {
+      for (const d of dependentComponents) {
+        // only add elements that are not already contained
+        if (!safedDeps.includes(d)) {
+          safedDeps.push(d);
+          yield d;
+        }
+      }
+    }
+  }
+
+  private _calcDependencies() {
+    const deps = new DefaultMap<string, Array<string>>(() => []);
+    const fromSet = new Set<string>();
+    for (const line of this.component.lines()) {
+      const [from, to] = line.components;
+      deps.getDef(from).push(to);
+      fromSet.add(from);
+    }
+    const froms = Array.from(fromSet.values());
+    return { deps, froms };
+  }
+
   private _initialSort(): Array<Line> {
     const nodes = this._sortByDependencies();
-    return this.component.content
-      .filter((c: Content) => {
-        return c instanceof Line;
-      })
-      .sort((c1: Content, c2: Content) => {
-        const [a, b] = [c1 as Line, c2 as Line];
-        let result =
-          nodes.indexOf(a.components[0]) - nodes.indexOf(b.components[0]);
+    return Array.from(this.component.lines()).sort((a: Line, b: Line) => {
+      let result =
+        nodes.indexOf(a.components[0]) - nodes.indexOf(b.components[0]);
+      if (result === 0) {
+        result = a.combinedDirection() - b.combinedDirection();
         if (result === 0) {
-          result = a.combinedDirection() - b.combinedDirection();
-          if (result === 0) {
-            result =
-              nodes.indexOf(a.components[1]) - nodes.indexOf(b.components[1]);
-          }
+          result =
+            nodes.indexOf(a.components[1]) - nodes.indexOf(b.components[1]);
         }
-        return result;
-      }) as Array<Line>;
+      }
+      return result;
+    });
   }
 
   private _sort(): void {
     const orig = this._initialSort();
     // leave all content that is not explicitly an arrow connection
     // before the arrow lines that are being sorted
-    const others = this.component.content.filter((c: Content) => {
-      return !(c instanceof Line);
-    });
+    const others: Array<Content> = Array.from(this.component.noLines());
     let sorted = new Array<Line>();
     let idx = 0;
 
@@ -125,39 +137,38 @@ export class SortComponent {
   /// collect the content of type `Line`, remove it from the actual content
   // and return it
   private _extractLines(comp: Component): Array<Line> {
-    const isNamespace = comp.type === "namespace";
-    let lines = new Array<Line>();
-    const comp_name = comp.name == null ? "" : comp.name;
-    const newContent = new Array<Content>();
-    for (const c of comp.content) {
-      if (c instanceof Line) {
-        // remove leading spaces
-        c.sides[0] = c.sides[0].trimLeft();
-        if (isNamespace) {
-          for (let i = 0; i < c.components.length; ++i) {
-            const name = c.components[i];
-            if (name.lastIndexOf(".") < 1) {
-              c.components[i] = name.startsWith(".")
-                ? name.substr(1)
-                : comp_name + "." + name;
-            }
-          }
-        }
-        lines.push(c);
-      } else {
-        newContent.push(c);
+    let extracted = new Array<Line>();
+    comp.forAll((c) => {
+      const lines = this._adaptNames(c);
+      if (lines.length > 0) {
+        c.content = Array.from(c.noLines());
       }
-    }
-    // recursive call
-    if (comp.children) {
-      for (const c of comp.children) {
-        lines = lines.concat(this._extractLines(c));
+      extracted = extracted.concat(lines);
+    });
+    return extracted;
+  }
+
+  private _adaptNames(c: Component): Array<Line> {
+    const lines = Array.from(c.lines());
+    for (const line of lines) {
+      // remove leading spaces
+      line.sides[0] = line.sides[0].trimLeft();
+      if (c.isNamespace()) {
+        this._addNamespace(line, c.name == null ? "" : c.name);
       }
-    }
-    if (lines.length > 0) {
-      comp.content = newContent;
     }
     return lines;
+  }
+
+  private _addNamespace(c: Line, compName: string) {
+    for (let i = 0; i < c.components.length; ++i) {
+      const name = c.components[i];
+      if (name.lastIndexOf(".") < 1) {
+        c.components[i] = name.startsWith(".")
+          ? name.substr(1)
+          : compName + "." + name;
+      }
+    }
   }
 
   private _componentNames(
@@ -168,18 +179,16 @@ export class SortComponent {
     const lineComponents = new Set<string>();
     const lineInterfaces = new Set<string>();
     if (comp.name != null && comp.name) {
-      if (comp.type === "component") {
-        components.set(comp.name, `[${comp.name}]`);
-      } else {
-        components.set(comp.name, comp.name);
-      }
+      components.set(
+        comp.name,
+        comp.isComponent() ? `[${comp.name}]` : comp.name
+      );
     }
-    const isNamespace = comp.type === "namespace";
     for (const line of comp.content) {
       if (line instanceof Line) {
         for (let i = 0; i < line.components.length; ++i) {
           let c = line.components[i];
-          if (isNamespace) {
+          if (comp.isNamespace()) {
             if (c.startsWith(".")) {
               c = c.substr(1);
               if (c.indexOf(".") !== -1) {
@@ -215,6 +224,9 @@ export class SortComponent {
         }
       }
     }
+    for (const name of lineComponents) {
+      components.set(name, `[${name}]`);
+    }
     if (comp.children) {
       for (const c of comp.children) {
         const childComponents = this._componentNames(c, components);
@@ -243,9 +255,8 @@ export class SortComponent {
           !components.has(name) &&
           (parentComponents === undefined || !parentComponents.has(name))
         ) {
-          if (isNamespace) {
-            const idx = name.indexOf(".");
-            if (idx !== -1) {
+          if (comp.isNamespace()) {
+            if (name.includes(".")) {
               name = "";
             }
           } else {
@@ -260,7 +271,6 @@ export class SortComponent {
       for (const name of lineComponents) {
         const def = new Definition("component", name);
         comp.content = [def, ...comp.content];
-        components.set(name, `[${name}]`);
       }
     }
 
@@ -269,17 +279,15 @@ export class SortComponent {
 
   // add [] brackets to defined components - remove them otherwise
   private _renameComponents(componentNames: Map<string, string>): void {
-    for (const line of this.component.content) {
-      if (line instanceof Line) {
-        for (let i = 0; i < line.components.length; ++i) {
-          let c = line.components[i];
-          if (c[0] == "[") {
-            c = c.substr(1, c.length - 2);
-          }
-          const name = componentNames.get(c);
-          if (name !== undefined) {
-            line.components[i] = name;
-          }
+    for (const line of this.component.lines()) {
+      for (let i = 0; i < line.components.length; ++i) {
+        let c = line.components[i];
+        if (c[0] == "[") {
+          c = c.substr(1, c.length - 2);
+        }
+        const name = componentNames.get(c);
+        if (name !== undefined) {
+          line.components[i] = name;
         }
       }
     }
@@ -310,90 +318,40 @@ export class SortComponent {
     this.restructure();
     for (const c of this.component.content) {
       if (c instanceof Line) {
-        if (c.arrow.right === "|>" || c.arrow.left === "<|") {
-          if (c.arrow.layout !== Layout.Vertical) {
-            // in case we already have a correct layout we don't temper with it
-            // (the user maybe knew what (s)he was doing...)
-            c.setCombinedDirection(CombinedDirection.Up);
-          }
-        } else if (
-          c.arrow.left === "o" ||
-          c.arrow.left === "*" ||
-          c.arrow.right === "o" ||
-          c.arrow.right === "*"
-        ) {
-          if (c.arrow.layout !== Layout.Horizontal) {
-            // similar to above
-            c.setCombinedDirection(CombinedDirection.Right);
-          }
-        }
+        c.setDefaultDirection();
       }
     }
     this._sort();
-    this._sortPackages(this.component);
-    return new Component(
-      this.component.content,
-      this.component.children,
-      this.component.type,
-      this.component.name
-    );
+    this._sortPackages();
+    return this.component;
   }
 
-  private _contains(c: Component, name: string): boolean {
-    if (
-      c.name === name ||
-      (c.name !== undefined &&
-        c.type === "namespace" &&
-        name.startsWith(c.name))
-    ) {
-      return true;
-    }
-    for (const d of c.content) {
-      /* istanbul ignore else */
-      if (d instanceof Definition) {
-        if (d.name === name || d.alias === name) {
-          return true;
-        }
+  private _sortPackages(component: Component = this.component) {
+    component.forAll((c) => {
+      if (c.children) {
+        c.children = this._sorted(c.children);
       }
-    }
-    if (c.children !== undefined) {
-      for (const child of c.children) {
-        return this._contains(child, name);
-      }
-    }
-    return false;
+    });
   }
 
-  private _sortPackages(component: Component) {
-    if (component.children !== undefined) {
-      const children = component.children;
-      for (const child of children) {
-        this._sortPackages(child);
-      }
-      component.children = children.sort((c1: Component, c2: Component) => {
-        // sort package definitions last that contain component definitions
-        // which are used in lines first.
-        for (const l of this.component.content) {
-          /* istanbul ignore else */
-          if (l instanceof Line) {
-            for (let c of l.components) {
-              if (c[0] == "[") {
-                c = c.substr(1, c.length - 2);
-              }
-              // reversed sort
-              if (this._contains(c1, c)) {
-                return 1;
-              }
-              if (this._contains(c2, c)) {
-                return -1;
-              }
-            }
+  private _sorted(children: Component[]): Component[] {
+    return children.sort((c1: Component, c2: Component) => {
+      // sort package definitions last that contain component definitions
+      // which are used in lines first.
+      for (const l of this.component.lines()) {
+        for (const name of l.componentNames()) {
+          // reversed sort
+          if (c1.containsName(name)) {
+            return 1;
+          }
+          if (c2.containsName(name)) {
+            return -1;
           }
         }
-        // should not come here
-        /* istanbul ignore next */
-        throw new Error("component not found");
-      });
-    }
+      }
+      // should not come here
+      /* istanbul ignore next */
+      throw new Error("component not found");
+    });
   }
 }

@@ -65,3 +65,13 @@ export function toString(content: Array<Content>, lf: string): string {
     })
     .join(lf);
 }
+
+export function contains(c: Content, name: string): boolean {
+  if (c instanceof Line) {
+    return c.components[0] === name || c.components[1] === name;
+  }
+  if (c instanceof Definition) {
+    return c.name === name;
+  }
+  return false;
+}

@@ -56,11 +56,10 @@ export class Arrow {
       [tag, arr[tagIdx]] = [arr[tagIdx], tag];
     }
     const left = arr[0];
-    const direction =
-      left.indexOf("<") >= 0
-        ? // right direction is default - also for undirected arrows
-          ArrowDirection.Left
-        : ArrowDirection.Right;
+    // right direction is default - also for undirected arrows
+    const direction = left.includes("<")
+      ? ArrowDirection.Left
+      : ArrowDirection.Right;
     const layout = arr.length <= 2 ? Layout.Horizontal : Layout.Vertical;
 
     // in case of horizontal arrow 1 is used - otherwise 2 or higher
@@ -100,6 +99,17 @@ export class Arrow {
         ? ArrowDirection.Left
         : ArrowDirection.Right,
       this.layout
+    );
+  }
+
+  isInheritance(): boolean {
+    return this.right === "|>" || this.left === "<|";
+  }
+
+  isComposition(): boolean {
+    const compositions = ["o", "*"];
+    return (
+      compositions.includes(this.left) || compositions.includes(this.right)
     );
   }
 }
