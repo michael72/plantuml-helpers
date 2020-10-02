@@ -144,4 +144,8 @@ export class Line {
       c[0] == "[" ? c.substr(1, c.length - 2) : c
     );
   }
+
+  has(name: string): boolean {
+    return this.components.includes(name);
+  }
 }

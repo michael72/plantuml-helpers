@@ -50,18 +50,10 @@ export function bestOf<T>(
   return accu;
 }
 
-export function minOf<T, U>(
-  items: Iterable<T>,
-  init: U,
-  map: (item: T) => U = (t: T) => (t as unknown) as U
-): T {
-  return bestOfMap<T, U>(items, map, init, (left, right) => left < right);
-}
-
 export function maxOf<T, U>(
   items: Iterable<T>,
   init: U,
-  map: (item: T) => U = (t: T) => (t as unknown) as U
+  map: (item: T) => U
 ): T {
   return bestOfMap<T, U>(items, map, init, (left, right) => left > right);
 }
