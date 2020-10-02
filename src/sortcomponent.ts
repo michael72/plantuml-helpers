@@ -48,26 +48,26 @@ export class SortComponent {
 
   private _addTransitiveDeps(
     deps: DefaultMap<string, string[]>,
-    safedDeps: string[]
+    savedDeps: string[]
   ) {
     // addedDeps will contain the newly added dependencies, which will be used in the next round again
-    let addedDeps = safedDeps;
+    let addedDeps = savedDeps;
     while (addedDeps.length !== 0) {
       addedDeps = addedDeps.flatMap((c) =>
-        Array.from(this._addItemDeps(deps.get(c), safedDeps))
+        Array.from(this._addItemDeps(deps.get(c), savedDeps))
       );
     }
   }
 
   private *_addItemDeps(
     dependentComponents: string[] | undefined,
-    safedDeps: string[]
+    savedDeps: string[]
   ): Generator<string> {
     if (dependentComponents) {
       for (const d of dependentComponents) {
         // only add elements that are not already contained
-        if (!safedDeps.includes(d)) {
-          safedDeps.push(d);
+        if (!savedDeps.includes(d)) {
+          savedDeps.push(d);
           yield d;
         }
       }
