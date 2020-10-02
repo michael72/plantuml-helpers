@@ -22,6 +22,10 @@ The available commands are:
     * inheritance is set to use "up" direction (if not already set to "down")
     * composition is set to use "right" direction (if not already set to "left") 
 
+Supported diagram types are:
+    * component + class diagrams
+    * sequence diagrams - here the "sorting" is done by declaring the participants and actors in order
+
 Commands with key combinations are:
 
 * Alt-8: rotate arrow to left
