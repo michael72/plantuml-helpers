@@ -74,7 +74,8 @@
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "test": "nyc mocha",
-    "posttest": "nyc report"
+    "posttest": "nyc report",
+    "watchtest": "nyc mocha -w"
   },
   "devDependencies": {
     "@types/chai": "^4.2.12",

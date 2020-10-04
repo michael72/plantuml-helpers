@@ -7,17 +7,6 @@ const REGEX_LINEENDING = /(.*\S+)(\s*)$/s;
 
 export const UNKNOWN_DIAGRAM_TYPE = "Unable to determine diagram type";
 
-function _crLf(txt: string): string {
-  const idx = txt.indexOf("\n");
-  if (idx != -1) {
-    if (idx > 0 && txt.charAt(idx - 1) == "\r") {
-      return "\r\n";
-    }
-    return "\n";
-  }
-  return "\r";
-}
-
 export function autoFormatTxt(txt: string): string {
   const crLf = _crLf(txt);
   const m = REGEX_LINEENDING.exec(txt);
@@ -50,4 +39,15 @@ export function autoFormatTxt(txt: string): string {
   } else {
     throw new Error("Unsupported diagram type: " + tpe.toString());
   }
+}
+
+function _crLf(txt: string): string {
+  const idx = txt.indexOf("\n");
+  if (idx != -1) {
+    if (idx > 0 && txt.charAt(idx - 1) == "\r") {
+      return "\r\n";
+    }
+    return "\n";
+  }
+  return "\r";
 }

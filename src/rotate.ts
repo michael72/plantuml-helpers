@@ -22,7 +22,6 @@ export function rotateDirection(
 }
 
 /**  rotate line of plantuml code preserving the dependency.
-
 @startuml directions
 [B] <-- [A] : up
 A -> [C] : right

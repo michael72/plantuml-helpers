@@ -6,6 +6,32 @@ import {
 } from "./diagramtype";
 import { Line } from "./line";
 
+export type Content = Line | Definition | string;
+
+export function compToString(content: Content): string {
+  return content instanceof Line || content instanceof Definition
+    ? content.toString()
+    : content;
+}
+
+export function contains(c: Content, name: string): boolean {
+  if (c instanceof Line) {
+    return c.components[0] === name || c.components[1] === name;
+  }
+  if (c instanceof Definition) {
+    return c.name === name;
+  }
+  return false;
+}
+
+export function toString(content: Array<Content>, lf: string): string {
+  return content
+    .map((s: Content) => {
+      return compToString(s);
+    })
+    .join(lf);
+}
+
 export class Definition {
   constructor(
     public type: string,
@@ -41,37 +67,12 @@ export class Definition {
     return;
   }
 
+  isComponent(): boolean {
+    return this.type === "component";
+  }
+
   toString(): string {
     const comp = `${this.type} ${this.name}`;
     return this.alias != null && this.alias ? comp + " as " + this.alias : comp;
   }
-  isComponent(): boolean {
-    return this.type === "component";
-  }
-}
-
-export type Content = Line | Definition | string;
-
-export function compToString(content: Content): string {
-  return content instanceof Line || content instanceof Definition
-    ? content.toString()
-    : content;
-}
-
-export function toString(content: Array<Content>, lf: string): string {
-  return content
-    .map((s: Content) => {
-      return compToString(s);
-    })
-    .join(lf);
-}
-
-export function contains(c: Content, name: string): boolean {
-  if (c instanceof Line) {
-    return c.components[0] === name || c.components[1] === name;
-  }
-  if (c instanceof Definition) {
-    return c.name === name;
-  }
-  return false;
 }

@@ -12,6 +12,44 @@ export enum Layout {
 
 export class Arrow {
   static REGEX_TAG = /(?:[lrud]\S*)|(?:\[\S+\])/; // any [...] or l(eft), r(ight), u(p) or d(own) - o would not work (a-z)
+  isComposition(): boolean {
+    const compositions = ["o", "*"];
+    return (
+      compositions.includes(this.left) || compositions.includes(this.right)
+    );
+  }
+
+  isInheritance(): boolean {
+    return this.right === "|>" || this.left === "<|";
+  }
+
+  reverse(): Arrow {
+    return new Arrow(
+      this._revHead(this.right),
+      this.line,
+      this.sizeVert,
+      this.tag,
+      this._revHead(this.left),
+      this.direction === ArrowDirection.Right
+        ? ArrowDirection.Left
+        : ArrowDirection.Right,
+      this.layout
+    );
+  }
+
+  toString(): string {
+    let mid = this.line + this.tag;
+    if (this.layout === Layout.Vertical) {
+      // tag is place at the end or in the middle of the arrow
+      mid += this.line.repeat(this.sizeVert - 1);
+    }
+    return this.left + mid + this.right;
+  }
+
+  private _revHead(arrow: string): string {
+    return reverse(reverseHead(arrow));
+  }
+
   private constructor(
     public left: string,
     public line: string,
@@ -72,44 +110,6 @@ export class Arrow {
       arr[arr.length - 1],
       direction,
       layout
-    );
-  }
-
-  toString(): string {
-    let mid = this.line + this.tag;
-    if (this.layout === Layout.Vertical) {
-      // tag is place at the end or in the middle of the arrow
-      mid += this.line.repeat(this.sizeVert - 1);
-    }
-    return this.left + mid + this.right;
-  }
-
-  private _revHead(arrow: string): string {
-    return reverse(reverseHead(arrow));
-  }
-
-  reverse(): Arrow {
-    return new Arrow(
-      this._revHead(this.right),
-      this.line,
-      this.sizeVert,
-      this.tag,
-      this._revHead(this.left),
-      this.direction === ArrowDirection.Right
-        ? ArrowDirection.Left
-        : ArrowDirection.Right,
-      this.layout
-    );
-  }
-
-  isInheritance(): boolean {
-    return this.right === "|>" || this.left === "<|";
-  }
-
-  isComposition(): boolean {
-    const compositions = ["o", "*"];
-    return (
-      compositions.includes(this.left) || compositions.includes(this.right)
     );
   }
 }

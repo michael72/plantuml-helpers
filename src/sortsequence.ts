@@ -14,15 +14,16 @@ function _toTup(s: string): [string, string] {
   const arr = s.split(",");
   return [arr[0], arr[1]];
 }
-
-// Sorting of sequences can only swap the definitions.
-// The order of lines with arrows and the direction of the arrows cannot be changed!
-// The items should be sorted by incoming/outgoing dependencies.
-// The strongest connected items should be neighbours.
-// The items with the most outgoing dependencies should be on the left.
 // The items with the most incoming dependencies should be on the right.
+// The items with the most outgoing dependencies should be on the left.
+// The strongest connected items should be neighbours.
+// The items should be sorted by incoming/outgoing dependencies.
+// The order of lines with arrows and the direction of the arrows cannot be changed!
+// Sorting of sequences can only swap the definitions.
+
 export class SortSequence {
   constructor(private component: Component) {}
+
   autoFormat(): Component {
     this._reformat();
     return this.component;
@@ -44,33 +45,6 @@ export class SortSequence {
     });
   }
 
-  private _getOrderedContent(ordered: string[]) {
-    // bring the names in `this.component` in the order as in `ordered`.
-    // bring the definitions (if necessary) to the front
-    const newContent = new Array<Content>();
-
-    for (const key of ordered) {
-      this._extractContentTo(newContent, key);
-    }
-    return newContent;
-  }
-
-  private _extractContentTo(newContent: Content[], key: string) {
-    const alreadyContained = newContent.some((c: Content) => contains(c, key));
-    if (!alreadyContained && !this._moveToNewContent(newContent, key)) {
-      newContent.push(new Definition("participant", key));
-    }
-  }
-
-  private _moveToNewContent(newContent: Content[], key: string): boolean {
-    const item = this.component.content[0];
-    if (contains(item, key) || typeof item === "string") {
-      newContent.push(this.component.content.splice(0, 1)[0]);
-      return true;
-    }
-    return false;
-  }
-
   private _orderNames(): Array<string> {
     const [depCount, totalCount, names] = this._getCountsAndNames();
     // order the names (participants/actors) starting with the strongest connected pair
@@ -84,6 +58,45 @@ export class SortSequence {
       this._moveToOrdered(remaining, ordered, depCount);
     }
     return ordered;
+  }
+
+  private _getCountsAndNames(): [
+    DefaultMap<string, number>,
+    DefaultMap<string, number>,
+    Array<string>
+  ] {
+    const depCount = new DefaultMap<string, number>(() => 0);
+    const totalCount = new DefaultMap<string, number>(() => 0);
+    const names = new Array<string>();
+
+    for (const def of this.component.definitions()) {
+      names.push(def.name);
+    }
+    for (const line of this.component.lines()) {
+      this._addLineComponentsNames(line, names);
+      this._updateLineStats(line, depCount, totalCount);
+    }
+    return [depCount, totalCount, names];
+  }
+
+  private _addLineComponentsNames(line: Line, names: string[]) {
+    for (const item of line.components) {
+      if (!names.includes(item)) {
+        names.push(item);
+      }
+    }
+  }
+
+  private _updateLineStats(
+    line: Line,
+    depCount: DefaultMap<string, number>,
+    totalCount: DefaultMap<string, number>
+  ) {
+    const [from, to] = line.components;
+    const key = _toKey([from, to]);
+    depCount.set(key, depCount.getDef(key) + 1);
+    totalCount.set(from, totalCount.getDef(from) + 1);
+    totalCount.set(to, totalCount.getDef(to) + 1);
   }
 
   private _strongestConnected(
@@ -219,42 +232,30 @@ export class SortSequence {
     );
   }
 
-  private _getCountsAndNames(): [
-    DefaultMap<string, number>,
-    DefaultMap<string, number>,
-    Array<string>
-  ] {
-    const depCount = new DefaultMap<string, number>(() => 0);
-    const totalCount = new DefaultMap<string, number>(() => 0);
-    const names = new Array<string>();
+  private _getOrderedContent(ordered: string[]) {
+    // bring the names in `this.component` in the order as in `ordered`.
+    // bring the definitions (if necessary) to the front
+    const newContent = new Array<Content>();
 
-    for (const def of this.component.definitions()) {
-      names.push(def.name);
+    for (const key of ordered) {
+      this._extractContentTo(newContent, key);
     }
-    for (const line of this.component.lines()) {
-      this._addLineComponentsNames(line, names);
-      this._updateLineStats(line, depCount, totalCount);
-    }
-    return [depCount, totalCount, names];
+    return newContent;
   }
 
-  private _addLineComponentsNames(line: Line, names: string[]) {
-    for (const item of line.components) {
-      if (!names.includes(item)) {
-        names.push(item);
-      }
+  private _extractContentTo(newContent: Content[], key: string) {
+    const alreadyContained = newContent.some((c: Content) => contains(c, key));
+    if (!alreadyContained && !this._moveToNewContent(newContent, key)) {
+      newContent.push(new Definition("participant", key));
     }
   }
 
-  private _updateLineStats(
-    line: Line,
-    depCount: DefaultMap<string, number>,
-    totalCount: DefaultMap<string, number>
-  ) {
-    const [from, to] = line.components;
-    const key = _toKey([from, to]);
-    depCount.set(key, depCount.getDef(key) + 1);
-    totalCount.set(from, totalCount.getDef(from) + 1);
-    totalCount.set(to, totalCount.getDef(to) + 1);
+  private _moveToNewContent(newContent: Content[], key: string): boolean {
+    const item = this.component.content[0];
+    if (contains(item, key) || typeof item === "string") {
+      newContent.push(this.component.content.splice(0, 1)[0]);
+      return true;
+    }
+    return false;
   }
 }

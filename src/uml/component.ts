@@ -107,8 +107,92 @@ export class Component {
     return [new this(content, children, type, name, suffix, printName), i];
   }
 
-  static DEFAULT_TAB = "  ";
+  anyOf(chk: (c: Component) => boolean): boolean {
+    if (chk(this)) {
+      return true;
+    }
+    if (this.children) {
+      for (const c of this.children) {
+        if (c.anyOf(chk)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
 
+  containsName(name: string): boolean {
+    return this.anyOf(
+      (child) =>
+        child.name == name ||
+        child.hasDefinition(name) ||
+        child.hasNamespace(name)
+    );
+  }
+
+  *definitions(): Generator<Definition> {
+    for (const c of this.content) {
+      if (c instanceof Definition) {
+        yield c;
+      }
+    }
+  }
+
+  forAll(fun: (c: Component) => void): void {
+    fun(this);
+    if (this.children) {
+      for (const c of this.children) {
+        c.forAll(fun);
+      }
+    }
+  }
+
+  hasDefinition(name: string): boolean {
+    for (const d of this.definitions()) {
+      if (d.name === name || d.alias === name) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  hasNamespace(name: string): boolean {
+    return (
+      this.name !== undefined &&
+      this.isNamespace() &&
+      name.startsWith(this.name)
+    );
+  }
+
+  isComponent(): boolean {
+    return this.type === "component";
+  }
+
+  isNamespace(): boolean {
+    return this.type === "namespace";
+  }
+
+  *lines(): Generator<Line> {
+    for (const c of this.content) {
+      if (c instanceof Line) {
+        yield c;
+      }
+    }
+  }
+
+  *noLines(): Generator<Definition | string> {
+    for (const c of this.content) {
+      if (!(c instanceof Line)) {
+        yield c;
+      }
+    }
+  }
+
+  toString(lf?: string): string {
+    return this._toStringTab("", lf == null ? "\n" : lf);
+  }
+
+  static DEFAULT_TAB = "  ";
   private _toStringTab(tab: string, lf: string): string {
     if (this.type != null && this.type) {
       let t = tab;
@@ -170,90 +254,5 @@ export class Component {
     }
     result += toString(this.content, lf);
     return result;
-  }
-
-  toString(lf?: string): string {
-    return this._toStringTab("", lf == null ? "\n" : lf);
-  }
-
-  hasDefinition(name: string): boolean {
-    for (const d of this.definitions()) {
-      if (d.name === name || d.alias === name) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  isNamespace(): boolean {
-    return this.type === "namespace";
-  }
-
-  isComponent(): boolean {
-    return this.type === "component";
-  }
-
-  hasNamespace(name: string): boolean {
-    return (
-      this.name !== undefined &&
-      this.isNamespace() &&
-      name.startsWith(this.name)
-    );
-  }
-
-  containsName(name: string): boolean {
-    return this.anyOf(
-      (child) =>
-        child.name == name ||
-        child.hasDefinition(name) ||
-        child.hasNamespace(name)
-    );
-  }
-
-  *lines(): Generator<Line> {
-    for (const c of this.content) {
-      if (c instanceof Line) {
-        yield c;
-      }
-    }
-  }
-
-  *definitions(): Generator<Definition> {
-    for (const c of this.content) {
-      if (c instanceof Definition) {
-        yield c;
-      }
-    }
-  }
-
-  *noLines(): Generator<Definition | string> {
-    for (const c of this.content) {
-      if (!(c instanceof Line)) {
-        yield c;
-      }
-    }
-  }
-
-  anyOf(chk: (c: Component) => boolean): boolean {
-    if (chk(this)) {
-      return true;
-    }
-    if (this.children) {
-      for (const c of this.children) {
-        if (c.anyOf(chk)) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
-  forAll(fun: (c: Component) => void): void {
-    fun(this);
-    if (this.children) {
-      for (const c of this.children) {
-        c.forAll(fun);
-      }
-    }
   }
 }

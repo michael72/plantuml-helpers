@@ -4,6 +4,64 @@ import * as vscode from "vscode";
 import * as rotate from "./rotate";
 import * as reformat from "./reformat";
 
+// this method is called when your extension is activated
+// your extension is activated the very first time the command is executed
+export function activate(context: vscode.ExtensionContext): void {
+  const swapLine = vscode.commands.registerTextEditorCommand(
+    "pumlhelper.swapLine",
+    (textEditor: vscode.TextEditor) => {
+      rotateSelected(textEditor, rotate.RotateDirection.Swap);
+    }
+  );
+  const rotateLeft = vscode.commands.registerTextEditorCommand(
+    "pumlhelper.rotateLineLeft",
+    (textEditor: vscode.TextEditor) => {
+      rotateSelected(textEditor, rotate.RotateDirection.Left);
+    }
+  );
+  const rotateRight = vscode.commands.registerTextEditorCommand(
+    "pumlhelper.rotateLineRight",
+    (textEditor: vscode.TextEditor) => {
+      rotateSelected(textEditor, rotate.RotateDirection.Right);
+    }
+  );
+  const autoFormat = vscode.commands.registerTextEditorCommand(
+    "pumlhelper.autoFormat",
+    (textEditor: vscode.TextEditor) => {
+      autoFormatContent(textEditor);
+    }
+  );
+  for (const s of [swapLine, rotateLeft, rotateRight, autoFormat]) {
+    context.subscriptions.push(s);
+  }
+}
+
+export function deactivate(): void {
+  // nothing to do
+}
+
+function rotateSelected(
+  textEditor: vscode.TextEditor,
+  dir: rotate.RotateDirection
+): void {
+  if (textEditor != null) {
+    const document = textEditor.document;
+    void textEditor.edit((editBuilder) => {
+      for (const sel of textEditor.selections) {
+        const range =
+          sel.isEmpty || sel.isSingleLine
+            ? document.lineAt(sel.active.line).range
+            : sel;
+        const lines = document.getText(range);
+        const rotated = lines.split("\n").map((line) => {
+          return rotate.rotateLine(line, dir);
+        });
+        editBuilder.replace(range, rotated.join("\n"));
+      }
+    }); // apply the (accumulated) replacement(s) (if multiple cursors/selections)
+  }
+}
+
 function autoFormatContent(textEditor: vscode.TextEditor): void {
   if (textEditor != null) {
     const document = textEditor.document;
@@ -67,62 +125,4 @@ function autoFormatContent(textEditor: vscode.TextEditor): void {
       }
     }); // apply the (accumulated) replacement(s) (if multiple cursors/selections)
   }
-}
-
-function rotateSelected(
-  textEditor: vscode.TextEditor,
-  dir: rotate.RotateDirection
-): void {
-  if (textEditor != null) {
-    const document = textEditor.document;
-    void textEditor.edit((editBuilder) => {
-      for (const sel of textEditor.selections) {
-        const range =
-          sel.isEmpty || sel.isSingleLine
-            ? document.lineAt(sel.active.line).range
-            : sel;
-        const lines = document.getText(range);
-        const rotated = lines.split("\n").map((line) => {
-          return rotate.rotateLine(line, dir);
-        });
-        editBuilder.replace(range, rotated.join("\n"));
-      }
-    }); // apply the (accumulated) replacement(s) (if multiple cursors/selections)
-  }
-}
-
-// this method is called when your extension is activated
-// your extension is activated the very first time the command is executed
-export function activate(context: vscode.ExtensionContext): void {
-  const swapLine = vscode.commands.registerTextEditorCommand(
-    "pumlhelper.swapLine",
-    (textEditor: vscode.TextEditor) => {
-      rotateSelected(textEditor, rotate.RotateDirection.Swap);
-    }
-  );
-  const rotateLeft = vscode.commands.registerTextEditorCommand(
-    "pumlhelper.rotateLineLeft",
-    (textEditor: vscode.TextEditor) => {
-      rotateSelected(textEditor, rotate.RotateDirection.Left);
-    }
-  );
-  const rotateRight = vscode.commands.registerTextEditorCommand(
-    "pumlhelper.rotateLineRight",
-    (textEditor: vscode.TextEditor) => {
-      rotateSelected(textEditor, rotate.RotateDirection.Right);
-    }
-  );
-  const autoFormat = vscode.commands.registerTextEditorCommand(
-    "pumlhelper.autoFormat",
-    (textEditor: vscode.TextEditor) => {
-      autoFormatContent(textEditor);
-    }
-  );
-  for (const s of [swapLine, rotateLeft, rotateRight, autoFormat]) {
-    context.subscriptions.push(s);
-  }
-}
-
-export function deactivate(): void {
-  // nothing to do
 }

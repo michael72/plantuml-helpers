@@ -42,17 +42,6 @@ const keyMap: Map<string, DiagramType> = new Map([
 
 const RegToken = /^\s*([a-z]+).*/;
 
-function _getTypeByKeywords(line: string): DiagramType {
-  const m = RegToken.exec(line);
-  if (m) {
-    const t = keyMap.get(m[1]);
-    if (t != null) {
-      return t;
-    }
-  }
-  return DiagramType.Unknown;
-}
-
 export function getType(content: Array<string>): DiagramType {
   for (const line of content) {
     const tpe = _getTypeByKeywords(line);
@@ -91,6 +80,17 @@ export function getType(content: Array<string>): DiagramType {
       if (line.indexOf(arrow) != -1) {
         return DiagramType.Sequence;
       }
+    }
+  }
+  return DiagramType.Unknown;
+}
+
+function _getTypeByKeywords(line: string): DiagramType {
+  const m = RegToken.exec(line);
+  if (m) {
+    const t = keyMap.get(m[1]);
+    if (t != null) {
+      return t;
     }
   }
   return DiagramType.Unknown;

@@ -6,38 +6,6 @@
  * @param repl the replacement
  * @return the replaced target string.
  */
-function _replaceAll(target: string, search: string, repl: string): string {
-  const i = target.indexOf(search);
-  return i === -1
-    ? target
-    : target.slice(0, i) +
-        repl +
-        _replaceAll(
-          target.slice(i + search.length, target.length),
-          search,
-          repl
-        );
-}
-
-/**
- * Replaces the characters that indicate the arrow drawn to the left by the characters
- * that go right - or vice versa. Example: replaces `>` by `<` in `->`
- *
- * @param arrow the actual arrow where the characters are replace
- * @param left representation of a character pointing in left direction
- * @param right opposite representation of left parameter
- * @return the reverted arrow
- */
-function _reverseAll(arrow: string, left: string, right: string): string {
-  return arrow.includes(left)
-    ? _replaceAll(arrow, left, right)
-    : _replaceAll(arrow, right, left);
-}
-
-export function reverseHead(head: string): string {
-  return _reverseAll(head, ">", "<");
-}
-
 /**
  * Reverses the whole string. `abcd` gets `dcba`.
  * @param s the string to reverse
@@ -81,4 +49,36 @@ export class DefaultMap<K, V> extends Map<K, V> {
       return v;
     }
   }
+}
+
+export function reverseHead(head: string): string {
+  return _reverseAll(head, ">", "<");
+}
+
+/**
+ * Replaces the characters that indicate the arrow drawn to the left by the characters
+ * that go right - or vice versa. Example: replaces `>` by `<` in `->`
+ *
+ * @param arrow the actual arrow where the characters are replace
+ * @param left representation of a character pointing in left direction
+ * @param right opposite representation of left parameter
+ * @return the reverted arrow
+ */
+function _reverseAll(arrow: string, left: string, right: string): string {
+  return arrow.includes(left)
+    ? _replaceAll(arrow, left, right)
+    : _replaceAll(arrow, right, left);
+}
+
+function _replaceAll(target: string, search: string, repl: string): string {
+  const i = target.indexOf(search);
+  return i === -1
+    ? target
+    : target.slice(0, i) +
+        repl +
+        _replaceAll(
+          target.slice(i + search.length, target.length),
+          search,
+          repl
+        );
 }
