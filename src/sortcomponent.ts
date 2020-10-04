@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { DefaultMap } from "./helpers";
 import { Component } from "./uml/component";
 import { Content, Definition } from "./uml/definition";
@@ -71,11 +72,9 @@ export class SortComponent {
 
     return Array.from(deps.keys()).sort((s1: string, s2: string) => {
       // sort objects to the beginning that are the least pointed to
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       let cmp = pointedCounts.get(s1)! - pointedCounts.get(s2)!;
       if (cmp === 0) {
         // more objects depend on the current key: sort to the end
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         cmp = deps.get(s2)!.length - deps.get(s1)!.length;
         if (cmp === 0) {
           // preserve original order
@@ -123,7 +122,7 @@ export class SortComponent {
     let addedDeps = savedDeps;
     while (addedDeps.length !== 0) {
       addedDeps = addedDeps.flatMap((c) =>
-        Array.from(this._addItemDeps(deps.get(c), savedDeps))
+        Array.from(this._itemDeps(deps.get(c), savedDeps))
       );
     }
   }
@@ -174,20 +173,14 @@ export class SortComponent {
     comp: Component,
     parentComponents?: Map<string, string>
   ): Map<string, string> {
-    let names = new Map<string, string>();
-    if (comp.name != null && comp.name) {
-      names.set(comp.name, comp.isComponent() ? `[${comp.name}]` : comp.name);
-    }
     this._removeLeadingDots(comp);
+    const names = this._getComponentNames(comp);
 
     const { lineComponents, lineInterfaces } = this._extractLineDefinitions(
       comp,
       names
     );
-    for (const name of lineComponents) {
-      names.set(name, `[${name}]`);
-    }
-    names = this._mergeChildComponents(comp, names, lineComponents);
+    Array.from(lineComponents).forEach((n) => names.set(n, `[${n}]`));
 
     const interfaces = this._filterExistingInterfaces(
       comp,
@@ -195,7 +188,8 @@ export class SortComponent {
       names,
       parentComponents
     );
-    interfaces.forEach((name) => names.set(name, name));
+    interfaces.forEach((i) => names.set(i, i));
+
     const defaultItem = this._defaultItem(lineComponents, names);
     this._addLineDefinitions(comp, lineComponents, interfaces, defaultItem);
 
@@ -219,11 +213,19 @@ export class SortComponent {
     }
   }
 
+  private _getComponentNames(comp: Component) {
+    const names = new Map<string, string>();
+    if (comp.name != null && comp.name) {
+      names.set(comp.name, comp.isComponent() ? `[${comp.name}]` : comp.name);
+    }
+    return names;
+  }
+
   private _extractLineDefinitions(comp: Component, names: Map<string, string>) {
     const lineComponents = new Set<string>();
     const lineInterfaces = new Set<string>();
     for (const def of comp.definitions()) {
-      this._addDefinitions(def, lineComponents, lineInterfaces, names);
+      this._addDefinitions(def, names);
     }
     for (const line of comp.lines()) {
       this._getInterfacesAndComponents(
@@ -233,23 +235,18 @@ export class SortComponent {
         names
       );
     }
+    this._mergeChildComponents(comp, names, lineComponents);
+
     return { lineComponents, lineInterfaces };
   }
 
-  private _addDefinitions(
-    def: Definition,
-    lineComponents: Set<string>,
-    lineInterfaces: Set<string>,
-    components: Map<string, string>
-  ) {
-    (def.isComponent() ? lineComponents : lineInterfaces).delete(def.name);
-    if (def.alias != null && def.alias) {
-      const alias = def.isComponent() ? `[${def.alias}]` : def.alias;
-      components.set(def.name, alias);
-      components.set(def.alias, alias);
-    } else {
-      const name = def.isComponent() ? `[${def.name}]` : def.name;
-      components.set(def.name, name);
+  private _addDefinitions(def: Definition, components: Map<string, string>) {
+    const isAlias = def.alias != null && def.alias.length > 0;
+    const aliasName = isAlias ? def.alias! : def.name;
+    const compName = def.isComponent() ? `[${aliasName}]` : aliasName;
+    components.set(aliasName, compName);
+    if (isAlias) {
+      components.set(def.name, compName);
     }
   }
 
@@ -276,26 +273,25 @@ export class SortComponent {
     if (comp.children) {
       for (const c of comp.children) {
         const childComponents = this._componentNames(c, names);
-        for (const n of childComponents.keys()) {
-          lineComponents.delete(n);
+        for (const [k, v] of childComponents.entries()) {
+          lineComponents.delete(k);
+          names.set(k, v);
         }
-        names = new Map<string, string>([...names, ...childComponents]);
       }
     }
-    return names;
   }
 
   private _filterExistingInterfaces(
     comp: Component,
     lineInterfaces: Set<string>,
     names: Map<string, string>,
-    parentComponents: Map<string, string> | undefined
+    parentNames: Map<string, string> | undefined
   ) {
     const isNamespace = comp.isNamespace();
     return Array.from(lineInterfaces).filter(
       (name) =>
         !names.has(name) &&
-        (parentComponents === undefined || !parentComponents.has(name)) &&
+        (parentNames === undefined || !parentNames.has(name)) &&
         (!isNamespace || !name.includes("."))
     );
   }
@@ -356,7 +352,6 @@ export class SortComponent {
       // remove leading spaces
       line.sides[0] = line.sides[0].trimLeft();
       if (c.isNamespace()) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this._addNamespace(line, c.name!);
       }
     }
@@ -390,7 +385,7 @@ export class SortComponent {
     }
   }
 
-  private *_addItemDeps(
+  private *_itemDeps(
     dependentComponents: string[] | undefined,
     savedDeps: string[]
   ): Generator<string> {
