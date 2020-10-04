@@ -190,7 +190,9 @@ export class SortComponent {
     );
     interfaces.forEach((i) => names.set(i, i));
 
-    const defaultItem = this._defaultItem(lineComponents, names);
+    const defaultItem = this._hasComponents(lineComponents, names)
+      ? "interface"
+      : "class";
     this._addLineDefinitions(comp, lineComponents, interfaces, defaultItem);
 
     return names;
@@ -296,17 +298,15 @@ export class SortComponent {
     );
   }
 
-  private _defaultItem(
+  private _hasComponents(
     lineComponents: Set<string>,
     names: Map<string, string>
   ) {
     // hasComponents -> is a component diagram, otherwise: class diagram
-    const hasComponents =
+    return (
       lineComponents.size > 0 ||
-      Array.from(names.values()).some((v) => v.startsWith("["));
-
-    const defaultItem = hasComponents ? "interface" : "class";
-    return defaultItem;
+      Array.from(names.values()).some((v) => v.startsWith("["))
+    );
   }
 
   private _addLineDefinitions(
