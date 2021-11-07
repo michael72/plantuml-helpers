@@ -164,8 +164,7 @@ export class SortComponent {
         }
       }
       // should not come here
-      /* istanbul ignore next */
-      throw new Error("component not found");
+      return 0;
     });
   }
 
