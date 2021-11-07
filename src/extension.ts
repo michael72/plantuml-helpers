@@ -70,24 +70,42 @@ function autoFormatContent(textEditor: vscode.TextEditor): void {
         let range = sel;
         if (sel.isEmpty || sel.isSingleLine) {
           let line = sel.active.line;
-          let last = line;
           while (line >= 0) {
             const text = document.lineAt(line).text.trim();
+            const nextLine = document.lineAt(line+1).text.trim();
             if (
+              // auto format starting from the start of the document (without start)
+              // or from opening bracket - including that bracket
               text.startsWith("@startuml") ||
               text === "```plantuml" ||
-              text.includes("{")
+              text.includes("{") ||
+              nextLine === "{"
             ) {
-              line += 1;
+              if (text === "{") {
+                // add identifier _before_ the opening bracket (like package etc.)
+                line -= 1;
+              } else if (nextLine !== "{" && !text.includes("{")) {
+                line += 1;
+              } 
               break;
             }
             line -= 1;
           }
+          let bracketCount = 0;
+          let last = line;
           while (last < document.lineCount) {
             const text = document.lineAt(last).text.trim();
-            if (text === "@enduml" || text === "```" || text.includes("}")) {
-              last -= 1;
+            if (text === "@enduml" || text === "```" || (text.includes("}") && bracketCount === 1)) {
+              if (!text.includes("}")) {
+                last -= 1;
+              }
               break;
+            }
+            else if (text.includes("{")) {
+              bracketCount += 1;
+            }
+            else if (text.includes("}")) {
+              bracketCount -= 1;
             }
             last += 1;
           }
@@ -104,6 +122,7 @@ function autoFormatContent(textEditor: vscode.TextEditor): void {
             last,
             document.lineAt(last).range.end.character
           );
+          textEditor.selection = range;
         }
         const oldText = document.getText(range);
         try {
