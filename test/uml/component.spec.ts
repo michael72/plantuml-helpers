@@ -3,7 +3,7 @@ import { Component } from "../../src/uml/component";
 import { Definition } from "../../src/uml/definition";
 
 import { should } from "chai";
-import { equal } from "assert";
+import { strictEqual } from "assert";
 should();
 
 describe("Component", () => {
@@ -106,7 +106,7 @@ describe("Component", () => {
       const c1 = Definition.fromString("[First component]")!;
       c1.type.should.equal("component");
       c1.name.should.equal("First component");
-      equal(c1.alias, undefined);
+      strictEqual(c1.alias, undefined);
 
       const c2 = Definition.fromString("[Another component] as Comp2")!;
       c2.type.should.equal("component");
@@ -116,7 +116,7 @@ describe("Component", () => {
       const c3 = Definition.fromString("component Comp3")!;
       c3.type.should.equal("component");
       c3.name.should.equal("Comp3");
-      equal(c3.alias, undefined);
+      strictEqual(c3.alias, undefined);
 
       const c4 = Definition.fromString("component [Last\tcomponent] as Comp4")!;
       c4.type.should.equal("component");
@@ -128,7 +128,7 @@ describe("Component", () => {
       const c1 = Definition.fromString('() "First Interface"')!;
       c1.type.should.equal("interface");
       c1.name.should.equal("First Interface");
-      equal(c1.alias, undefined);
+      strictEqual(c1.alias, undefined);
 
       const c2 = Definition.fromString('() "Another interface" as Interf2')!;
       c2.type.should.equal("interface");
@@ -138,7 +138,7 @@ describe("Component", () => {
       const c3 = Definition.fromString("interface Interf3")!;
       c3.type.should.equal("interface");
       c3.name.should.equal("Interf3");
-      equal(c3.alias, undefined);
+      strictEqual(c3.alias, undefined);
 
       const c4 = Definition.fromString(
         'interface "Last\\ninterface" as Interf4'
@@ -152,7 +152,7 @@ describe("Component", () => {
       ["a b c", "ABC", 'package "blub"', "interf as bla"].forEach(
         (s: string) => {
           const def = Definition.fromString(s);
-          equal(def, undefined);
+          strictEqual(def, undefined);
         }
       );
     });
