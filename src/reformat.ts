@@ -23,11 +23,13 @@ export function autoFormatTxt(txt: string): string {
   const lines = txt.split(crLf);
   const tpe = getType(lines);
   if (tpe == DiagramType.ClassComponent) {
-    return (
-      new SortComponent(Component.fromString(lines))
-        .autoFormat()
-        .toString(crLf) + ending
-    );
+    let formatted = new SortComponent(Component.fromString(lines))
+      .autoFormat()
+      .toString(crLf);
+    if (!formatted.endsWith(ending)) {
+      formatted += ending;
+    }
+    return formatted;
   } else if (tpe == DiagramType.Sequence) {
     return (
       new SortSequence(Component.fromString(lines))

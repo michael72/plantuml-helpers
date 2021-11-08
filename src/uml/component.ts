@@ -1,8 +1,9 @@
-import { compToString, toString, Content, Definition } from "./definition";
+import { compToString, toString, joinContent, Content, Definition } from "./definition";
 import { Line } from "./line";
 
 export class Component {
   constructor(
+    public header: Array<Content>,
     public content: Array<Content>,
     public children?: Array<Component>,
     public type?: string,
@@ -25,11 +26,11 @@ export class Component {
     }
     // post-filter: remove empty lines
     arr = arr.filter((line: string) => {
-      return line.length > 0;
+      return line.trim().length > 0;
     });
 
     // multiple components in sequence
-    const parent = new Component(new Array<Content>());
+    const parent = new Component(new Array<Content>(), new Array<Content>());
     const children = new Array<Component>();
     for (let i = 0; i < arr.length; ++i) {
       const [comp, new_i] = this._fromString(arr, i);
@@ -74,14 +75,17 @@ export class Component {
     }
 
     let prevLine: Line | undefined;
+    const header = new Array<Content>();
     const content = new Array<Content>();
     let children: Array<Component> | undefined = undefined;
+    let isHeader = i == 0;
 
     // parse the content of the component
     for (; i < arr.length; ++i) {
       const s = arr[i];
       const def = Definition.fromString(s);
       if (def) {
+        isHeader = false;
         content.push(def);
       } else if (this.regexTitle.exec(s)) {
         // parse child element until closing bracket
@@ -92,19 +96,22 @@ export class Component {
       } else {
         const line = Line.fromString(s);
         if (line) {
+          isHeader = false;
           prevLine = line;
           content.push(line);
         } else if (s.trim() == "}") {
           break;
         } else if (prevLine) {
           prevLine.attach(s);
+        } else if (isHeader) {
+          header.push(s);
         } else {
           content.push(s);
         }
       }
     }
 
-    return [new this(content, children, type, name, suffix, printName), i];
+    return [new this(header, content, children, type, name, suffix, printName), i];
   }
 
   anyOf(chk: (c: Component) => boolean): boolean {
@@ -243,16 +250,12 @@ export class Component {
     let result = "";
     if (this.children) {
       for (const child of this.children) {
-        if (result.length > 0) {
-          result += lf;
-        }
-        result += child._toStringTab(tab, lf).trimRight();
-      }
-      if (this.content.length > 0) {
-        result += lf;
+        result = joinContent(result, child._toStringTab(tab, lf).trimRight(), lf);
       }
     }
-    result += toString(this.content, lf);
+    result = joinContent(toString(this.header, lf), result, lf);
+    result = joinContent(result, toString(this.content, lf), lf);
     return result;
   }
 }
+ 

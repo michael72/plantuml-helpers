@@ -398,4 +398,56 @@ note left of A: this is an A
     const actual = reformat.autoFormatTxt(original);
     actual.should.equal(original);
   });
+
+  it("should sort classes and preserve their content", () => {
+    const original = `title "some title"
+hide empty members
+package a
+{
+class A {
+  + foo();
+}
+class B {
+  + bar() : string
+}
+}
+package c
+{
+  class C {
+    - bla() : int
+  }
+}
+A -> C
+B -> A
+`
+  const expected = `title "some title"
+hide empty members
+package c {
+  class C {
+    - bla() : int
+  }
+}
+package a {
+  class A {
+    + foo();
+  }
+  class B {
+    + bar() : string
+  }
+}
+B -> A
+A -> C
+`
+  const actual = reformat.autoFormatTxt(original);
+  actual.should.equal(expected);
+  });
+
+  it("should leave the content of a class as is", () => {
+    const original = `class A {
+  + foo();
+}
+`
+    const actual = reformat.autoFormatTxt(original);
+    actual.should.equal(original);
+  });
 });

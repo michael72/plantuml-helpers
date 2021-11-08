@@ -32,6 +32,10 @@ export function toString(content: Array<Content>, lf: string): string {
     .join(lf);
 }
 
+export function joinContent(left: string, right: string, lf: string): string {
+  return left + (left.length > 0 && right.length > 0 ? lf : "") + right;
+}
+
 export class Definition {
   constructor(
     public type: string,
