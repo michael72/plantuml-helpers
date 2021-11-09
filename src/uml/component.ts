@@ -5,6 +5,7 @@ export class Component {
   constructor(
     public header: Array<Content>,
     public content: Array<Content>,
+    public footer: Array<Content>,
     public children?: Array<Component>,
     public type?: string,
     public name?: string,
@@ -30,7 +31,7 @@ export class Component {
     });
 
     // multiple components in sequence
-    const parent = new Component(new Array<Content>(), new Array<Content>());
+    const parent = new Component(new Array<Content>(), new Array<Content>(), new Array<Content>());
     const children = new Array<Component>();
     for (let i = 0; i < arr.length; ++i) {
       const [comp, new_i] = this._fromString(arr, i);
@@ -77,6 +78,7 @@ export class Component {
     let prevLine: Line | undefined;
     const header = new Array<Content>();
     const content = new Array<Content>();
+    let footer = new Array<Content>();
     let children: Array<Component> | undefined = undefined;
     let isHeader = i == 0;
 
@@ -110,8 +112,11 @@ export class Component {
         }
       }
     }
+    if (prevLine) {
+      footer = prevLine.moveAttached();
+    }
 
-    return [new this(header, content, children, type, name, suffix, printName), i];
+    return [new this(header, content, footer, children, type, name, suffix, printName), i];
   }
 
   anyOf(chk: (c: Component) => boolean): boolean {
@@ -255,6 +260,7 @@ export class Component {
     }
     result = joinContent(toString(this.header, lf), result, lf);
     result = joinContent(result, toString(this.content, lf), lf);
+    result = joinContent(result, toString(this.footer, lf), lf);
     return result;
   }
 }

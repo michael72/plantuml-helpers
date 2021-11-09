@@ -60,6 +60,15 @@ export class Line {
     this.attached.push(line);
   }
 
+  moveAttached(): Array<string> {
+    if (this.attached) {
+      const result = this.attached;
+      this.attached = undefined;
+      return result;
+    }
+    return new Array<string>();
+  }
+
   combinedDirection(): CombinedDirection {
     if (this.arrow.layout === Layout.Horizontal) {
       return this.arrow.direction === ArrowDirection.Left
