@@ -20,7 +20,5 @@ jobs:
             - ./node_modules
       - run:
           name: test
-          command: npm install && npm run vscode:prepublish && npm t && codecov -f coverage/*.json
-      - run:
-          name: upload to codecov
-          command: bash <(curl -s https://codecov.io/bash)
+          command: npm install && npm run vscode:prepublish && npm t
+      
