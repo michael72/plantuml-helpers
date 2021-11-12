@@ -17,16 +17,6 @@ jobs:
       - run:
           name: test
           command: npm install && npm run vscode:prepublish && npm t && codecov -f coverage/*.json
-
-      - store_artifacts:
-          path: test-results.xml
-          prefix: tests
-      - store-artifacts:
-          path: coverage
-          prefix: coverage
-      - store_test_results:
-          path: test-results.xml
       - run:
           name: upload to codecov
           command: bash <(curl -s https://codecov.io/bash)
-          
