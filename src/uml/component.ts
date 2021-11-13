@@ -258,9 +258,11 @@ export class Component {
         result = joinContent(result, child._toStringTab(tab, lf).trimRight(), lf);
       }
     }
-    result = joinContent(toString(this.header, lf), result, lf);
-    result = joinContent(result, toString(this.content, lf), lf);
-    result = joinContent(result, toString(this.footer, lf), lf);
+    // each one extra lf between header + children + content + footer
+    const lf2 = lf + lf;
+    result = joinContent(toString(this.header, lf), result, lf2);
+    result = joinContent(result, toString(this.content, lf), lf2);
+    result = joinContent(result, toString(this.footer, lf), lf2);
     return result;
   }
 }

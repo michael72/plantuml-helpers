@@ -60,13 +60,23 @@ export class Line {
     this.attached.push(line);
   }
 
+  isNoteAttached(): boolean {
+    return this.attached != undefined && this.attached.length > 0 && this.attached[this.attached.length-1].startsWith("note ");
+  }
+
   moveAttached(): Array<string> {
-    if (this.attached) {
-      const result = this.attached;
-      this.attached = undefined;
-      return result;
+    let result = new Array<string>();
+    // move attached only if not a note (notes belong to the preceeding line)
+    while (this.attached && !this.isNoteAttached()) {
+      const last = this.attached.pop();
+      if (last == undefined) {
+        this.attached = undefined;
+      }
+      else {
+        result = [last, ...result];
+      }
     }
-    return new Array<string>();
+    return result;
   }
 
   combinedDirection(): CombinedDirection {

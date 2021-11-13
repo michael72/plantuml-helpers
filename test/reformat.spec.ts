@@ -176,7 +176,7 @@ describe("Reformat", () => {
       "}\n" +
       "package a {\n" +
       "  component A\n" +
-      "}\n" +
+      "}\n\n" +
       "[A] -> [B]\n" +
       "[B] -> [C]\n";
     const actual = reformat.autoFormatTxt(original);
@@ -225,7 +225,7 @@ describe("Reformat", () => {
       "      component C\n" +
       "    }\n" +
       "  }\n" +
-      "}\n" +
+      "}\n\n" +
       "IA <|-- [A]\n" +
       "[A] o-> B\n" +
       "[A] *-> [C]\n" +
@@ -243,7 +243,7 @@ describe("Reformat", () => {
       "class Foo <<bla>> #red-green {\n" +
       "  class B\n" +
       "  class A\n" +
-      "}\n" +
+      "}\n\n" +
       "A -> B\n" +
       "A -> C\n";
     const actual = reformat.autoFormatTxt(original);
@@ -266,7 +266,7 @@ describe("Reformat", () => {
       "}\n" +
       "package net.dummy #DDDDDD {\n" +
       "  class DPerson\n" +
-      "}\n" +
+      "}\n\n" +
       "class BaseClass\n" +
       "BaseClass <|-- DPerson\n" +
       "BaseClass <|-- Person\n" +
@@ -282,7 +282,7 @@ describe("Reformat", () => {
       "package foo {\n" +
       "  component A {\n" +
       "  }\n" +
-      "}\n" +
+      "}\n\n" +
       "[A] --|> IA\n";
     const actual = reformat.autoFormatTxt(original);
     actual.should.equal(expected);
@@ -318,6 +318,7 @@ namespace net.dummy #DDDDDD {
 namespace net.foo {
   class Person
 }
+
 class BaseClass
 IBase <|-- BaseClass
 BaseClass <|-- net.unused.Person
@@ -392,12 +393,46 @@ C -> D
 
   it("should preserve notes", () => {
     const original = `title Foo
+
 A -> B
 note left of A: this is an A
 `;
     const actual = reformat.autoFormatTxt(original);
     actual.should.equal(original);
   });
+
+  it("should preserve notes and add footer", () => {
+    const original = `title Foo
+
+A -> B
+note left of A: this is an A
+
+footer
+`;
+    const actual = reformat.autoFormatTxt(original);
+    actual.should.equal(original);
+  });
+
+  it("should put spaces between header, classes, connections and footer", () => {
+    const original = `header
+class A {
+}
+A -> B
+footer
+`;
+  const expected = `header
+
+class A {
+}
+
+A -> B
+
+footer
+`;
+    const actual = reformat.autoFormatTxt(original);
+    actual.should.equal(expected);
+  });
+
 
   it("should sort classes and preserve their content", () => {
     const original = `title "some title"
@@ -422,6 +457,7 @@ B -> A
 `
   const expected = `title "some title"
 hide empty members
+
 package c {
   class C {
     - bla() : int
@@ -435,6 +471,7 @@ package a {
     + bar() : string
   }
 }
+
 B -> A
 A -> C
 `
