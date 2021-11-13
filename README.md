@@ -3,7 +3,7 @@
 This is a small helper for editing PlantUML files.
 
 [![codecov](https://codecov.io/gh/michael72/plantuml-helpers/branch/master/graph/badge.svg)](https://codecov.io/gh/michael72/plantuml-helpers)
-[![Build Status](https://travis-ci.org/michael72/plantuml-helpers.svg?branch=master)](https://travis-ci.org/michael72/plantuml-helpers)
+[![CircleCI](https://circleci.com/gh/michael72/plantuml-helpers.svg?style=svg)](https://circleci.com/gh/michael72/plantuml-helpers)
 
 ![Sample](doc/puml-helpers.gif)
 
