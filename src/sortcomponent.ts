@@ -2,19 +2,46 @@
 import { DefaultMap } from "./helpers";
 import { Component } from "./uml/component";
 import { Content, Definition } from "./uml/definition";
-import { Line } from "./uml/line";
+import { CombinedDirection, Line } from "./uml/line";
 
 export class SortComponent {
   constructor(private component: Component) {}
 
-  autoFormat(): Component {
+  autoFormat(rebuild: boolean): Component {
     this.restructure();
     for (const line of this.component.lines()) {
-      line.setDefaultDirection();
+      line.setDefaultDirection(rebuild);
     }
     this._sort();
     this._sortPackages();
+    if (rebuild) {
+      this._rebuild();
+    }
     return this.component;
+  }
+
+  private _rebuild() : void {
+    let prevName = "";
+    let prevDir = CombinedDirection.Up;
+    let cnt = 0;
+
+    for (let i = this.component.content.length-1; i >= 0; --i) {
+      const c = this.component.content[i];
+      if (c instanceof Line) {
+        const name = c.componentNames()[0]; 
+        const dir = c.combinedDirection();
+        if (name === prevName && dir == prevDir) {
+          cnt += 2;
+          for (let j = 0; j < cnt; ++j) {
+            c.rotateRight();
+          }
+        } else {
+          prevName = name;
+          prevDir = dir;
+          cnt = -1;
+        }
+      }
+    }
   }
 
   restructure(): void {

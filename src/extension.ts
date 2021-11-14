@@ -28,10 +28,16 @@ export function activate(context: vscode.ExtensionContext): void {
   const autoFormat = vscode.commands.registerTextEditorCommand(
     "pumlhelper.autoFormat",
     (textEditor: vscode.TextEditor) => {
-      autoFormatContent(textEditor);
+      autoFormatContent(textEditor, false);
     }
   );
-  for (const s of [swapLine, rotateLeft, rotateRight, autoFormat]) {
+  const reFormat = vscode.commands.registerTextEditorCommand(
+    "pumlhelper.reFormat",
+    (textEditor: vscode.TextEditor) => {
+      autoFormatContent(textEditor, true);
+    }
+  );
+  for (const s of [swapLine, rotateLeft, rotateRight, autoFormat, reFormat]) {
     context.subscriptions.push(s);
   }
 }
@@ -62,7 +68,7 @@ function rotateSelected(
   }
 }
 
-function autoFormatContent(textEditor: vscode.TextEditor): void {
+function autoFormatContent(textEditor: vscode.TextEditor, rebuild: boolean): void {
   if (textEditor != null) {
     const document = textEditor.document;
     void textEditor.edit((editBuilder) => {
@@ -126,7 +132,7 @@ function autoFormatContent(textEditor: vscode.TextEditor): void {
         }
         const oldText = document.getText(range);
         try {
-          const newText = reformat.autoFormatTxt(oldText);
+          const newText = reformat.autoFormatTxt(oldText, rebuild);
           if (oldText.trim() === newText.trim()) {
             void vscode.window.showInformationMessage(
               "The diagram was already sorted."

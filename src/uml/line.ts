@@ -79,6 +79,23 @@ export class Line {
     return result;
   }
 
+  rotateRight(): void {
+    switch(this.combinedDirection()) {
+      case CombinedDirection.Right:
+        this.setCombinedDirection(CombinedDirection.Down);
+        break;
+      case CombinedDirection.Down:
+        this.setCombinedDirection(CombinedDirection.Left);
+        break;
+      case CombinedDirection.Left:
+        this.setCombinedDirection(CombinedDirection.Up);
+        break;
+      case CombinedDirection.Up:
+        this.setCombinedDirection(CombinedDirection.Right);
+        break;
+    }
+  }
+
   combinedDirection(): CombinedDirection {
     if (this.arrow.layout === Layout.Horizontal) {
       return this.arrow.direction === ArrowDirection.Left
@@ -129,10 +146,15 @@ export class Line {
         : Layout.Horizontal;
   }
 
-  setDefaultDirection(): void {
-    const defaultDir = this._defaultDirection();
-    if (defaultDir != undefined) {
-      this.setCombinedDirection(defaultDir);
+  setDefaultDirection(rebuild: boolean): void {
+    if (rebuild) {
+      this.setCombinedDirection(this.arrow.isInheritance() ? CombinedDirection.Up : CombinedDirection.Right);
+    }
+    else {
+      const defaultDir = this._defaultDirection();
+      if (defaultDir != undefined) {
+        this.setCombinedDirection(defaultDir);
+      }
     }
   }
 

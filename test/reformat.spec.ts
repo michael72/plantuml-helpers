@@ -333,6 +333,51 @@ net.dummy.Meeting o- net.dummy.Person
     actual.should.equal(expected);
   });
 
+  it("should rearrange on reformat", () => {
+    const original = `         
+class BaseClass
+namespace net.foo {
+  net.dummy.Person  <|- Person
+  .BaseClass <|-- Person
+  .net.dummy.Meeting o-- Person
+}
+namespace net.dummy #DDDDDD {
+  class Person
+  .BaseClass <|-- Person
+  Meeting o-- Person
+  .BaseClass <|-- Meeting
+}
+namespace {
+  class Foo;
+}
+IBase <|-- BaseClass
+BaseClass <|-- net.unused.Person
+`;
+    const expected = `namespace {
+  class Foo;
+}
+namespace net.dummy #DDDDDD {
+  class Meeting
+  class Person
+}
+namespace net.foo {
+  class Person
+}
+
+class BaseClass
+IBase <|-- BaseClass
+net.unused.Person -|> BaseClass
+BaseClass <|- net.foo.Person
+net.dummy.Meeting -|> BaseClass
+BaseClass <|-- net.dummy.Person
+net.dummy.Meeting o- net.foo.Person
+net.dummy.Person <|-- net.foo.Person
+net.dummy.Meeting o- net.dummy.Person
+`;
+    const actual = reformat.autoFormatTxt(original, true);
+    actual.should.equal(expected);
+  });
+
   it("should order a sequence diagram by dependency and clean it up", () => {
     const original = `participant B
 A -> B
@@ -487,4 +532,29 @@ A -> C
     const actual = reformat.autoFormatTxt(original);
     actual.should.equal(original);
   });
+
+  it("should reformat in all directions", () => {
+    const original = `[A] -> [B]
+[B] -> [C]
+[C] -> [D]
+[B] -> [E]
+[B] -> [F]
+[C] -> [G]
+[C] -> [H]
+[C] -> [J]
+`
+    const expected = `[A] -> [B]
+[E] <-- [B]
+[B] --> [F]
+[B] -> [C]
+[C] --> [D]
+[G] <-- [C]
+[C] --> [H]
+[C] -> [J]
+`
+    
+  const actual = reformat.autoFormatTxt(original, true);
+  actual.should.equal(expected);
+  })
+
 });

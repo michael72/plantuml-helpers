@@ -7,7 +7,7 @@ const REGEX_LINEENDING = /(.*\S+)(\s*)$/s;
 
 export const UNKNOWN_DIAGRAM_TYPE = "Unable to determine diagram type";
 
-export function autoFormatTxt(txt: string): string {
+export function autoFormatTxt(txt: string, rebuild = false): string {
   const crLf = _crLf(txt);
   const m = REGEX_LINEENDING.exec(txt);
   // auto formatting does not include the ending - add it later
@@ -24,7 +24,7 @@ export function autoFormatTxt(txt: string): string {
   const tpe = getType(lines);
   if (tpe == DiagramType.ClassComponent) {
     let formatted = new SortComponent(Component.fromString(lines))
-      .autoFormat()
+      .autoFormat(rebuild)
       .toString(crLf);
     if (!formatted.endsWith(ending)) {
       formatted += ending;
