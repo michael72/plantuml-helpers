@@ -26,6 +26,8 @@ Supported diagram types are:
     * component + class diagrams
     * sequence diagrams - here the "sorting" is done by declaring the participants and actors in order
 
+* PlantUMLHelpers: Reformat UML is similar to auto format, however directions may all be changed and directions set by user are all overridden. Also if one source component points to several other components in the same direction the directions are automatically adjusted to point also up/down or left/right. This may already lead to good enough results.
+
 Commands with key combinations are:
 
 * Alt-8: rotate arrow to left

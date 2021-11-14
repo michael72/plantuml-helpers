@@ -143,76 +143,22 @@ IConnector <|-- [Connector]
 
 Nicely done!
 
-### Circular dependencies
+#### Alternative using Reformat
 
-A few notes on doing circular dependencies. TODO.
-
-```plantuml
-@startuml
-title Unordered
-[A] -> [B]
-[B] -> [C]
-[C] -> [D]
-[D] -> [A]
-[G] -> [B]
-[D] -> [H]
-@enduml
-```
-
-```plantuml
-title auto formatted
-@startuml
-[G] -> [B]
-[B] -> [C]
-[C] -> [D]
-[D] -> [H]
-[D] -> [A]
-[A] -> [B]
-@enduml
-```
-
-```plantuml
-title Ordered - with change in direction
-[G] -> [B]
-[B] --> [C]
-[C] -> [D]
-[D] -> [H]
-[A] <-- [D]
-[B] <- [A]
-``` 
-
-### Simple circles
+Using `Reformat` command leads directly to the following result:
 
 ```plantuml
 @startuml
-title 4 nodes
-[A] -> [B]
-[B] --> [C]
-[D] <- [C]
-[A] <-- [D]
+ICamera <|-- [Camera]
+[Camera] o--> [Commands]
+[Camera] .> IConnector
+[Commands] o-> [CommandChannel]
+[Channel] o-> IConnector
+IConnector <|-- [Connector]
+[CommandChannel] -|> [Channel]
+[Channel] <|-- [DataChannel]
+[Connector] o-> Socket
+[ImageProvider] o-> [DataChannel]
 @enduml
 ```
-
-```plantuml
-@startuml
-title 5 nodes
-[A] -> [B]
-[B] -> [C]
-[C] --> [D]
-[E] <- [D]
-[A] <-- [E]
-@enduml
-```
-
-```plantuml
-@startuml
-title 6 nodes
-[A] -> [B]
-[B] -> [C]
-[C] --> [D]
-[E] <- [D]
-[F] <- [E]
-[A] <-- [F]
-@enduml
-```
-
+![Reformat](examples_7.svg)
