@@ -76,9 +76,10 @@ function autoFormatContent(textEditor: vscode.TextEditor, rebuild: boolean): voi
         let range = sel;
         if (sel.isEmpty || sel.isSingleLine) {
           let line = sel.active.line;
-          while (line >= 0) {
+          while (line >= 0 && line < document.lineCount) {
             const text = document.lineAt(line).text.trim();
-            const nextLine = document.lineAt(line+1).text.trim();
+            const nextLine = (line + 1) < document.lineCount ?
+              document.lineAt(line + 1).text.trim() : "";
             if (
               // auto format starting from the start of the document (without start)
               // or from opening bracket - including that bracket
@@ -92,7 +93,7 @@ function autoFormatContent(textEditor: vscode.TextEditor, rebuild: boolean): voi
                 line -= 1;
               } else if (nextLine !== "{" && !text.includes("{")) {
                 line += 1;
-              } 
+              }
               break;
             }
             line -= 1;
