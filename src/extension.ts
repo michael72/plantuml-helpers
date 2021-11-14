@@ -100,7 +100,7 @@ function autoFormatContent(textEditor: vscode.TextEditor, rebuild: boolean): voi
           }
           let bracketCount = 0;
           let last = line;
-          while (last < document.lineCount) {
+          while (last >= 0 && last < document.lineCount) {
             const text = document.lineAt(last).text.trim();
             if (text === "@enduml" || text === "```" || (text.includes("}") && bracketCount === 1)) {
               if (!text.includes("}")) {
