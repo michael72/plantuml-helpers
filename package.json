@@ -2,10 +2,10 @@
   "name": "plantuml-helpers",
   "displayName": "PlantUmlHelpers",
   "description": "Editor extension that helps facilitate editing and creation of PlantUML diagrams",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "publisher": "michael72",
   "engines": {
-    "vscode": "^1.49.0"
+    "vscode": "^1.59.0"
   },
   "license": "SEE LICENSE IN LICENSE.txt",
   "bugs": {
@@ -26,7 +26,8 @@
     "onCommand:pumlhelper.swapLine",
     "onCommand:pumlhelper.rotateLineLeft",
     "onCommand:pumlhelper.rotateLineRight",
-    "onCommand:pumlhelper.autoFormat"
+    "onCommand:pumlhelper.autoFormat",
+    "onCommand:pumlhelper.reFormat"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -50,7 +51,13 @@
         "command": "pumlhelper.autoFormat",
         "title": "Auto Format UML",
         "category": "PlantUMLHelpers"
+      },
+      {
+        "command": "pumlhelper.reFormat",
+        "title": "Reformat UML",
+        "category": "PlantUMLHelpers"
       }
+
     ],
     "keybindings": [
       {
