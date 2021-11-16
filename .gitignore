@@ -8,4 +8,6 @@ node_modules
 coverage/
 *.orig
 *.cpuprofile
+.out/
+puml/
 
