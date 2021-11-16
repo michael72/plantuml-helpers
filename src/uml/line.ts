@@ -96,6 +96,27 @@ export class Line {
     }
   }
 
+  rotateLeft(): void {
+    switch(this.combinedDirection()) {
+      case CombinedDirection.Right:
+        this.setCombinedDirection(CombinedDirection.Up);
+        break;
+      case CombinedDirection.Down:
+        this.setCombinedDirection(CombinedDirection.Right);
+        break;
+      case CombinedDirection.Left:
+        this.setCombinedDirection(CombinedDirection.Down);
+        break;
+      case CombinedDirection.Up:
+        this.setCombinedDirection(CombinedDirection.Left);
+        break;
+    }
+  }
+
+  layout(): Layout {
+    return this.arrow.layout;
+  }
+
   combinedDirection(): CombinedDirection {
     if (this.arrow.layout === Layout.Horizontal) {
       return this.arrow.direction === ArrowDirection.Left

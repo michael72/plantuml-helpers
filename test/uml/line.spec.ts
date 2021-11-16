@@ -127,4 +127,28 @@ describe("Line class", () => {
     parsed.arrow.line.should.equal("-");
     parsed.toString().should.equal(line);
   });
+
+  it ("should rotate an arrow right", () => {
+    const line = Line.fromString("A -> B")!;
+    line.rotateRight();
+    line.toString().should.equal("A --> B");
+    line.rotateRight();
+    line.toString().should.equal("B <- A");
+    line.rotateRight();
+    line.toString().should.equal("B <-- A");
+    line.rotateRight();
+    line.toString().should.equal("A -> B");
+  })
+
+  it ("should rotate an arrow left", () => {
+    const line = Line.fromString("A -> B")!;
+    line.rotateLeft();
+    line.toString().should.equal("B <-- A");
+    line.rotateLeft();
+    line.toString().should.equal("B <- A");
+    line.rotateLeft();
+    line.toString().should.equal("A --> B");
+    line.rotateLeft();
+    line.toString().should.equal("A -> B");
+  })
 });

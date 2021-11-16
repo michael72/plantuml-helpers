@@ -3,7 +3,7 @@ import { DefaultMap } from "./helpers";
 import { bestOf, mapReduce, maxOf } from "./mapreduce";
 
 import { Component } from "./uml/component";
-import { contains, Content, Definition } from "./uml/definition";
+import { Content, Definition } from "./uml/definition";
 import { Line } from "./uml/line";
 
 function _toKey(s: [string, string]): string {
@@ -14,6 +14,7 @@ function _toTup(s: string): [string, string] {
   const arr = s.split(",");
   return [arr[0], arr[1]];
 }
+
 // The items with the most incoming dependencies should be on the right.
 // The items with the most outgoing dependencies should be on the left.
 // The strongest connected items should be neighbours.
@@ -22,7 +23,7 @@ function _toTup(s: string): [string, string] {
 // Sorting of sequences can only swap the definitions.
 
 export class SortSequence {
-  constructor(private component: Component) {}
+  constructor(private component: Component) { }
 
   autoFormat(): Component {
     this._reformat();
@@ -236,26 +237,38 @@ export class SortSequence {
     // bring the names in `this.component` in the order as in `ordered`.
     // bring the definitions (if necessary) to the front
     const newContent = new Array<Content>();
-
-    for (const key of ordered) {
-      this._extractContentTo(newContent, key);
+    const unordered = new Array<string>();
+    const defs = new Array<Definition>(...this.component.definitions());
+    const defNames = defs.map((d: Definition) => {
+      return d.name;
+    });
+    for (const c of this.component.content) {
+      if (c instanceof Line) {
+        for (const name of c.componentNames()) {
+          if (!unordered.includes(name)) {
+            unordered.push(name);
+          }
+        }
+      }
+      else if (c instanceof Definition) {
+        if (!unordered.includes(c.name)) {
+          unordered.push(c.name);
+        }
+      }
     }
+    if (ordered.join(",") !== unordered.join(",")) {
+      for (const o of ordered) {
+        const idx = defNames.indexOf(o);
+        if (idx === -1) {
+          newContent.push(new Definition("participant", o));
+        }
+        else {
+          newContent.push(this.component.content.splice(this.component.content.indexOf(defs[idx]), 1)[0]);
+        }
+      }
+    }
+
     return newContent;
   }
 
-  private _extractContentTo(newContent: Content[], key: string) {
-    const alreadyContained = newContent.some((c: Content) => contains(c, key));
-    if (!alreadyContained && !this._moveToNewContent(newContent, key)) {
-      newContent.push(new Definition("participant", key));
-    }
-  }
-
-  private _moveToNewContent(newContent: Content[], key: string): boolean {
-    const item = this.component.content[0];
-    if (contains(item, key) || typeof item === "string") {
-      newContent.push(this.component.content.splice(0, 1)[0]);
-      return true;
-    }
-    return false;
-  }
 }

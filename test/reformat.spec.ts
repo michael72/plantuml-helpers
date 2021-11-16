@@ -366,8 +366,8 @@ namespace net.foo {
 
 class BaseClass
 IBase <|-- BaseClass
-net.unused.Person -|> BaseClass
-BaseClass <|- net.foo.Person
+BaseClass <|- net.unused.Person
+net.foo.Person -|> BaseClass
 net.dummy.Meeting -|> BaseClass
 BaseClass <|-- net.dummy.Person
 net.dummy.Meeting o- net.foo.Person
@@ -407,6 +407,9 @@ D -> A
 `;
 
     const expected = `participant D
+participant A
+participant B
+participant C
 A -> B
 B -> C
 D -> A
@@ -542,19 +545,74 @@ A -> C
 [C] -> [G]
 [C] -> [H]
 [C] -> [J]
+[C] -> [K]
 `
     const expected = `[A] -> [B]
 [E] <-- [B]
 [B] --> [F]
 [B] -> [C]
-[C] --> [D]
+[D] <-- [C]
 [G] <-- [C]
 [C] --> [H]
-[C] -> [J]
+[C] --> [J]
+[C] -> [K]
 `
     
   const actual = reformat.autoFormatTxt(original, true);
   actual.should.equal(expected);
+  })
+
+  it("should reformat 2 outgoing same arrows - first is rotated left", () => {
+    const original = `[A] -> [B]
+[A] -> [C]
+E <|-- [F]
+E <|-- [G]`
+    const expected = `[A] --> [B]
+[A] -> [C]
+[F] -|> E
+E <|-- [G]`
+    const actual = reformat.autoFormatTxt(original, true);
+    actual.should.equal(expected);
+  })
+
+  it("should reformat the doc example code", () => {
+    const original = `[Camera] o-> [Commands]
+[Camera] -|> ICamera
+[Camera] .> IConnector
+[Channel] o-> IConnector
+[CommandChannel] -|> [Channel]  
+[Commands] o-> [CommandChannel] 
+[DataChannel] -|> [Channel]
+[Connector] -|> IConnector 
+[Connector] o-> Socket
+[ImageProvider] o-> [DataChannel]`;
+    const expected = `ICamera <|-- [Camera]
+[Camera] o--> [Commands]
+[Camera] .> IConnector
+[Commands] o-> [CommandChannel]
+[Channel] o-> IConnector
+IConnector <|-- [Connector]
+[CommandChannel] -|> [Channel]
+[Channel] <|-- [DataChannel]
+[Connector] o-> Socket
+[ImageProvider] o-> [DataChannel]`;
+    const actual = reformat.autoFormatTxt(original, true);
+    actual.should.equal(expected);
+  })
+
+  it("should reformat a simple sequence diagram", () => {
+    const original = `A -> C : c
+A -> B : b
+A -> B : bb`
+    // A and B are stronger connected than A and C
+    const expected = `participant A
+participant B
+participant C
+A -> C : c
+A -> B : b
+A -> B : bb`
+    const actual = reformat.autoFormatTxt(original, true);
+    actual.should.equal(expected);
   })
 
 });

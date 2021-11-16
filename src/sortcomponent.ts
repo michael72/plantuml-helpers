@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { DefaultMap } from "./helpers";
+import { Layout } from "./uml/arrow";
 import { Component } from "./uml/component";
 import { Content, Definition } from "./uml/definition";
-import { CombinedDirection, Line } from "./uml/line";
+import { Line } from "./uml/line";
 
 export class SortComponent {
-  constructor(private component: Component) {}
+  constructor(private component: Component) { }
 
   autoFormat(rebuild: boolean): Component {
     this.restructure();
@@ -20,26 +21,63 @@ export class SortComponent {
     return this.component;
   }
 
-  private _rebuild() : void {
+  private _rebuild(): void {
     let prevName = "";
-    let prevDir = CombinedDirection.Up;
+    let prevDir: Layout | undefined = undefined;
     let cnt = 0;
 
-    for (let i = this.component.content.length-1; i >= 0; --i) {
-      const c = this.component.content[i];
+    const lines = new Array<Line>();
+    for (const c of this.component.content) {
       if (c instanceof Line) {
-        const name = c.componentNames()[0]; 
-        const dir = c.combinedDirection();
-        if (name === prevName && dir == prevDir) {
-          cnt += 2;
-          for (let j = 0; j < cnt; ++j) {
-            c.rotateRight();
-          }
-        } else {
-          prevName = name;
-          prevDir = dir;
-          cnt = -1;
+        lines.push(c);
+      }
+    }
+    const l = Line.fromString("__dummy->__dummy");
+    if (l != undefined) {
+      lines.push(l);
+    }
+
+    for (let i = 0; i < lines.length; ++i) {
+      const line = lines[i];
+      const name = line.components[0];
+      const dir = line.layout();
+      if (name === prevName && dir == prevDir) {
+        cnt += 1;
+      } else {
+        prevName = name;
+        prevDir = dir;
+        cnt += 1;
+        let c = (cnt - (cnt % 3)) / 3;
+        if (cnt == 2) {
+          // special case: only 2 same arrows going out:
+          // rotate the first to right
+          lines[i - cnt].rotateRight();
         }
+        // 3 or more arrows going out
+        else if (c != 0) {
+          // leave the last arrows in the same direction
+          // rotate the first ones to the left
+          // rotate the in-between arrows to the right
+          // <- ... | -> ... | ^ ...
+          // rotate more when in horizontal layout: vertical arrows can also be drawn diagonally
+          if (dir == Layout.Horizontal && (cnt % 3) == 2) {
+            c += 1;
+          }
+          let start = i - cnt;
+          let end = start + c;
+          for (let j = start; j < end; ++j) {
+            lines[j].rotateLeft();
+          }
+          start = end;
+          end += c;
+          if (dir == Layout.Horizontal && (cnt % 3) == 1) {
+            end += 1;
+          }
+          for (let j = start; j < end; ++j) {
+            lines[j].rotateRight();
+          }
+        }
+        cnt = 0;
       }
     }
   }
