@@ -631,4 +631,24 @@ A ->`
     const actual = reformat.autoFormatTxt(original, true);
     actual.should.equal(expected);
   })
+
+  it("should leave return arrows as is", () => {
+    const original = `A -> B
+A <-- B`
+    const expected = `A -> B
+A <-- B`
+    const actual = reformat.autoFormatTxt(original, true);
+    actual.should.equal(expected);
+  })
+
+  it("should consider ... (dot dot dot)", () => {
+    const original = `A -> B
+...
+A <-- B`
+    const expected = `A -> B
+...
+A <-- B`
+    const actual = reformat.autoFormatTxt(original, true);
+    actual.should.equal(expected);
+  })
 });

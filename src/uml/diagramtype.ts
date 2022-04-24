@@ -59,10 +59,11 @@ export function getType(content: Array<string>): DiagramType {
   // [abc] or () "foo" -> Component
   for (const line of content) {
     if (
-      REGEX_INTERFACE.exec(line) ||
-      REGEX_COMPONENT.exec(line) ||
-      REGEX_CLASS.exec(line) ||
-      REGEX_COMP_USE.exec(line)
+      line !== "..." &&
+      (REGEX_INTERFACE.exec(line) ||
+        REGEX_COMPONENT.exec(line) ||
+        REGEX_CLASS.exec(line) ||
+        REGEX_COMP_USE.exec(line))
     ) {
       return DiagramType.ClassComponent;
     }

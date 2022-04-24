@@ -34,8 +34,11 @@ export class Line {
   }
 
   static fromString(line: string): Line | undefined {
+    if (line.startsWith("'") || line.trim() == "...") {
+      return;
+    }
     const m = this.REGEX.exec(line);
-    if (!m || line.startsWith("'")) {
+    if (!m) {
       return;
     }
     const a = 4; // arrow-index
