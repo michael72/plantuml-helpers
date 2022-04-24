@@ -11,7 +11,7 @@ export class Component {
     public name?: string,
     public suffix?: string, // content between name and opening brace: could be color, stereotype and/or link etc.
     private printName?: string
-  ) {}
+  ) { }
 
   static regexTitle = /\s*(package|namespace|node|folder|frame|cloud|database|class|component|interface|enum|annotation)\s+([^{\s]*)\s*([^{]*)?{.*/;
 
@@ -96,7 +96,8 @@ export class Component {
         children.push(child);
         i = next;
       } else {
-        const line = Line.fromString(s);
+        const class_types = ["abstract", "abstract class", "annotation", "class", "entity", "enum", "interface"]
+        const line = type !== undefined && class_types.includes(type) ? undefined : Line.fromString(s);
         if (line) {
           isHeader = false;
           prevLine = line;
@@ -266,4 +267,3 @@ export class Component {
     return result;
   }
 }
- 

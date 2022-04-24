@@ -51,14 +51,18 @@ export class SortSequence {
     // order the names (participants/actors) starting with the strongest connected pair
     const ordered = this._strongestConnected(depCount, totalCount);
     const remaining = new Set<string>(
-      names.filter((n) => !ordered.includes(n))
+      names.filter((n) => !ordered.includes(n) && n.length != 0)
     );
 
     // 1-2 elements per loop are moved from `remaining` to `ordered`
-    while (remaining.size > 0) {
+    let last_size = 0;
+    while (remaining.size > 0 && last_size != remaining.size) {
+      last_size = remaining.size;
       this._moveToOrdered(remaining, ordered, depCount);
     }
-    return ordered;
+    return ordered.filter((c) =>
+      c.length > 1 || (c.length == 1 && c[0] != "[" && c[0] != "]")
+    );
   }
 
   private _getCountsAndNames(): [
@@ -172,7 +176,9 @@ export class SortSequence {
   ): [number, number] {
     // sum all outgoing and incoming dependencies to the reference item `refItem`
     const sum = (connect: (k: string) => [string, string]) => {
-      const countDeps = (c: string) => depCount.getDef(_toKey(connect(c)));
+      const countDeps = (c: string) =>
+        depCount.getDef(_toKey(connect(c))
+        );
       return mapReduce(ordered, 0, countDeps, (accu, i) => accu + i);
     };
     // connect refItem -> k = outgoing and k -> refItem = incoming dependencies of refItem

@@ -238,9 +238,9 @@ describe("Reformat", () => {
 
   it("should re-format nested components", () => {
     const original =
-      "class Foo <<bla>> #red-green {\n" + "  A -> B\n" + "}\n" + "A -> C\n";
+      "package Foo <<bla>> #red-green {\n" + "  A -> B\n" + "}\n" + "A -> C\n";
     const expected =
-      "class Foo <<bla>> #red-green {\n" +
+      "package Foo <<bla>> #red-green {\n" +
       "  class B\n" +
       "  class A\n" +
       "}\n\n" +
@@ -249,7 +249,6 @@ describe("Reformat", () => {
     const actual = reformat.autoFormatTxt(original);
     actual.should.equal(expected);
   });
-
   it("should reformat nested with global classes", () => {
     const original =
       "class BaseClass\n" +
@@ -468,7 +467,7 @@ class A {
 A -> B
 footer
 `;
-  const expected = `header
+    const expected = `header
 
 class A {
 }
@@ -503,7 +502,7 @@ package c
 A -> C
 B -> A
 `
-  const expected = `title "some title"
+    const expected = `title "some title"
 hide empty members
 
 package c {
@@ -523,8 +522,8 @@ package a {
 B -> A
 A -> C
 `
-  const actual = reformat.autoFormatTxt(original);
-  actual.should.equal(expected);
+    const actual = reformat.autoFormatTxt(original);
+    actual.should.equal(expected);
   });
 
   it("should leave the content of a class as is", () => {
@@ -557,9 +556,9 @@ A -> C
 [C] --> [J]
 [C] -> [K]
 `
-    
-  const actual = reformat.autoFormatTxt(original, true);
-  actual.should.equal(expected);
+
+    const actual = reformat.autoFormatTxt(original, true);
+    actual.should.equal(expected);
   })
 
   it("should reformat 2 outgoing same arrows - first is rotated left", () => {
@@ -615,4 +614,21 @@ A -> B : bb`
     actual.should.equal(expected);
   })
 
+  it("should leave simple outgoing and incoming connections", () => {
+    const original = `-> A
+A ->`
+    const expected = `-> A
+A ->`
+    const actual = reformat.autoFormatTxt(original, true);
+    actual.should.equal(expected);
+  })
+
+  it("should remove brackets of outgoing and incoming connections", () => {
+    const original = `[ -> A
+A -> ]`
+    const expected = `-> A
+A ->`
+    const actual = reformat.autoFormatTxt(original, true);
+    actual.should.equal(expected);
+  })
 });

@@ -11,7 +11,7 @@ export enum CombinedDirection {
 
 export class Line {
   /** Regex to find an arrow in the current line. */
-  static REGEX = /^(\s*)((?:"[^"]+")|[^-~="><\\/\s]+)(?:\s+("[^"]+"))?\s*(\S*[^A-Za-np-z_\s]+)\s*(?:("[^"]+")\s+)?((?:"[^"]+")|[^-~="><\\/\s]+)(\s*(?::.*)?)$/;
+  static REGEX = /^(\s*)((?:"[^"]+")|[^-~="><\\/\s]*)(?:\s+("[^"]+"))?\s*(\S*[^A-Za-np-z_\s]+)\s*(?:("[^"]+")\s+)?((?:"[^"]+")|[^-~="><\\/\s]*)(\s*(?::.*)?)$/;
   // example:                 A                  "1"           ->                          "2"          B  : foo
 
   /** corresponds to enum order in CombinedDirection - first letter only */
@@ -24,11 +24,18 @@ export class Line {
     public arrow: Arrow,
     public multiplicities: Array<string>,
     public sides: Array<string>
-  ) {}
+  ) {
+    if (this.components[0].length == 0) {
+      this.components[0] = "[";
+    }
+    if (this.components[1].length == 0) {
+      this.components[1] = "]";
+    }
+  }
 
   static fromString(line: string): Line | undefined {
     const m = this.REGEX.exec(line);
-    if (!m) {
+    if (!m || line.startsWith("'")) {
       return;
     }
     const a = 4; // arrow-index
@@ -61,7 +68,7 @@ export class Line {
   }
 
   isNoteAttached(): boolean {
-    return this.attached != undefined && this.attached.length > 0 && this.attached[this.attached.length-1].startsWith("note ");
+    return this.attached != undefined && this.attached.length > 0 && this.attached[this.attached.length - 1].startsWith("note ");
   }
 
   moveAttached(): Array<string> {
@@ -80,7 +87,7 @@ export class Line {
   }
 
   rotateRight(): void {
-    switch(this.combinedDirection()) {
+    switch (this.combinedDirection()) {
       case CombinedDirection.Right:
         this.setCombinedDirection(CombinedDirection.Down);
         break;
@@ -97,7 +104,7 @@ export class Line {
   }
 
   rotateLeft(): void {
-    switch(this.combinedDirection()) {
+    switch (this.combinedDirection()) {
       case CombinedDirection.Right:
         this.setCombinedDirection(CombinedDirection.Up);
         break;
@@ -133,7 +140,7 @@ export class Line {
     // remove outer brackets
     return this.components.map((c) =>
       c[0] == "[" ? c.substr(1, c.length - 2) : c
-    );
+    ).filter((c) => c.length > 1 || (c !== "[" && c !== "]" && c !== ""));
   }
 
   has(name: string): boolean {
@@ -189,7 +196,7 @@ export class Line {
         this.multiplicities[1],
         this.components[1],
       ]
-        .filter((s: string) => s.length > 0)
+        .filter((s: string) => (s.length > 1) || (s.length == 1 && s !== "[" && s !== "]"))
         .join(" ") +
       this.sides[1];
 

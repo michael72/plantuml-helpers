@@ -10,7 +10,7 @@ export enum DiagramType {
 
 export const REGEX_INTERFACE = /^\s*(\(\)|interface)\s+((?:"[^"]+")|[^"\s]+)(?:\s+as\s+(\S+))?\s*$/;
 export const REGEX_COMPONENT = /^\s*(component\s+)?((?:\[[^*\]]+\])|[^[*\]\s]+)(?:\s+as\s+(\S+))?\s*$/;
-export const REGEX_CLASS = /^\s*(class|enum)\s+([^[\]\s]+)(?:\s+as\s+(\S+))?\s*$/;
+export const REGEX_CLASS = /^\s*(class|enum|abstract|abstract class|annotation)\s+([^[\]\s]+)(?:\s+as\s+(\S+))?\s*$/;
 export const REGEX_SEQUENCE = /^\s*(actor|participant)\s+([^[\]\s]+)(?:\s+as\s+(\S+))?\s*$/;
 export const REGEX_USE_CASE = /(?:^|\s+)(?::([^:]+):)|(?:\(([^:]+)\))(?:$|\s+)/g;
 export const REGEX_ACTIVITY = /(?:(?:^|\s+)\(\*\)(?:$|\s+))|(?:^\s*:.*)/g;
@@ -22,6 +22,10 @@ const keyMap: Map<string, DiagramType> = new Map([
   ["class", DiagramType.ClassComponent],
   ["interface", DiagramType.ClassComponent],
   ["component", DiagramType.ClassComponent],
+  ["annotation", DiagramType.ClassComponent],
+  ["abstract", DiagramType.ClassComponent],
+  ["abstract class", DiagramType.ClassComponent],
+  ["enum", DiagramType.ClassComponent],
   ["participant", DiagramType.Sequence],
   ["boundary", DiagramType.Sequence],
   ["control", DiagramType.Sequence],
