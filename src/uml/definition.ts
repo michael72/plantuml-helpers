@@ -1,3 +1,4 @@
+import { Attachable } from "./attachable";
 import {
   REGEX_INTERFACE,
   REGEX_CLASS,
@@ -6,32 +7,38 @@ import {
 } from "./diagramtype";
 import { Line } from "./line";
 
-export type Content = Line | Definition | string;
-
-export function compToString(content: Content): string {
-  return content instanceof Line || content instanceof Definition
-    ? content.toString()
-    : content;
-}
+export type Content = Line | Definition;
 
 export function toString(content: Array<Content>, lf: string): string {
   return content
     .map((s: Content) => {
-      return compToString(s);
+      return s.toString();
     })
     .join(lf);
 }
 
-export function joinContent(left: string, right: string, lf: string): string {
-  return left + (left.length > 0 && right.length > 0 ? lf : "") + right;
+export function joinContent(
+  left: string,
+  right: string,
+  lf: string,
+  addSection = true
+): string {
+  const addLf = addSection
+    ? lf +
+      (left.endsWith(lf) ||
+      left.endsWith("\n") ||
+      right.startsWith(lf) ||
+      right.startsWith("\n")
+        ? ""
+        : lf)
+    : lf;
+  return left + (left.length > 0 && right.length > 0 ? addLf : "") + right;
 }
 
-export class Definition {
-  constructor(
-    public type: string,
-    public name: string,
-    public alias?: string
-  ) {}
+export class Definition extends Attachable {
+  constructor(public type: string, public name: string, public alias?: string) {
+    super();
+  }
   static fromString(line: string): Definition | undefined {
     const shorten = (s: string, by: string): string => {
       if (s[0] === by) {
@@ -67,6 +74,12 @@ export class Definition {
 
   toString(): string {
     const comp = `${this.type} ${this.name}`;
-    return this.alias != null && this.alias ? comp + " as " + this.alias : comp;
+    const content =
+      this.alias != null && this.alias ? comp + " as " + this.alias : comp;
+    return content + this.attachedToString();
+  }
+
+  removeAlias(): Definition {
+    return new Definition(this.type, this.name);
   }
 }

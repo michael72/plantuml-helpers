@@ -1,5 +1,7 @@
 import { reverseHead } from "../helpers";
 import { Arrow, Layout, ArrowDirection } from "./arrow";
+import { Attachable } from "./attachable";
+import { Component } from "./component";
 
 /** Combined direction is ordered clockwise. */
 export enum CombinedDirection {
@@ -9,15 +11,14 @@ export enum CombinedDirection {
   Up,
 }
 
-export class Line {
+export class Line extends Attachable {
   /** Regex to find an arrow in the current line. */
-  static REGEX = /^(\s*)((?:"[^"]+")|[^-~="><\\/\s]*)(?:\s+("[^"]+"))?\s*(\S*[^A-Za-np-z_\s]+)\s*(?:("[^"]+")\s+)?((?:"[^"]+")|[^-~="><\\/\s]*)(\s*(?::.*)?)$/;
+  static REGEX =
+    /^(\s*)((?:"[^"]+")|[^-~="><\\/\s]*)(?:\s+("[^"]+"))?\s*(\S*[^A-Za-np-z_\s]+)\s*(?:("[^"]+")\s+)?((?:"[^"]+")|[^-~="><\\/\s]*)(\s*[-+]*\s*(?::.*)?)$/;
   // example:                 A                  "1"           ->                          "2"          B  : foo
 
   /** corresponds to enum order in CombinedDirection - first letter only */
   static DIRECTIONS = "rdlu";
-
-  private attached?: Array<string>;
 
   constructor(
     public components: Array<string>,
@@ -25,6 +26,7 @@ export class Line {
     public multiplicities: Array<string>,
     public sides: Array<string>
   ) {
+    super();
     if (this.components[0].length == 0) {
       this.components[0] = "[";
     }
@@ -58,32 +60,6 @@ export class Line {
       if (idx !== -1) {
         result.arrow.tag = "";
         result.setCombinedDirection(idx);
-      }
-    }
-    return result;
-  }
-
-  attach(line: string): void {
-    if (!this.attached) {
-      this.attached = new Array<string>();
-    }
-    this.attached.push(line);
-  }
-
-  isNoteAttached(): boolean {
-    return this.attached != undefined && this.attached.length > 0 && this.attached[this.attached.length - 1].startsWith("note ");
-  }
-
-  moveAttached(): Array<string> {
-    let result = new Array<string>();
-    // move attached only if not a note (notes belong to the preceeding line)
-    while (this.attached && !this.isNoteAttached()) {
-      const last = this.attached.pop();
-      if (last == undefined) {
-        this.attached = undefined;
-      }
-      else {
-        result = [last, ...result];
       }
     }
     return result;
@@ -141,9 +117,9 @@ export class Line {
 
   componentNames(): string[] {
     // remove outer brackets
-    return this.components.map((c) =>
-      c[0] == "[" ? c.substr(1, c.length - 2) : c
-    ).filter((c) => c.length > 1 || (c !== "[" && c !== "]" && c !== ""));
+    return this.components
+      .map((c) => (c[0] == "[" ? c.substring(1, c.length - 1) : c))
+      .filter((c) => c.length > 1 || (c !== "[" && c !== "]" && c !== ""));
   }
 
   has(name: string): boolean {
@@ -179,9 +155,12 @@ export class Line {
 
   setDefaultDirection(rebuild: boolean): void {
     if (rebuild) {
-      this.setCombinedDirection(this.arrow.isInheritance() ? CombinedDirection.Up : CombinedDirection.Right);
-    }
-    else {
+      this.setCombinedDirection(
+        this.arrow.isInheritance()
+          ? CombinedDirection.Up
+          : CombinedDirection.Right
+      );
+    } else {
       const defaultDir = this._defaultDirection();
       if (defaultDir != undefined) {
         this.setCombinedDirection(defaultDir);
@@ -190,7 +169,7 @@ export class Line {
   }
 
   toString(): string {
-    let content =
+    const content =
       this.sides[0] +
       [
         this.components[0],
@@ -199,14 +178,23 @@ export class Line {
         this.multiplicities[1],
         this.components[1],
       ]
-        .filter((s: string) => (s.length > 1) || (s.length == 1 && s !== "[" && s !== "]"))
+        .filter(
+          (s: string) =>
+            s.length > 1 || (s.length == 1 && s !== "[" && s !== "]")
+        )
         .join(" ") +
       this.sides[1];
 
-    if (this.attached) {
-      content += "\n" + this.attached.join("\n");
+    return content + this.attachedToString();
+  }
+
+  includes(c: Component): boolean {
+    for (const name of this.componentNames()) {
+      if (c.containsName(name)) {
+        return true;
+      }
     }
-    return content;
+    return false;
   }
 
   private _defaultDirection(): CombinedDirection | undefined {

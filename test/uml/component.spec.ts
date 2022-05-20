@@ -19,7 +19,7 @@ describe("Component", () => {
       const parsed = Component.fromString(original);
       parsed.name!.should.equal("fun");
       parsed.type!.should.equal("package");
-      parsed.content.length.should.equal(4);
+      parsed.content.length.should.equal(3); // note is attached to the component
       parsed.toString().should.equal(original);
     });
     it("should parse a package with `}` in next line", () => {

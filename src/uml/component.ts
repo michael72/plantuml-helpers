@@ -1,21 +1,26 @@
-import { compToString, toString, joinContent, Content, Definition } from "./definition";
+import { Attachable } from "./attachable";
+import { toString, joinContent, Content, Definition } from "./definition";
 import { Line } from "./line";
 
 export class Component {
   constructor(
-    public header: Array<Content>,
+    public header: Array<string>,
     public content: Array<Content>,
-    public footer: Array<Content>,
+    public footer: Array<string>,
     public children?: Array<Component>,
     public type?: string,
     public name?: string,
     public suffix?: string, // content between name and opening brace: could be color, stereotype and/or link etc.
     private printName?: string
-  ) { }
+  ) {}
 
-  static regexTitle = /\s*(package|namespace|node|folder|frame|cloud|database|class|component|interface|enum|annotation)\s+([^{\s]*)\s*([^{]*)?{.*/;
+  static regexTitle =
+    /\s*(package|namespace|node|folder|frame|cloud|database|class|component|interface|enum|annotation)\s+([^{\s]*)\s*([^{]*)?{.*/;
 
-  static fromString(s: string | Array<string>): Component {
+  static fromString(
+    s: string | Array<string>,
+    keepEmptyLines = false
+  ): Component {
     let arr = typeof s === "string" ? s.split("\n") : s;
     // pre-filter: remove single open braces { and put them at the end of the previous line
     for (let i = 0; i < arr.length; ++i) {
@@ -26,12 +31,18 @@ export class Component {
       arr[i] = arr[i].trimRight();
     }
     // post-filter: remove empty lines
-    arr = arr.filter((line: string) => {
-      return line.trim().length > 0;
-    });
+    if (!keepEmptyLines) {
+      arr = arr.filter((line: string) => {
+        return line.trim().length > 0;
+      });
+    }
 
     // multiple components in sequence
-    const parent = new Component(new Array<Content>(), new Array<Content>(), new Array<Content>());
+    const parent = new Component(
+      new Array<string>(),
+      new Array<Content>(),
+      new Array<string>()
+    );
     const children = new Array<Component>();
     for (let i = 0; i < arr.length; ++i) {
       const [comp, new_i] = this._fromString(arr, i);
@@ -75,20 +86,19 @@ export class Component {
       }
     }
 
-    let prevLine: Line | undefined;
-    const header = new Array<Content>();
+    let prevLine: Attachable | undefined;
+    const header = new Array<string>();
     const content = new Array<Content>();
-    let footer = new Array<Content>();
+    let footer = new Array<string>();
     let children: Array<Component> | undefined = undefined;
-    let isHeader = i == 0;
 
     // parse the content of the component
     for (; i < arr.length; ++i) {
       const s = arr[i];
       const def = Definition.fromString(s);
       if (def) {
-        isHeader = false;
         content.push(def);
+        prevLine = def;
       } else if (this.regexTitle.exec(s)) {
         // parse child element until closing bracket
         const [child, next] = this._fromString(arr, i);
@@ -96,20 +106,28 @@ export class Component {
         children.push(child);
         i = next;
       } else {
-        const class_types = ["abstract", "abstract class", "annotation", "class", "entity", "enum", "interface"]
-        const line = type !== undefined && class_types.includes(type) ? undefined : Line.fromString(s);
+        const class_types = [
+          "abstract",
+          "abstract class",
+          "annotation",
+          "class",
+          "entity",
+          "enum",
+          "interface",
+        ];
+        const line =
+          type !== undefined && class_types.includes(type)
+            ? undefined
+            : Line.fromString(s);
         if (line) {
-          isHeader = false;
           prevLine = line;
           content.push(line);
         } else if (s.trim() == "}") {
           break;
         } else if (prevLine) {
           prevLine.attach(s);
-        } else if (isHeader) {
-          header.push(s);
         } else {
-          content.push(s);
+          header.push(s);
         }
       }
     }
@@ -117,7 +135,19 @@ export class Component {
       footer = prevLine.moveAttached();
     }
 
-    return [new this(header, content, footer, children, type, name, suffix, printName), i];
+    return [
+      new this(
+        header,
+        content,
+        footer,
+        children,
+        type,
+        name,
+        suffix,
+        printName
+      ),
+      i,
+    ];
   }
 
   anyOf(chk: (c: Component) => boolean): boolean {
@@ -193,14 +223,6 @@ export class Component {
     }
   }
 
-  *noLines(): Generator<Definition | string> {
-    for (const c of this.content) {
-      if (!(c instanceof Line)) {
-        yield c;
-      }
-    }
-  }
-
   toString(lf?: string): string {
     return this._toStringTab("", lf == null ? "\n" : lf);
   }
@@ -220,13 +242,22 @@ export class Component {
       const idx = this.content.findIndex((c: Content) => {
         return c instanceof Line;
       });
+      const headerContent = this.header
+        .map((s: string) => {
+          return s.trimLeft();
+        })
+        .join("\n" + t)
+        .trimRight();
+      if (headerContent) {
+        result += t + headerContent;
+      }
       if (idx !== 0) {
         result +=
           t +
           this.content
             .slice(0, idx === -1 ? this.content.length : idx)
             .map((s: Content) => {
-              return compToString(s).trimLeft();
+              return s.toString().trimLeft();
             })
             .join("\n" + t);
       }
@@ -243,7 +274,7 @@ export class Component {
           this.content
             .slice(idx)
             .map((s: Content) => {
-              return compToString(s).trimLeft();
+              return s.toString().trimLeft();
             })
             .join(lf + t);
       }
@@ -256,14 +287,17 @@ export class Component {
     let result = "";
     if (this.children) {
       for (const child of this.children) {
-        result = joinContent(result, child._toStringTab(tab, lf).trimRight(), lf);
+        result = joinContent(
+          result,
+          child._toStringTab(tab, lf).trimRight(),
+          lf,
+          false
+        );
       }
     }
-    // each one extra lf between header + children + content + footer
-    const lf2 = lf + lf;
-    result = joinContent(toString(this.header, lf), result, lf2);
-    result = joinContent(result, toString(this.content, lf), lf2);
-    result = joinContent(result, toString(this.footer, lf), lf2);
+    result = joinContent(this.header.join(lf), result, lf);
+    result = joinContent(result, toString(this.content, lf), lf);
+    result = joinContent(result, this.footer.join(lf), lf);
     return result;
   }
 }

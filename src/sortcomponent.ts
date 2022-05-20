@@ -6,7 +6,7 @@ import { Content, Definition } from "./uml/definition";
 import { Line } from "./uml/line";
 
 export class SortComponent {
-  constructor(private component: Component) { }
+  constructor(private component: Component) {}
 
   autoFormat(rebuild: boolean): Component {
     this.restructure();
@@ -32,10 +32,7 @@ export class SortComponent {
         lines.push(c);
       }
     }
-    const l = Line.fromString("__dummy->__dummy");
-    if (l != undefined) {
-      lines.push(l);
-    }
+    lines.push(Line.fromString("__dummy->__dummy")!);
 
     for (let i = 0; i < lines.length; ++i) {
       const line = lines[i];
@@ -60,7 +57,7 @@ export class SortComponent {
           // rotate the in-between arrows to the right
           // <- ... | -> ... | ^ ...
           // rotate more when in horizontal layout: vertical arrows can also be drawn diagonally
-          if (dir == Layout.Horizontal && (cnt % 3) == 2) {
+          if (dir == Layout.Horizontal && cnt % 3 == 2) {
             c += 1;
           }
           let start = i - cnt;
@@ -70,7 +67,7 @@ export class SortComponent {
           }
           start = end;
           end += c;
-          if (dir == Layout.Horizontal && (cnt % 3) == 1) {
+          if (dir == Layout.Horizontal && cnt % 3 == 1) {
             end += 1;
           }
           for (let j = start; j < end; ++j) {
@@ -96,7 +93,7 @@ export class SortComponent {
     const orig = this._initialSort();
     // leave all content that is not explicitly an arrow connection
     // before the arrow lines that are being sorted
-    const others: Array<Content> = Array.from(this.component.noLines());
+    const others: Array<Content> = Array.from(this.component.definitions());
     let sorted = new Array<Line>();
     let idx = 0;
 
@@ -129,7 +126,7 @@ export class SortComponent {
     });
   }
 
-  private _sortByDependencies(): Array<Content> {
+  private _sortByDependencies(): Array<string> {
     // try to bring the components in order
     const { deps, froms } = this._calcDependencies();
 
@@ -215,21 +212,21 @@ export class SortComponent {
 
   private _sorted(children: Component[]): Component[] {
     return children.sort((c1: Component, c2: Component) => {
+      let result = 0;
       // sort package definitions last that contain component definitions
       // which are used in lines first.
       for (const l of this.component.lines()) {
-        for (const name of l.componentNames()) {
-          // reversed sort
-          if (c1.containsName(name)) {
-            return 1;
-          }
-          if (c2.containsName(name)) {
-            return -1;
-          }
+        // reversed sort
+        if (l.includes(c1)) {
+          result = 1;
+          break;
+        }
+        if (l.includes(c2)) {
+          result = -1;
+          break;
         }
       }
-      // should not come here
-      return 0;
+      return result;
     });
   }
 
@@ -268,7 +265,7 @@ export class SortComponent {
         for (let i = 0; i < line.components.length; i++) {
           let c = line.components[i];
           if (c.startsWith(".")) {
-            c = c.substr(1);
+            c = c.substring(1);
             if (c.includes(".")) {
               // rename .a.b.c to a.b.c
               line.components[i] = c;
@@ -324,7 +321,7 @@ export class SortComponent {
   ) {
     for (const c of line.components) {
       const isComponent = c.startsWith("[");
-      const name = isComponent ? c.substr(1, c.length - 2) : c;
+      const name = isComponent ? c.substring(1, c.length - 1) : c;
       if (!names.has(name)) {
         (isComponent ? lineComponents : lineInterfaces).add(name);
       }
@@ -403,7 +400,7 @@ export class SortComponent {
     comp.forAll((c) => {
       const lines = this._linesWithAdaptedNames(c);
       if (lines.length > 0) {
-        c.content = Array.from(c.noLines());
+        c.content = Array.from(c.definitions());
       }
       extracted = extracted.concat(lines);
     });
@@ -427,7 +424,7 @@ export class SortComponent {
       const name = c.components[i];
       if (name.lastIndexOf(".") < 1) {
         c.components[i] = name.startsWith(".")
-          ? name.substr(1)
+          ? name.substring(1)
           : compName + "." + name;
       }
     }
@@ -439,7 +436,7 @@ export class SortComponent {
       for (let i = 0; i < line.components.length; ++i) {
         let c = line.components[i];
         if (c[0] == "[") {
-          c = c.substr(1, c.length - 2);
+          c = c.substring(1, c.length - 1);
         }
         const name = componentNames.get(c);
         if (name !== undefined) {
