@@ -1,6 +1,4 @@
-import { assert } from "console";
 import { DefaultMap } from "./helpers";
-import { bestOf, mapReduce, maxOf } from "./mapreduce";
 
 import { Component } from "./uml/component";
 import { Content, Definition } from "./uml/definition";
@@ -8,11 +6,6 @@ import { Line } from "./uml/line";
 
 function _toKey(s: [string, string]): string {
   return s[0] + "," + s[1];
-}
-
-function _toTup(s: string): [string, string] {
-  const arr = s.split(",");
-  return [arr[0], arr[1]];
 }
 
 // The items with the most incoming dependencies should be on the right.
@@ -23,7 +16,7 @@ function _toTup(s: string): [string, string] {
 // Sorting of sequences can only swap the definitions.
 
 export class SortSequence {
-  constructor(private component: Component) { }
+  constructor(private component: Component) {}
 
   autoFormat(): Component {
     this._reformat();
@@ -35,214 +28,241 @@ export class SortSequence {
     this.component.content = this._removeParticipants();
     const ordered = this._orderNames();
 
-    const newContent = this._getOrderedContent(ordered);
+    const [newContentPre, newContentPost] = this._getOrderedContent(ordered);
     // set the ordered content
-    this.component.content = newContent.concat(this.component.content);
+    this.component.content = newContentPre
+      .concat(this.component.content)
+      .concat(newContentPost);
   }
 
   private _removeParticipants() {
     return this.component.content.filter((c: Content) => {
-      return !(c instanceof Definition && c.type === "participant");
+      return !(
+        c instanceof Definition &&
+        c.type === "participant" &&
+        c.alias === undefined
+      );
     });
   }
 
-  private _orderNames(): Array<string> {
-    const [depCount, totalCount, names] = this._getCountsAndNames();
-    // order the names (participants/actors) starting with the strongest connected pair
-    const ordered = this._strongestConnected(depCount, totalCount);
-    const remaining = new Set<string>(
-      names.filter((n) => !ordered.includes(n) && n.length != 0)
-    );
-
-    // 1-2 elements per loop are moved from `remaining` to `ordered`
-    let last_size = 0;
-    while (remaining.size > 0 && last_size != remaining.size) {
-      last_size = remaining.size;
-      this._moveToOrdered(remaining, ordered, depCount);
+  private _calculateWeight(
+    components: Array<string>,
+    weights: Array<[string, string, number]>
+  ): number {
+    let sum = 0;
+    const square = (a: number): number => {
+      return a * a;
+    };
+    for (const [l, r, num] of weights) {
+      sum += square((components.indexOf(l) - components.indexOf(r)) * num);
     }
-    return ordered.filter((c) =>
-      c.length > 1 || (c.length == 1 && c[0] != "[" && c[0] != "]")
+    return sum;
+  }
+
+  private _calculateDirCount(
+    components: Array<string>,
+    weights: Array<[string, string, number]>
+  ): number {
+    let sum = 0;
+    for (const [l, r, num] of weights) {
+      const dist = components.indexOf(l) - components.indexOf(r);
+      if (dist > 0) {
+        sum += num;
+      }
+    }
+    return sum;
+  }
+
+  private _orderNames(): Array<string> {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const [depCount, names] = this._getCountsAndNames();
+    let filtered: Array<string> = [];
+
+    const weights: Array<[string, string, number]> = [];
+    for (const [k, v] of depCount) {
+      const arr = k.split(",");
+      weights.push([arr[0], arr[1], v]);
+    }
+
+    let off_left = names[0] === "[" ? 1 : 0;
+    while (off_left != 0 && depCount.get("[," + names[off_left]) != undefined) {
+      off_left += 1;
+    }
+    const off_right = names[names.length - 1] === "]" ? 1 : 0;
+
+    let numElems = names.length - off_left - off_right;
+    if (numElems >= 9) {
+      filtered = this._filterSimpleConnections(names, depCount);
+      numElems = names.length - off_left - off_right;
+    }
+
+    let ordered: Array<string> = [...names];
+    let checklist = [...ordered];
+    let minWeight = this._calculateWeight(ordered, weights);
+    let minDirCount = this._calculateDirCount(ordered, weights);
+
+    const swap = (arr: Array<string>, i: number, j: number) => {
+      const temp = arr[i];
+      arr[i] = arr[j];
+      arr[j] = temp;
+    };
+
+    const checkWeight = (recalc = false) => {
+      const weight = this._calculateWeight(checklist, weights);
+      if (weight <= minWeight || recalc) {
+        const dirCount = this._calculateDirCount(checklist, weights);
+        if (
+          recalc ||
+          weight < minWeight ||
+          (weight == minWeight && dirCount < minDirCount)
+        ) {
+          minWeight = weight;
+          minDirCount = dirCount;
+          ordered = [...checklist];
+          return true;
+        }
+      }
+      return false;
+    };
+
+    const rotate = (left: number, right: number) => {
+      let rotated: Array<string> = checklist.slice(left, right);
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      rotated.unshift(rotated.pop()!);
+      if (left > 0) {
+        rotated = [...checklist.slice(0, left), ...rotated];
+      }
+      if (right < checklist.length) {
+        rotated = [...rotated, ...checklist.slice(right)];
+      }
+      checklist = rotated;
+    };
+
+    if (numElems < 9) {
+      // perform all permutations - for >= 9 this takes too long
+      const counters = new Array<number>(numElems).fill(0);
+      let i = 1;
+      while (i < ordered.length - off_left - off_right) {
+        if (counters[i] < i) {
+          const k = i % 2 && counters[i];
+          swap(checklist, i + off_left, k + off_left);
+          ++counters[i];
+          i = 1;
+          checkWeight();
+        } else {
+          counters[i] = 0;
+          ++i;
+        }
+      }
+    } else {
+      let finished = false;
+      while (!finished) {
+        finished = true;
+        for (let i = off_left; i < ordered.length - off_right; i += 1) {
+          for (let j = i + 1; j < ordered.length - off_right; j += 1) {
+            for (let k = j - i - 1; k > 0; k--) {
+              rotate(i, j + 1);
+              if (checkWeight()) {
+                finished = false;
+              }
+            }
+            rotate(i, j);
+          }
+        }
+      }
+    }
+
+    // re-add the simple connections
+    for (const name of filtered) {
+      let first = true;
+      for (let i = checklist.length - off_right; i >= off_left; i -= 1) {
+        checklist.splice(i, 0, name);
+        checkWeight(first);
+        first = false;
+        checklist.splice(i, 1);
+      }
+      checklist = ordered;
+    }
+
+    return ordered.filter((c) => {
+      return this._isRealComponent(c);
+    });
+  }
+
+  private _isRealComponent(name: string): boolean {
+    return (
+      name.length > 1 || (name.length == 1 && name[0] != "[" && name[0] != "]")
     );
   }
 
-  private _getCountsAndNames(): [
-    DefaultMap<string, number>,
-    DefaultMap<string, number>,
-    Array<string>
-  ] {
+  private _filterSimpleConnections(
+    names: Array<string>,
+    depCount: DefaultMap<string, number>
+  ): Array<string> {
+    const filtered: Array<string> = [];
+    const deps = new DefaultMap<string, Array<string>>(() => {
+      return new Array<string>();
+    });
+    for (const connection of depCount.keys()) {
+      const arr = connection.split(",");
+      if (this._isRealComponent(arr[0]) && this._isRealComponent(arr[1])) {
+        deps.getDef(arr[0]).push(arr[1]);
+        deps.getDef(arr[1]).push(arr[0]);
+      }
+    }
+
+    for (const name of names) {
+      if (deps.getDef(name).length == 1) {
+        filtered.push(name);
+      }
+    }
+    for (const name of filtered) {
+      names.splice(names.indexOf(name), 1);
+    }
+    return filtered;
+  }
+
+  private _getCountsAndNames(): [DefaultMap<string, number>, Array<string>] {
     const depCount = new DefaultMap<string, number>(() => 0);
-    const totalCount = new DefaultMap<string, number>(() => 0);
     const names = new Array<string>();
 
     for (const def of this.component.definitions()) {
-      names.push(def.name);
+      if (!names.includes(def.name)) {
+        names.push(def.name);
+      }
     }
     for (const line of this.component.lines()) {
       this._addLineComponentsNames(line, names);
-      this._updateLineStats(line, depCount, totalCount);
+      this._updateLineStats(line, depCount);
     }
-    return [depCount, totalCount, names];
+    return [depCount, names];
   }
 
   private _addLineComponentsNames(line: Line, names: string[]) {
     for (const item of line.components) {
       if (!names.includes(item)) {
-        names.push(item);
+        if (item === "[") {
+          names.unshift(item);
+        } else {
+          names.push(item);
+        }
       }
     }
   }
 
-  private _updateLineStats(
-    line: Line,
-    depCount: DefaultMap<string, number>,
-    totalCount: DefaultMap<string, number>
-  ) {
+  private _updateLineStats(line: Line, depCount: DefaultMap<string, number>) {
     const [from, to] = line.components;
     const key = _toKey([from, to]);
     depCount.set(key, depCount.getDef(key) + 1);
-    totalCount.set(from, totalCount.getDef(from) + 1);
-    totalCount.set(to, totalCount.getDef(to) + 1);
   }
 
-  private _strongestConnected(
-    depCount: DefaultMap<string, number>,
-    totalCount: DefaultMap<string, number>
-  ): Array<string> {
-    const getCount = (item: [string, number]) =>
-      totalCount.getDef(_toTup(item[0])[0]);
-    const best = bestOf(
-      depCount.entries(),
-      ["", 0],
-      (left: [string, number], right: [string, number]) =>
-        left[1] > right[1] ||
-        (left[1] == right[1] && getCount(left) > getCount(right))
-    );
-    return _toTup(best[0]);
-  }
-
-  private _moveToOrdered(
-    remaining: Set<string>,
-    ordered: string[],
-    depCount: DefaultMap<string, number>
-  ) {
-    // find the tuple in `remaining` with the most [outgoing, incoming] dependencies
-    // related to the already `ordered` elements.
-    const bestTup = this._findMostOutIn(ordered, remaining, depCount);
-    // move the item with the most outgoing dependencies from remaining to the left of `ordered`
-    let moved = this._moveKeyToLeft(bestTup[0], ordered, remaining);
-    // move the item with the most incoming dependencies from `remaining` to the right of `ordered`
-    moved = this._moveKeyToRight(bestTup[1], ordered, remaining) || moved;
-    // if `remaining` and `ordered` were not connected (disjoint) then add a new sequence to `ordered`
-    if (!moved) {
-      assert(!bestTup[0] && !bestTup[1]);
-      this._moveDisjoint(ordered, remaining, depCount);
-    }
-  }
-
-  private _findMostOutIn(
-    ordered: string[],
-    remaining: Set<string>,
-    depCount: DefaultMap<string, number>
-  ) {
-    const bestTup = ["", ""];
-    const maxDeps = [0, 0];
-    for (const r of remaining) {
-      this._calcOutIn(ordered, depCount, r, maxDeps, bestTup);
-    }
-    return bestTup;
-  }
-
-  private _calcOutIn(
-    ordered: string[],
-    depCount: DefaultMap<string, number>,
-    refKey: string,
-    maxDeps: number[],
-    bestTup: string[]
-  ) {
-    const outIn = this._sumOutIn(ordered, depCount, refKey);
-    for (let i = 0; i < outIn.length; i++) {
-      if (maxDeps[i] < outIn[i]) {
-        maxDeps[i] = outIn[i];
-        bestTup[i] = refKey;
-        break;
-      }
-    }
-  }
-
-  private _sumOutIn(
-    ordered: string[],
-    depCount: DefaultMap<string, number>,
-    refItem: string
-  ): [number, number] {
-    // sum all outgoing and incoming dependencies to the reference item `refItem`
-    const sum = (connect: (k: string) => [string, string]) => {
-      const countDeps = (c: string) =>
-        depCount.getDef(_toKey(connect(c))
-        );
-      return mapReduce(ordered, 0, countDeps, (accu, i) => accu + i);
-    };
-    // connect refItem -> k = outgoing and k -> refItem = incoming dependencies of refItem
-    return [sum((k) => [refItem, k]), sum((k) => [k, refItem])];
-  }
-
-  private _moveKeyToLeft(
-    key: string,
-    dest: string[],
-    src: Set<string>
-  ): boolean {
-    // insert at the beginning
-    if (key && src.delete(key)) {
-      dest.splice(0, 0, key);
-      return true;
-    }
-    return false;
-  }
-
-  private _moveKeyToRight(
-    key: string,
-    dest: string[],
-    src: Set<string>
-  ): boolean {
-    // insert at the end
-    if (key && src.delete(key)) {
-      dest.push(key);
-      return true;
-    }
-    return false;
-  }
-
-  private _moveDisjoint(
-    ordered: string[],
-    remaining: Set<string>,
-    depCount: DefaultMap<string, number>
-  ) {
-    // elements are disjoint
-    // get the element with the most outgoing dependencies and...
-    const bestKey = maxOf(remaining, 0, (key) =>
-      this._calcSumOfDepCounts(remaining, key, depCount)
-    );
-    // ... move it to the right of the ordered keys.
-    // This is the start of the next sequence.
-    this._moveKeyToRight(bestKey, ordered, remaining);
-  }
-
-  private _calcSumOfDepCounts(
-    keySet: Set<string>,
-    leftPart: string,
-    depCount: DefaultMap<string, number>
-  ) {
-    return mapReduce(
-      keySet,
-      0,
-      (rightPart: string) => depCount.getDef(_toKey([leftPart, rightPart])),
-      (accu: number, count: number) => accu + count
-    );
-  }
-
-  private _getOrderedContent(ordered: string[]) {
+  private _getOrderedContent(
+    ordered: string[]
+  ): [Array<Content>, Array<Content>] {
     // bring the names in `this.component` in the order as in `ordered`.
     // bring the definitions (if necessary) to the front
-    const newContent = new Array<Content>();
+    const newContentPre = new Array<Content>();
+    const newContentPost = new Array<Content>();
     const unordered = new Array<string>();
     const defs = new Array<Definition>(...this.component.definitions());
     const defNames = defs.map((d: Definition) => {
@@ -255,8 +275,7 @@ export class SortSequence {
             unordered.push(name);
           }
         }
-      }
-      else if (c instanceof Definition) {
+      } else {
         if (!unordered.includes(c.name)) {
           unordered.push(c.name);
         }
@@ -264,17 +283,31 @@ export class SortSequence {
     }
     if (ordered.join(",") !== unordered.join(",")) {
       for (const o of ordered) {
-        const idx = defNames.indexOf(o);
+        let idx = defNames.indexOf(o);
         if (idx === -1) {
-          newContent.push(new Definition("participant", o));
-        }
-        else {
-          newContent.push(this.component.content.splice(this.component.content.indexOf(defs[idx]), 1)[0]);
+          newContentPost.push(new Definition("participant", o));
+        } else {
+          // definition stays where it was
+          // all superfluous definitions (simple participants) have been removed by
+          // _removeParticipants()
+          // add reference to sorted section at the end
+          newContentPost.push(defs[idx].removeAlias());
+
+          // remove all other definitions by the current name from the original content
+          let idxContent = 0;
+          const nextIndex = () => {
+            defNames[idx] = "";
+            idx = defNames.indexOf(o);
+            idxContent = this.component.content.indexOf(defs[idx]);
+            return idxContent != -1 && idx != -1;
+          };
+          while (nextIndex()) {
+            this.component.content.splice(idxContent, 1);
+          }
         }
       }
     }
 
-    return newContent;
+    return [newContentPre, newContentPost];
   }
-
 }

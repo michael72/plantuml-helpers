@@ -32,7 +32,7 @@ export function autoFormatTxt(txt: string, rebuild = false): string {
     return formatted;
   } else if (tpe == DiagramType.Sequence) {
     return (
-      new SortSequence(Component.fromString(lines))
+      new SortSequence(Component.fromString(lines, true))
         .autoFormat()
         .toString(crLf) + ending
     );

@@ -387,13 +387,14 @@ A -> B
     actual.should.equal(expected);
   });
 
-  it("should order a sequence diagram by dependency", () => {
+  it("should order a sequence diagram by dependency - adding definitions up-front and sort at the end", () => {
     const original = `actor B
 A -> B
 `;
-    const expected = `participant A
-actor B
+    const expected = `actor B
 A -> B
+participant A
+actor B
 `;
     const actual = reformat.autoFormatTxt(original);
     actual.should.equal(expected);
@@ -405,13 +406,13 @@ B -> C
 D -> A
 `;
 
-    const expected = `participant D
+    const expected = `A -> B
+B -> C
+D -> A
+participant D
 participant A
 participant B
 participant C
-A -> B
-B -> C
-D -> A
 `;
     const actual = reformat.autoFormatTxt(original);
     actual.should.equal(expected);
@@ -480,7 +481,6 @@ footer
     actual.should.equal(expected);
   });
 
-
   it("should sort classes and preserve their content", () => {
     const original = `title "some title"
 hide empty members
@@ -501,7 +501,7 @@ package c
 }
 A -> C
 B -> A
-`
+`;
     const expected = `title "some title"
 hide empty members
 
@@ -521,7 +521,7 @@ package a {
 
 B -> A
 A -> C
-`
+`;
     const actual = reformat.autoFormatTxt(original);
     actual.should.equal(expected);
   });
@@ -530,7 +530,7 @@ A -> C
     const original = `class A {
   + foo();
 }
-`
+`;
     const actual = reformat.autoFormatTxt(original);
     actual.should.equal(original);
   });
@@ -545,7 +545,7 @@ A -> C
 [C] -> [H]
 [C] -> [J]
 [C] -> [K]
-`
+`;
     const expected = `[A] -> [B]
 [E] <-- [B]
 [B] --> [F]
@@ -555,24 +555,24 @@ A -> C
 [C] --> [H]
 [C] --> [J]
 [C] -> [K]
-`
+`;
 
     const actual = reformat.autoFormatTxt(original, true);
     actual.should.equal(expected);
-  })
+  });
 
   it("should reformat 2 outgoing same arrows - first is rotated left", () => {
     const original = `[A] -> [B]
 [A] -> [C]
 E <|-- [F]
-E <|-- [G]`
+E <|-- [G]`;
     const expected = `[A] --> [B]
 [A] -> [C]
 [F] -|> E
-E <|-- [G]`
+E <|-- [G]`;
     const actual = reformat.autoFormatTxt(original, true);
     actual.should.equal(expected);
-  })
+  });
 
   it("should reformat the doc example code", () => {
     const original = `[Camera] o-> [Commands]
@@ -597,58 +597,213 @@ IConnector <|-- [Connector]
 [ImageProvider] o-> [DataChannel]`;
     const actual = reformat.autoFormatTxt(original, true);
     actual.should.equal(expected);
-  })
+  });
 
   it("should reformat a simple sequence diagram", () => {
     const original = `A -> C : c
 A -> B : b
-A -> B : bb`
+A -> B : bb`;
     // A and B are stronger connected than A and C
-    const expected = `participant A
-participant B
-participant C
-A -> C : c
+    const expected = `A -> C : c
 A -> B : b
-A -> B : bb`
+A -> B : bb
+participant C
+participant A
+participant B`;
     const actual = reformat.autoFormatTxt(original, true);
     actual.should.equal(expected);
-  })
+  });
 
   it("should leave simple outgoing and incoming connections", () => {
     const original = `-> A
-A ->`
+A ->`;
     const expected = `-> A
-A ->`
+A ->`;
     const actual = reformat.autoFormatTxt(original, true);
     actual.should.equal(expected);
-  })
+  });
 
   it("should remove brackets of outgoing and incoming connections", () => {
     const original = `[ -> A
-A -> ]`
+A -> ]`;
     const expected = `-> A
-A ->`
+A ->`;
     const actual = reformat.autoFormatTxt(original, true);
     actual.should.equal(expected);
-  })
+  });
 
   it("should leave return arrows as is", () => {
     const original = `A -> B
-A <-- B`
+A <-- B`;
     const expected = `A -> B
-A <-- B`
+A <-- B`;
     const actual = reformat.autoFormatTxt(original, true);
     actual.should.equal(expected);
-  })
+  });
 
   it("should consider ... (dot dot dot)", () => {
     const original = `A -> B
 ...
-A <-- B`
+A <-- B`;
     const expected = `A -> B
 ...
-A <-- B`
+A <-- B`;
     const actual = reformat.autoFormatTxt(original, true);
     actual.should.equal(expected);
-  })
+  });
+
+  it("should sort incoming connections to the left", () => {
+    const original = `-> b
+a -> b
+a -> c
+a -> d
+a -> d
+`;
+    const expected = `-> b
+a -> b
+a -> c
+a -> d
+a -> d
+participant b
+participant a
+participant d
+participant c
+`;
+    const actual = reformat.autoFormatTxt(original, true);
+    actual.should.equal(expected);
+  });
+
+  it("should remove superfluous definitions", () => {
+    const original = `
+actor a
+participant c
+participant b as "B"
+a -> c
+-> b
+b -> c
+a -> b
+actor a
+participant b
+participant c`;
+    const expected = `actor a
+participant b as "B"
+a -> c
+-> b
+b -> c
+a -> b
+participant b
+actor a
+participant c`;
+    const actual = reformat.autoFormatTxt(original, true);
+    actual.should.equal(expected);
+  });
+
+  it("should sort complex sequence diagrams", () => {
+    const original = `participant a as "this is an A"
+actor b as "a B\nis a b"
+a -> b
+a -> c
+b -> c
+b -> d
+c -> d
+f -> e
+f -> c
+e -> a
+h -> i
+j -> k
+a -> h
+a -> j
+b -> z
+c -> z`;
+    const expected = `participant a as "this is an A"
+actor b as "a B\nis a b"
+
+a -> b
+a -> c
+b -> c
+b -> d
+c -> d
+f -> e
+f -> c
+e -> a
+h -> i
+j -> k
+a -> h
+a -> j
+b -> z
+c -> z
+participant i
+participant a
+participant c
+participant h
+participant f
+participant e
+participant d
+participant b
+participant j
+participant z
+participant k`;
+    const actual = reformat.autoFormatTxt(original, true);
+    actual.should.equal(expected);
+  });
+
+  it("should sort even more complex sequence diagrams", () => {
+    const original = `participant a as "this is an A"
+actor b as "a B\nis a b"
+a -> b
+a -> c
+b -> c
+b -> d
+c -> d
+f -> e
+f -> c
+e -> a
+h -> i
+i -> k
+a -> i
+c -> k
+j -> k
+a -> h
+a -> j
+b -> z
+z -> yy
+yy -> ]
+c -> z`;
+    const expected = `participant a as "this is an A"
+actor b as "a B\nis a b"
+
+a -> b
+a -> c
+b -> c
+b -> d
+c -> d
+f -> e
+f -> c
+e -> a
+h -> i
+i -> k
+a -> i
+c -> k
+j -> k
+a -> h
+a -> j
+b -> z
+z -> yy
+yy ->
+c -> z
+participant a
+participant b
+participant c
+participant z
+participant f
+participant e
+participant h
+participant i
+participant k
+participant j
+participant d
+participant yy`;
+    const actual = reformat.autoFormatTxt(original, true);
+    actual.should.equal(expected);
+  });
 });
