@@ -32,8 +32,7 @@
 				"${workspaceFolder}/test/**/*.spec.ts",
 			],
 			"console": "integratedTerminal",
-			"internalConsoleOptions": "neverOpen",
-			"protocol": "inspector"
+			"internalConsoleOptions": "neverOpen"
 		}
 	]
 }
