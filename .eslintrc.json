@@ -1,28 +1,60 @@
 {
   "extends": [
     "eslint:recommended",
-    "plugin:@typescript-eslint/recommended",
-    "plugin:@typescript-eslint/recommended-requiring-type-checking"
+    "@typescript-eslint/recommended",
+    "@typescript-eslint/recommended-requiring-type-checking",
+    "@typescript-eslint/strict"
   ],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
-    "ecmaVersion": 2020,
+    "ecmaVersion": 2022,
     "sourceType": "module",
-    "project": ["./tsconfig.eslint.json"]
+    "project": [
+      "./tsconfig.eslint.json"
+    ]
   },
-  "plugins": ["@typescript-eslint/eslint-plugin"],
+  "plugins": [
+    "@typescript-eslint/eslint-plugin"
+  ],
   "rules": {
     "no-shadow": "off",
     "@typescript-eslint/no-shadow": ["error"],
     "no-redeclare": "off",
-    "@typescript-eslint/no-redeclare": ["error"],
-    "no-continue": ["error"],
-    "no-mixed-operators": ["error"],
-    "no-multi-assign": ["error"],
-    "no-negated-condition": ["error"],
-    "@typescript-eslint/no-unnecessary-qualifier": ["warn"],
-    "@typescript-eslint/strict-boolean-expressions": ["warn"],
-    "@typescript-eslint/no-unnecessary-type-arguments": ["warn"],
-    "@typescript-eslint/prefer-for-of": ["warn"]
+    "@typescript-eslint/no-redeclare": [
+      "error"
+    ],
+    "no-continue": [
+      "error"
+    ],
+    "no-mixed-operators": [
+      "error"
+    ],
+    "no-multi-assign": [
+      "error"
+    ],
+    "no-negated-condition": [
+      "error"
+    ],
+    "@typescript-eslint/no-unnecessary-qualifier": [
+      "warn"
+    ],
+    "@typescript-eslint/strict-boolean-expressions": [
+      "warn"
+    ],
+    "@typescript-eslint/no-unnecessary-type-arguments": [
+      "warn"
+    ],
+    "@typescript-eslint/prefer-for-of": [
+      "warn"
+    ],
+    "@typescript-eslint/prefer-nullish-coalescing": [
+      "warn"
+    ],
+    "@typescript-eslint/prefer-optional-chain": [
+      "warn"
+    ],
+    "@typescript-eslint/no-confusing-void-expression": [
+      "error"
+    ]
   }
 }

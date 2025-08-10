@@ -10,4 +10,6 @@ coverage/
 *.cpuprofile
 .out/
 puml/
+coverage/
+.c8_output/
 

@@ -1,11 +1,11 @@
 version: 2.1
 orbs:
-  node: circleci/node@4.7.0
+  node: circleci/node@5.1.0
 
 jobs:
   build:
     docker:
-      - image: cimg/node:18.0.0
+      - image: cimg/node:20.10
     steps:
       - checkout
       - restore_cache:
@@ -22,4 +22,7 @@ jobs:
           command: npm install && npm run vscode:prepublish && npm t
       - run:
           name: upload to codecov
-          command: bash <(curl -s https://codecov.io/bash)
+          command: |
+            curl -Os https://uploader.codecov.io/latest/linux/codecov
+            chmod +x codecov
+            ./codecov -t ${CODECOV_TOKEN}

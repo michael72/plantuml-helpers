@@ -1,0 +1,25 @@
+{
+  "reporter": [
+    "html",
+    "text",
+    "text-summary",
+    "json",
+    "lcov"
+  ],
+  "check-coverage": true,
+  "all": true,
+  "include": [
+    "src/*.ts",
+    "src/uml/*.ts"
+  ],
+  "exclude": [
+    "**/*.d.ts",
+    "**/*.spec.ts",
+    "**/*.js",
+    "out/**",
+    "coverage/**"
+  ],
+  "extension": [
+    ".ts"
+  ]
+}

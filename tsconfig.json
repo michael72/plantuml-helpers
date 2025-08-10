@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
     "module": "commonjs",
-    "target": "ES2020",
+    "target": "ES2022",
     "outDir": "out",
-    "lib": ["es2020"],
+    "lib": ["ES2022"],
     "sourceMap": true,
     "rootDir": "src",
     "strict": true /* enable all strict type-checking options */,
@@ -12,7 +12,11 @@
     "noImplicitReturns": true /* Report error when not all code paths in function return a value. */,
     "noFallthroughCasesInSwitch": true /* Report errors for fallthrough cases in switch statement. */,
     "noUnusedParameters": true /* Report errors on unused parameters. */,
-    "noUnusedLocals": true
+    "noUnusedLocals": true,
+    "exactOptionalPropertyTypes": true, // New strict option
+    "noImplicitOverride": true, // New strict option
+    "noPropertyAccessFromIndexSignature": true, // New strict option
+    "noUncheckedIndexedAccess": true // New strict option for better array/object safety
   },
   "rules": {
     "@typescript-eslint/member-naming": [
