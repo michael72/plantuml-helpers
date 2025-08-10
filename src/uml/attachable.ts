@@ -2,9 +2,7 @@ export class Attachable {
   private attached?: Array<string>;
 
   attach(line: string): void {
-    if (!this.attached) {
-      this.attached = new Array<string>();
-    }
+    this.attached ??= new Array<string>();
     this.attached.push(line);
   }
 

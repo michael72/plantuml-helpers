@@ -1,0 +1,426 @@
+
+> plantuml-helpers@0.7.2 pretest
+> npm run compile && npm run lint
+
+
+> plantuml-helpers@0.7.2 compile
+> tsc -p ./
+
+
+> plantuml-helpers@0.7.2 lint
+> eslint src test --ext ts
+
+(node:37438) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/michael/priv/plantuml-helpers/eslint.config.js?mtime=1754840994878 is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /home/michael/priv/plantuml-helpers/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+/home/michael/priv/plantuml-helpers/src/reformat.ts
+  18:9   warning  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+  18:24  warning  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+
+/home/michael/priv/plantuml-helpers/src/sortcomponent.ts
+   42:18  error    Unexpected use of continue statement                                                                       no-continue
+   44:20  warning  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly          @typescript-eslint/strict-boolean-expressions
+   44:39  warning  Prefer using nullish coalescing operator (`??`) instead of a logical or (`||`), as it is a safer operator  @typescript-eslint/prefer-nullish-coalescing
+  130:22  warning  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly          @typescript-eslint/strict-boolean-expressions
+  130:38  warning  Prefer using nullish coalescing operator (`??`) instead of a logical or (`||`), as it is a safer operator  @typescript-eslint/prefer-nullish-coalescing
+  131:22  warning  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly          @typescript-eslint/strict-boolean-expressions
+  131:38  warning  Prefer using nullish coalescing operator (`??`) instead of a logical or (`||`), as it is a safer operator  @typescript-eslint/prefer-nullish-coalescing
+  136:26  warning  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly          @typescript-eslint/strict-boolean-expressions
+  136:42  warning  Prefer using nullish coalescing operator (`??`) instead of a logical or (`||`), as it is a safer operator  @typescript-eslint/prefer-nullish-coalescing
+  137:26  warning  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly          @typescript-eslint/strict-boolean-expressions
+  137:42  warning  Prefer using nullish coalescing operator (`??`) instead of a logical or (`||`), as it is a safer operator  @typescript-eslint/prefer-nullish-coalescing
+  170:20  warning  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly          @typescript-eslint/strict-boolean-expressions
+  170:39  warning  Prefer using nullish coalescing operator (`??`) instead of a logical or (`||`), as it is a safer operator  @typescript-eslint/prefer-nullish-coalescing
+  171:18  warning  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly          @typescript-eslint/strict-boolean-expressions
+  171:37  warning  Prefer using nullish coalescing operator (`??`) instead of a logical or (`||`), as it is a safer operator  @typescript-eslint/prefer-nullish-coalescing
+  214:15  error    Unexpected use of continue statement                                                                       no-continue
+  218:13  warning  Prefer using an optional chain expression instead, as it's more concise and easier to read                 @typescript-eslint/prefer-optional-chain
+  289:15  warning  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly          @typescript-eslint/strict-boolean-expressions
+  289:15  warning  Prefer using an optional chain expression instead, as it's more concise and easier to read                 @typescript-eslint/prefer-optional-chain
+  345:15  error    Unexpected use of continue statement                                                                       no-continue
+  380:10  warning  Prefer using an optional chain expression instead, as it's more concise and easier to read                 @typescript-eslint/prefer-optional-chain
+  438:11  warning  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly          @typescript-eslint/strict-boolean-expressions
+  451:11  warning  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly          @typescript-eslint/strict-boolean-expressions
+  464:13  warning  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly          @typescript-eslint/strict-boolean-expressions
+  467:13  warning  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly          @typescript-eslint/strict-boolean-expressions
+
+/home/michael/priv/plantuml-helpers/src/sortsequence.ts
+   77:5   warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unused-vars')
+   86:11  warning  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly            @typescript-eslint/strict-boolean-expressions
+   86:19  warning  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly            @typescript-eslint/strict-boolean-expressions
+  138:7   warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-non-null-assertion')
+  226:11  warning  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly            @typescript-eslint/strict-boolean-expressions
+  226:19  warning  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly            @typescript-eslint/strict-boolean-expressions
+  272:18  warning  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly            @typescript-eslint/strict-boolean-expressions
+  272:37  warning  Prefer using nullish coalescing operator (`??`) instead of a logical or (`||`), as it is a safer operator    @typescript-eslint/prefer-nullish-coalescing
+  273:16  warning  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly            @typescript-eslint/strict-boolean-expressions
+  273:35  warning  Prefer using nullish coalescing operator (`??`) instead of a logical or (`||`), as it is a safer operator    @typescript-eslint/prefer-nullish-coalescing
+
+/home/michael/priv/plantuml-helpers/src/uml/arrow.ts
+   77:11  warning  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly          @typescript-eslint/strict-boolean-expressions
+  100:18  warning  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly          @typescript-eslint/strict-boolean-expressions
+  100:25  warning  Prefer using nullish coalescing operator (`??`) instead of a logical or (`||`), as it is a safer operator  @typescript-eslint/prefer-nullish-coalescing
+  109:19  warning  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly          @typescript-eslint/strict-boolean-expressions
+  109:39  warning  Prefer using nullish coalescing operator (`??`) instead of a logical or (`||`), as it is a safer operator  @typescript-eslint/prefer-nullish-coalescing
+
+/home/michael/priv/plantuml-helpers/src/uml/attachable.ts
+  5:5  warning  Prefer using nullish coalescing operator (`??=`) instead of an assignment expression, as it is simpler to read  @typescript-eslint/prefer-nullish-coalescing
+
+/home/michael/priv/plantuml-helpers/src/uml/component.ts
+   29:20  warning  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly          @typescript-eslint/strict-boolean-expressions
+   29:35  warning  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly          @typescript-eslint/strict-boolean-expressions
+   34:11  warning  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly          @typescript-eslint/strict-boolean-expressions
+   80:10  warning  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly          @typescript-eslint/strict-boolean-expressions
+   90:11  warning  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly          @typescript-eslint/strict-boolean-expressions
+   96:11  warning  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly          @typescript-eslint/strict-boolean-expressions
+  110:12  warning  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly          @typescript-eslint/strict-boolean-expressions
+  110:15  error    Unexpected use of continue statement                                                                       no-continue
+  119:20  warning  Prefer using nullish coalescing operator (`??`) instead of a ternary expression, as it is simpler to read  @typescript-eslint/prefer-nullish-coalescing
+  241:34  warning  Prefer using nullish coalescing operator (`??`) instead of a ternary expression, as it is simpler to read  @typescript-eslint/prefer-nullish-coalescing
+
+/home/michael/priv/plantuml-helpers/src/uml/definition.ts
+  53:11  warning  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly               @typescript-eslint/strict-boolean-expressions
+  59:17  warning  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly               @typescript-eslint/strict-boolean-expressions
+  59:26  warning  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly               @typescript-eslint/strict-boolean-expressions
+  61:13  warning  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly               @typescript-eslint/strict-boolean-expressions
+  66:9   warning  Prefer using nullish coalescing operator (`??=`) instead of an assignment expression, as it is simpler to read  @typescript-eslint/prefer-nullish-coalescing
+  72:15  warning  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly               @typescript-eslint/strict-boolean-expressions
+  72:23  warning  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly               @typescript-eslint/strict-boolean-expressions
+
+/home/michael/priv/plantuml-helpers/src/uml/diagramtype.ts
+  97:9  warning  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+
+/home/michael/priv/plantuml-helpers/src/uml/line.ts
+   48:10  warning  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly          @typescript-eslint/strict-boolean-expressions
+   56:20  warning  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly          @typescript-eslint/strict-boolean-expressions
+   56:31  warning  Prefer using nullish coalescing operator (`??`) instead of a logical or (`||`), as it is a safer operator  @typescript-eslint/prefer-nullish-coalescing
+   57:21  warning  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly          @typescript-eslint/strict-boolean-expressions
+   57:32  warning  Prefer using nullish coalescing operator (`??`) instead of a logical or (`||`), as it is a safer operator  @typescript-eslint/prefer-nullish-coalescing
+   64:11  warning  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly          @typescript-eslint/strict-boolean-expressions
+  137:19  warning  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly          @typescript-eslint/strict-boolean-expressions
+  137:38  warning  Prefer using nullish coalescing operator (`??`) instead of a logical or (`||`), as it is a safer operator  @typescript-eslint/prefer-nullish-coalescing
+  138:19  warning  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly          @typescript-eslint/strict-boolean-expressions
+  138:38  warning  Prefer using nullish coalescing operator (`??`) instead of a logical or (`||`), as it is a safer operator  @typescript-eslint/prefer-nullish-coalescing
+  143:8   warning  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly          @typescript-eslint/strict-boolean-expressions
+  143:31  warning  Prefer using nullish coalescing operator (`??`) instead of a logical or (`||`), as it is a safer operator  @typescript-eslint/prefer-nullish-coalescing
+  143:38  warning  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly          @typescript-eslint/strict-boolean-expressions
+  143:61  warning  Prefer using nullish coalescing operator (`??`) instead of a logical or (`||`), as it is a safer operator  @typescript-eslint/prefer-nullish-coalescing
+  146:8   warning  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly          @typescript-eslint/strict-boolean-expressions
+  146:22  warning  Prefer using nullish coalescing operator (`??`) instead of a logical or (`||`), as it is a safer operator  @typescript-eslint/prefer-nullish-coalescing
+  146:29  warning  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly          @typescript-eslint/strict-boolean-expressions
+  182:19  warning  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly          @typescript-eslint/strict-boolean-expressions
+  182:33  warning  Prefer using nullish coalescing operator (`??`) instead of a logical or (`||`), as it is a safer operator  @typescript-eslint/prefer-nullish-coalescing
+  183:19  warning  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly          @typescript-eslint/strict-boolean-expressions
+  183:33  warning  Prefer using nullish coalescing operator (`??`) instead of a logical or (`||`), as it is a safer operator  @typescript-eslint/prefer-nullish-coalescing
+
+/home/michael/priv/plantuml-helpers/test/helpers.spec.ts
+  4:1  error  'describe' is not defined  no-undef
+  5:3  error  'it' is not defined        no-undef
+
+/home/michael/priv/plantuml-helpers/test/reformat.spec.ts
+    6:1   error  'describe' is not defined                              no-undef
+    7:3   error  'it' is not defined                                    no-undef
+   13:3   error  'it' is not defined                                    no-undef
+   20:3   error  'it' is not defined                                    no-undef
+   27:3   error  'it' is not defined                                    no-undef
+   34:3   error  'it' is not defined                                    no-undef
+   40:3   error  'it' is not defined                                    no-undef
+   69:3   error  'it' is not defined                                    no-undef
+   70:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+   70:47  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+   73:3   error  'it' is not defined                                    no-undef
+   74:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+   74:47  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+   77:3   error  'it' is not defined                                    no-undef
+   81:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+   81:19  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+   84:3   error  'it' is not defined                                    no-undef
+   96:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+   96:19  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+   99:3   error  'it' is not defined                                    no-undef
+  112:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  112:19  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  115:3   error  'it' is not defined                                    no-undef
+  129:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  129:19  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  132:3   error  'it' is not defined                                    no-undef
+  136:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  136:19  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  139:3   error  'it' is not defined                                    no-undef
+  154:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  154:19  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  157:3   error  'it' is not defined                                    no-undef
+  186:3   error  'it' is not defined                                    no-undef
+  236:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  236:19  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  239:3   error  'it' is not defined                                    no-undef
+  250:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  250:19  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  252:3   error  'it' is not defined                                    no-undef
+  274:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  274:19  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  277:3   error  'it' is not defined                                    no-undef
+  287:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  287:19  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  290:3   error  'it' is not defined                                    no-undef
+  332:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  332:19  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  335:3   error  'it' is not defined                                    no-undef
+  377:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  377:19  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  380:3   error  'it' is not defined                                    no-undef
+  387:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  387:19  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  390:3   error  'it' is not defined                                    no-undef
+  400:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  400:19  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  403:3   error  'it' is not defined                                    no-undef
+  418:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  418:19  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  421:3   error  'it' is not defined                                    no-undef
+  431:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  431:19  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  434:3   error  'it' is not defined                                    no-undef
+  439:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  439:19  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  442:3   error  'it' is not defined                                    no-undef
+  449:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  449:19  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  452:3   error  'it' is not defined                                    no-undef
+  461:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  461:19  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  464:3   error  'it' is not defined                                    no-undef
+  481:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  481:19  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  484:3   error  'it' is not defined                                    no-undef
+  526:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  526:19  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  529:3   error  'it' is not defined                                    no-undef
+  535:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  535:19  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  538:3   error  'it' is not defined                                    no-undef
+  561:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  561:19  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  564:3   error  'it' is not defined                                    no-undef
+  574:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  574:19  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  577:3   error  'it' is not defined                                    no-undef
+  599:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  599:19  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  602:3   error  'it' is not defined                                    no-undef
+  614:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  614:19  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  617:3   error  'it' is not defined                                    no-undef
+  623:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  623:19  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  626:3   error  'it' is not defined                                    no-undef
+  632:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  632:19  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  635:3   error  'it' is not defined                                    no-undef
+  641:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  641:19  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  644:3   error  'it' is not defined                                    no-undef
+  652:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  652:19  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  655:3   error  'it' is not defined                                    no-undef
+  673:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  673:19  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  676:3   error  'it' is not defined                                    no-undef
+  698:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  698:19  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  701:3   error  'it' is not defined                                    no-undef
+  747:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  747:19  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  750:3   error  'it' is not defined                                    no-undef
+  807:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  807:19  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+
+/home/michael/priv/plantuml-helpers/test/rotate.spec.ts
+   7:1   error  'describe' is not defined                              no-undef
+   8:3   error  'it' is not defined                                    no-undef
+  29:3   error  'it' is not defined                                    no-undef
+  36:3   error  'it' is not defined                                    no-undef
+  40:3   error  'it' is not defined                                    no-undef
+  56:3   error  'it' is not defined                                    no-undef
+  57:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  60:14  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+
+/home/michael/priv/plantuml-helpers/test/uml/arrow.spec.ts
+   8:1   error  'describe' is not defined                                              no-undef
+   9:3   error  'it' is not defined                                                    no-undef
+  11:5   error  Expected an assignment or function call and instead saw an expression  @typescript-eslint/no-unused-expressions
+  13:7   error  Unsafe call of a(n) `error` type typed value                           @typescript-eslint/no-unsafe-call
+  13:30  error  Unsafe member access .equal on an `error` typed value                  @typescript-eslint/no-unsafe-member-access
+  14:7   error  Unsafe call of a(n) `error` type typed value                           @typescript-eslint/no-unsafe-call
+  14:25  error  Unsafe member access .equal on an `error` typed value                  @typescript-eslint/no-unsafe-member-access
+  15:7   error  Unsafe call of a(n) `error` type typed value                           @typescript-eslint/no-unsafe-call
+  15:25  error  Unsafe member access .equal on an `error` typed value                  @typescript-eslint/no-unsafe-member-access
+  16:7   error  Unsafe call of a(n) `error` type typed value                           @typescript-eslint/no-unsafe-call
+  16:26  error  Unsafe member access .equal on an `error` typed value                  @typescript-eslint/no-unsafe-member-access
+  17:7   error  Unsafe call of a(n) `error` type typed value                           @typescript-eslint/no-unsafe-call
+  17:27  error  Unsafe member access .equal on an `error` typed value                  @typescript-eslint/no-unsafe-member-access
+  21:3   error  'it' is not defined                                                    no-undef
+  26:3   error  'it' is not defined                                                    no-undef
+  35:3   error  'it' is not defined                                                    no-undef
+  46:3   error  'it' is not defined                                                    no-undef
+  61:3   error  'it' is not defined                                                    no-undef
+  63:5   error  Unsafe call of a(n) `error` type typed value                           @typescript-eslint/no-unsafe-call
+  63:24  error  Unsafe member access .equal on an `error` typed value                  @typescript-eslint/no-unsafe-member-access
+  64:5   error  Unsafe call of a(n) `error` type typed value                           @typescript-eslint/no-unsafe-call
+  64:25  error  Unsafe member access .equal on an `error` typed value                  @typescript-eslint/no-unsafe-member-access
+
+/home/michael/priv/plantuml-helpers/test/uml/component.spec.ts
+    9:1   error  'describe' is not defined                              no-undef
+   10:3   error  'describe' is not defined                              no-undef
+   11:5   error  'it' is not defined                                    no-undef
+   20:7   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+   20:27  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+   21:7   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+   21:27  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+   22:7   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+   22:36  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+   23:7   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+   23:32  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+   25:5   error  'it' is not defined                                    no-undef
+   31:7   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+   31:27  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+   32:7   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+   32:27  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+   33:7   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+   33:36  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+   34:7   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+   34:32  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+   36:5   error  'it' is not defined                                    no-undef
+   41:7   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+   41:21  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+   43:5   error  'it' is not defined                                    no-undef
+   54:7   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+   54:21  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+   56:5   error  'it' is not defined                                    no-undef
+  101:7   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  101:21  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  104:3   error  'describe' is not defined                              no-undef
+  105:5   error  'it' is not defined                                    no-undef
+  107:7   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  107:22  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  108:7   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  108:22  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  112:7   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  112:22  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  113:7   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  113:22  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  114:7   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  114:24  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  117:7   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  117:22  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  118:7   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  118:22  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  122:7   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  122:22  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  123:7   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  123:22  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  124:7   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  124:24  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  127:5   error  'it' is not defined                                    no-undef
+  129:7   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  129:22  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  130:7   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  130:22  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  134:7   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  134:22  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  135:7   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  135:22  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  136:7   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  136:24  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  139:7   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  139:22  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  140:7   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  140:22  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  146:7   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  146:22  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  147:7   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  147:22  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  148:7   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  148:24  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  151:5   error  'it' is not defined                                    no-undef
+
+/home/michael/priv/plantuml-helpers/test/uml/line.spec.ts
+    9:3   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+    9:24  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+   11:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+   11:14  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+   15:1   error  'describe' is not defined                              no-undef
+   16:3   error  'it' is not defined                                    no-undef
+   22:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+   22:35  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+   23:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+   23:30  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+   26:3   error  'it' is not defined                                    no-undef
+   30:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+   30:40  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+   33:3   error  'it' is not defined                                    no-undef
+   37:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+   37:40  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+   40:3   error  'it' is not defined                                    no-undef
+   44:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+   44:40  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+   47:3   error  'it' is not defined                                    no-undef
+   51:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+   51:40  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+   54:3   error  'it' is not defined                                    no-undef
+   58:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+   58:39  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+   61:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+   61:30  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+   64:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+   64:30  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+   67:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+   67:30  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+   70:3   error  'it' is not defined                                    no-undef
+   75:7   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+   75:32  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+   79:3   error  'it' is not defined                                    no-undef
+   84:7   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+   84:32  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+   88:3   error  'it' is not defined                                    no-undef
+   93:7   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+   93:32  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+   97:3   error  'it' is not defined                                    no-undef
+  102:7   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  102:32  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  106:3   error  'it' is not defined                                    no-undef
+  117:9   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  117:34  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  122:3   error  'it' is not defined                                    no-undef
+  125:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  125:33  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  126:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  126:33  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  127:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  127:30  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  128:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  128:30  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  131:3   error  'it' is not defined                                    no-undef
+  134:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  134:28  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  136:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  136:28  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  138:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  138:28  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  140:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  140:28  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  143:3   error  'it' is not defined                                    no-undef
+  146:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  146:28  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  148:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  148:28  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  150:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  150:28  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  152:5   error  Unsafe call of a(n) `error` type typed value           @typescript-eslint/no-unsafe-call
+  152:28  error  Unsafe member access .equal on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+
+✖ 376 problems (298 errors, 78 warnings)
+  0 errors and 5 warnings potentially fixable with the `--fix` option.
+

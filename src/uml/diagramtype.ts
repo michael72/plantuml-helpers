@@ -94,7 +94,7 @@ function _getTypeByKeywords(line: string): DiagramType {
   const m = RegToken.exec(line);
   if (m) {
     const keyword = m[1];
-    if (keyword) {
+    if (keyword != null && keyword.length > 0) {
       const t = keyMap.get(keyword);
       if (t != null) {
         return t;

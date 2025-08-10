@@ -41,7 +41,7 @@ export class Definition extends Attachable {
   }
   static fromString(line: string): Definition | undefined {
     const shorten = (s: string, by: string): string => {
-      if (s[0] === by) {
+      if (s.length > 0 && s[0] === by) {
         return s.substring(1, s.length - 1);
       }
       return s;
@@ -50,26 +50,24 @@ export class Definition extends Attachable {
     // check interface definition
     if (m) {
       const name = m[2];
-      if (name) {
+      if (name != null && name.length > 0) {
         return new this("interface", shorten(name, '"'), m[3]);
       }
     } else {
       // check for component
       m = REGEX_COMPONENT.exec(line);
-      if (m && (m[1] || (m[2] && m[2][0] === "["))) {
+      if (m && (m[1] != null || (m[2] != null && m[2].length > 0 && m[2][0] === "["))) {
         const name = m[2];
-        if (name) {
+        if (name != null && name.length > 0) {
           return new this("component", shorten(name, "["), m[3]);
         }
       } else {
-        m = REGEX_CLASS.exec(line);
-        if (!m) {
-          m = REGEX_SEQUENCE.exec(line);
-        }
+        m = REGEX_CLASS.exec(line) ?? REGEX_SEQUENCE.exec(line);
+        
         if (m) {
           const type = m[1];
           const name = m[2];
-          if (type && name) {
+          if (type != null && type.length > 0 && name != null && name.length > 0) {
             return new this(type, shorten(name, '"'), m[3]);
           }
         }
@@ -85,7 +83,7 @@ export class Definition extends Attachable {
   override toString(): string {
     const comp = `${this.type} ${this.name}`;
     const content =
-      this.alias != null && this.alias ? comp + " as " + this.alias : comp;
+      this.alias != null && this.alias.length > 0 ? comp + " as " + this.alias : comp;
     return content + this.attachedToString();
   }
 

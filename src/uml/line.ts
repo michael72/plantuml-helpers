@@ -27,10 +27,10 @@ export class Line extends Attachable {
     public sides: Array<string>
   ) {
     super();
-    if (this.components[0]?.length == 0) {
+    if ((this.components[0]?.length ?? 0) == 0) {
       this.components[0] = "[";
     }
-    if (this.components[1]?.length == 0) {
+    if ((this.components[1]?.length ?? 0) == 0) {
       this.components[1] = "]";
     }
   }
@@ -45,7 +45,7 @@ export class Line extends Attachable {
     }
     const a = 4; // arrow-index
     const arrowStr = m[a];
-    if (!arrowStr) {
+    if (arrowStr == null || arrowStr.length === 0) {
       return;
     }
     const arrow = Arrow.fromString(arrowStr);
@@ -53,15 +53,15 @@ export class Line extends Attachable {
       return;
     }
     const mirror = (idx: number): Array<string> => {
-      const left = m[a - idx] || "";
-      const right = m[a + idx] || "";
+      const left = m[a - idx] ?? "";
+      const right = m[a + idx] ?? "";
       return [left, right];
     };
     const result = new this(mirror(2), arrow, mirror(1), mirror(3));
     if (result.arrow.tag.length > 0) {
       // check explicit direction set in arrow - e.g. -up->
       const firstChar = result.arrow.tag[0];
-      if (firstChar) {
+      if (firstChar != null && firstChar.length > 0) {
         const idx = this.DIRECTIONS.indexOf(firstChar);
         if (idx !== -1) {
           result.arrow.tag = "";
@@ -125,7 +125,7 @@ export class Line extends Attachable {
   componentNames(): string[] {
     // remove outer brackets
     return this.components
-      .map((c) => (c && c[0] == "[" ? c.substring(1, c.length - 1) : c))
+      .map((c) => (c != null && c[0] == "[" ? c.substring(1, c.length - 1) : c))
       .filter((c): c is string => c != null && (c.length > 1 || (c !== "[" && c !== "]" && c !== "")));
   }
 
@@ -134,16 +134,16 @@ export class Line extends Attachable {
   }
 
   reverse(): Line {
-    const comp0 = this.components[1] || "";
-    const comp1 = this.components[0] || "";
+    const comp0 = this.components[1] ?? "";
+    const comp1 = this.components[0] ?? "";
     const side1 = this.sides[1];
     return new Line(
       [comp0, comp1],
       this.arrow.reverse(),
-      [this.multiplicities[1] || "", this.multiplicities[0] || ""],
+      [this.multiplicities[1] ?? "", this.multiplicities[0] ?? ""],
       // the label section (on the right side) might contain an arrow as well
       // this has to be turned around as well!
-      [this.sides[0] || "", side1 ? reverseHead(side1) : ""]
+      [this.sides[0] ?? "", side1 != null && side1.length > 0 ? reverseHead(side1) : ""]
     );
   }
 
@@ -179,8 +179,8 @@ export class Line extends Attachable {
   }
 
   override toString(): string {
-    const side0 = this.sides[0] || "";
-    const side1 = this.sides[1] || "";
+    const side0 = this.sides[0] ?? "";
+    const side1 = this.sides[1] ?? "";
     const content =
       side0 +
       [

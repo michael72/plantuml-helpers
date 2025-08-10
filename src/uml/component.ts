@@ -26,12 +26,12 @@ export class Component {
     for (let i = 0; i < arr.length; ++i) {
       const currentLine = arr[i];
       const prevLine = arr[i - 1];
-      if (i > 0 && currentLine && prevLine && currentLine.trim().startsWith("{")) {
+      if (i > 0 && currentLine != null && currentLine.length > 0 && prevLine != null && prevLine.length > 0 && currentLine.trim().startsWith("{")) {
         arr[i - 1] = prevLine + " " + currentLine;
         arr[i] = "";
       }
       const lineToTrim = arr[i];
-      if (lineToTrim) {
+      if (lineToTrim != null && lineToTrim.length > 0) {
         arr[i] = lineToTrim.trimRight();
       }
     }
@@ -77,7 +77,7 @@ export class Component {
 
     let i = start;
     const currentLine = arr[i];
-    if (!currentLine) {
+    if (currentLine == null || currentLine.length === 0) {
       return [new Component([], [], []), i];
     }
     const m = this.regexTitle.exec(currentLine);
@@ -87,13 +87,13 @@ export class Component {
       ++i;
       type = m[1];
       printName = m[2];
-      if (printName) {
+      if (printName != null && printName.length > 0) {
         // remove quotes
         name = printName.startsWith('"')
           ? printName.substring(1, printName.length - 1)
           : printName;
       }
-      if (m[3]) {
+      if (m[3] != null && m[3].length > 0) {
         suffix = m[3].trimRight();
       }
     }
@@ -107,45 +107,48 @@ export class Component {
     // parse the content of the component
     for (; i < arr.length; ++i) {
       const s = arr[i];
-      if (!s) continue;
-      
-      const def = Definition.fromString(s);
-      if (def) {
-        content.push(def);
-        prevLine = def;
-      } else if (this.regexTitle.exec(s)) {
-        // parse child element until closing bracket
-        const [child, next] = this._fromString(arr, i);
-        children = children ? children : [];
-        children.push(child);
-        i = next;
+      if (s == null || s.length === 0) {
+        // Skip empty lines instead of using continue
+        // Process next line in the next iteration
       } else {
-        const class_types = [
-          "abstract",
-          "abstract class",
-          "annotation",
-          "class",
-          "entity",
-          "enum",
-          "interface",
-        ];
-        const line =
-          type !== undefined && class_types.includes(type)
-            ? undefined
-            : Line.fromString(s);
-        if (line) {
-          prevLine = line;
-          content.push(line);
-        } else if (s.trim() == "}") {
-          break;
-        } else if (prevLine) {
-          prevLine.attach(s);
+        const def = Definition.fromString(s);
+        if (def) {
+          content.push(def);
+          prevLine = def;
+        } else if (this.regexTitle.exec(s)) {
+          // parse child element until closing bracket
+          const [child, next] = this._fromString(arr, i);
+          children = children ?? [];
+          children.push(child);
+          i = next;
         } else {
-          header.push(s);
+          const class_types = [
+            "abstract",
+            "abstract class",
+            "annotation",
+            "class",
+            "entity",
+            "enum",
+            "interface",
+          ];
+          const line =
+            type !== undefined && class_types.includes(type)
+              ? undefined
+              : Line.fromString(s);
+          if (line) {
+            prevLine = line;
+            content.push(line);
+          } else if (s.trim() == "}") {
+            break;
+          } else if (prevLine) {
+            prevLine.attach(s);
+          } else {
+            header.push(s);
+          }
         }
       }
     }
-    if (prevLine) {
+   if (prevLine) {
       footer = prevLine.moveAttached();
     }
 
@@ -238,7 +241,7 @@ export class Component {
   }
 
   toString(lf?: string): string {
-    return this._toStringTab("", lf == null ? "\n" : lf);
+    return this._toStringTab("", lf ?? "\n");
   }
 
   static DEFAULT_TAB = "  ";

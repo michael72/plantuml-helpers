@@ -15,7 +15,7 @@ export function autoFormatTxt(txt: string, rebuild = false): string {
   if (m) {
     const matchedText = m[1];
     const matchedEnding = m[2];
-    if (matchedText && matchedEnding) {
+    if (matchedText != null && matchedText.length > 0 && matchedEnding != null && matchedEnding.length > 0) {
       txt = matchedText;
       ending = matchedEnding;
       if (ending.length > 2) {

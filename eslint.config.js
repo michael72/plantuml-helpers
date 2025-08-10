@@ -3,9 +3,9 @@ import tseslint from '@typescript-eslint/eslint-plugin';
 import tsparser from '@typescript-eslint/parser';
 
 export default [
-  // Apply to TypeScript files
+  // Apply to TypeScript source files
   {
-    files: ['src/**/*.ts', 'test/**/*.ts'],
+    files: ['src/**/*.ts'],
     languageOptions: {
       parser: tsparser,
       parserOptions: {
@@ -42,6 +42,43 @@ export default [
       '@typescript-eslint/prefer-nullish-coalescing': ['warn'],
       '@typescript-eslint/prefer-optional-chain': ['warn'],
       '@typescript-eslint/no-confusing-void-expression': ['error'],
+    },
+  },
+  // Apply to TypeScript test files with different rules
+  {
+    files: ['test/**/*.ts'],
+    languageOptions: {
+      parser: tsparser,
+      parserOptions: {
+        ecmaVersion: 2022,
+        sourceType: 'module',
+        project: ['./tsconfig.eslint.json'],
+      },
+      globals: {
+        describe: 'readonly',
+        it: 'readonly',
+        before: 'readonly',
+        after: 'readonly',
+        beforeEach: 'readonly',
+        afterEach: 'readonly',
+      },
+    },
+    plugins: {
+      '@typescript-eslint': tseslint,
+    },
+    rules: {
+      // ESLint recommended rules
+      ...eslint.configs.recommended.rules,
+      
+      // TypeScript ESLint recommended rules (less strict for tests)
+      ...tseslint.configs.recommended.rules,
+      
+      // Disable some strict rules for test files
+      '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unused-expressions': 'off',
+      '@typescript-eslint/strict-boolean-expressions': 'off',
+      'no-undef': 'off', // TypeScript handles this
     },
   },
   // Ignore patterns (equivalent to .eslintignore)
