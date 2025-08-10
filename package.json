@@ -80,9 +80,9 @@
     "lint": "eslint src test --ext ts",
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
-    "test": "c8 mocha",
+    "test": "c8 --loader=tsx mocha",
     "posttest": "c8 report",
-    "watchtest": "c8 mocha -w"
+    "watchtest": "c8 --loader=tsx mocha -w"
   },
   "devDependencies": {
     "@eslint/js": "^9.33.0",
@@ -97,6 +97,7 @@
     "eslint": "^9.33.0",
     "mocha": "^11.7.1",
     "ts-node": "^10.9.2",
+    "tsx": "^4.20.3",
     "typescript": "^5.9.2"
   }
 }

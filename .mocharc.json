@@ -1,5 +1,9 @@
 {
-  "extension": ["ts"],
-  "spec": "test/**/*.spec.ts",
-  "require": "ts-node/register"
+    "extension": ["ts", "js"],
+    "spec": ["tests/**.{ts,js}"],
+    "node-option": [
+        "loader=ts-node/esm",
+        "loader=./yaml-loader.mjs",
+        "no-warnings"
+    ]
 }
