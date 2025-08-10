@@ -24,11 +24,16 @@ export class Component {
     let arr = typeof s === "string" ? s.split("\n") : s;
     // pre-filter: remove single open braces { and put them at the end of the previous line
     for (let i = 0; i < arr.length; ++i) {
-      if (i > 0 && arr[i].trim().startsWith("{")) {
-        arr[i - 1] += " " + arr[i];
+      const currentLine = arr[i];
+      const prevLine = arr[i - 1];
+      if (i > 0 && currentLine && prevLine && currentLine.trim().startsWith("{")) {
+        arr[i - 1] = prevLine + " " + currentLine;
         arr[i] = "";
       }
-      arr[i] = arr[i].trimRight();
+      const lineToTrim = arr[i];
+      if (lineToTrim) {
+        arr[i] = lineToTrim.trimRight();
+      }
     }
     // post-filter: remove empty lines
     if (!keepEmptyLines) {
@@ -51,7 +56,10 @@ export class Component {
     }
     // shortcut: return the only child
     if (children.length == 1) {
-      return children[0];
+      const firstChild = children[0];
+      if (firstChild) {
+        return firstChild;
+      }
     }
     parent.children = children;
     return parent;
@@ -68,7 +76,11 @@ export class Component {
     let suffix: string | undefined;
 
     let i = start;
-    const m = this.regexTitle.exec(arr[i]);
+    const currentLine = arr[i];
+    if (!currentLine) {
+      return [new Component([], [], []), i];
+    }
+    const m = this.regexTitle.exec(currentLine);
 
     if (m && arr.length > 1) {
       // found a component definition
@@ -95,6 +107,8 @@ export class Component {
     // parse the content of the component
     for (; i < arr.length; ++i) {
       const s = arr[i];
+      if (!s) continue;
+      
       const def = Definition.fromString(s);
       if (def) {
         content.push(def);

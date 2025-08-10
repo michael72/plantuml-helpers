@@ -49,19 +49,29 @@ export class Definition extends Attachable {
     let m = REGEX_INTERFACE.exec(line);
     // check interface definition
     if (m) {
-      return new this("interface", shorten(m[2], '"'), m[3]);
+      const name = m[2];
+      if (name) {
+        return new this("interface", shorten(name, '"'), m[3]);
+      }
     } else {
       // check for component
       m = REGEX_COMPONENT.exec(line);
-      if (m && (m[1] || m[2][0] === "[")) {
-        return new this("component", shorten(m[2], "["), m[3]);
+      if (m && (m[1] || (m[2] && m[2][0] === "["))) {
+        const name = m[2];
+        if (name) {
+          return new this("component", shorten(name, "["), m[3]);
+        }
       } else {
         m = REGEX_CLASS.exec(line);
         if (!m) {
           m = REGEX_SEQUENCE.exec(line);
         }
         if (m) {
-          return new this(m[1], shorten(m[2], '"'), m[3]);
+          const type = m[1];
+          const name = m[2];
+          if (type && name) {
+            return new this(type, shorten(name, '"'), m[3]);
+          }
         }
       }
     }
@@ -72,7 +82,7 @@ export class Definition extends Attachable {
     return this.type === "component";
   }
 
-  toString(): string {
+  override toString(): string {
     const comp = `${this.type} ${this.name}`;
     const content =
       this.alias != null && this.alias ? comp + " as " + this.alias : comp;

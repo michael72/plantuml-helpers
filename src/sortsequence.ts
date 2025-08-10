@@ -81,7 +81,11 @@ export class SortSequence {
     const weights: Array<[string, string, number]> = [];
     for (const [k, v] of depCount) {
       const arr = k.split(",");
-      weights.push([arr[0], arr[1], v]);
+      const left = arr[0];
+      const right = arr[1];
+      if (left && right) {
+        weights.push([left, right, v]);
+      }
     }
 
     let off_left = names[0] === "[" ? 1 : 0;
@@ -103,8 +107,12 @@ export class SortSequence {
 
     const swap = (arr: Array<string>, i: number, j: number) => {
       const temp = arr[i];
-      arr[i] = arr[j];
-      arr[j] = temp;
+      const elemI = arr[i];
+      const elemJ = arr[j];
+      if (temp !== undefined && elemI !== undefined && elemJ !== undefined) {
+        arr[i] = elemJ;
+        arr[j] = elemI;
+      }
     };
 
     const checkWeight = (recalc = false) => {
@@ -128,7 +136,10 @@ export class SortSequence {
     const rotate = (left: number, right: number) => {
       let rotated: Array<string> = checklist.slice(left, right);
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      rotated.unshift(rotated.pop()!);
+      const popped = rotated.pop();
+      if (popped !== undefined) {
+        rotated.unshift(popped);
+      }
       if (left > 0) {
         rotated = [...checklist.slice(0, left), ...rotated];
       }
@@ -143,14 +154,19 @@ export class SortSequence {
       const counters = new Array<number>(numElems).fill(0);
       let i = 1;
       while (i < ordered.length - off_left - off_right) {
-        if (counters[i] < i) {
-          const k = i % 2 && counters[i];
-          swap(checklist, i + off_left, k + off_left);
-          ++counters[i];
+        const counterI = counters[i];
+        if (counterI !== undefined && counterI < i) {
+          const k = i % 2 && counterI;
+          if (k !== undefined) {
+            swap(checklist, i + off_left, k + off_left);
+          }
+          counters[i] = counterI + 1;
           i = 1;
           checkWeight();
         } else {
-          counters[i] = 0;
+          if (counterI !== undefined) {
+            counters[i] = 0;
+          }
           ++i;
         }
       }
@@ -205,9 +221,11 @@ export class SortSequence {
     });
     for (const connection of depCount.keys()) {
       const arr = connection.split(",");
-      if (this._isRealComponent(arr[0]) && this._isRealComponent(arr[1])) {
-        deps.getDef(arr[0]).push(arr[1]);
-        deps.getDef(arr[1]).push(arr[0]);
+      const left = arr[0];
+      const right = arr[1];
+      if (left && right && this._isRealComponent(left) && this._isRealComponent(right)) {
+        deps.getDef(left).push(right);
+        deps.getDef(right).push(left);
       }
     }
 
@@ -240,7 +258,7 @@ export class SortSequence {
 
   private _addLineComponentsNames(line: Line, names: string[]) {
     for (const item of line.components) {
-      if (!names.includes(item)) {
+      if (item && !names.includes(item)) {
         if (item === "[") {
           names.unshift(item);
         } else {
@@ -251,7 +269,8 @@ export class SortSequence {
   }
 
   private _updateLineStats(line: Line, depCount: DefaultMap<string, number>) {
-    const [from, to] = line.components;
+    const from = line.components[0] || "";
+    const to = line.components[1] || "";
     const key = _toKey([from, to]);
     depCount.set(key, depCount.getDef(key) + 1);
   }
@@ -291,14 +310,20 @@ export class SortSequence {
           // all superfluous definitions (simple participants) have been removed by
           // _removeParticipants()
           // add reference to sorted section at the end
-          newContentPost.push(defs[idx].removeAlias());
+          const defAtIdx = defs[idx];
+          if (defAtIdx) {
+            newContentPost.push(defAtIdx.removeAlias());
+          }
 
           // remove all other definitions by the current name from the original content
           let idxContent = 0;
           const nextIndex = () => {
             defNames[idx] = "";
             idx = defNames.indexOf(o);
-            idxContent = this.component.content.indexOf(defs[idx]);
+            const currentDef = defs[idx];
+            if (currentDef) {
+              idxContent = this.component.content.indexOf(currentDef);
+            }
             return idxContent != -1 && idx != -1;
           };
           while (nextIndex()) {

@@ -24,7 +24,6 @@ export function reverse(s: string): string {
  * A default value can not be used as it would always return
  * the same reference.
  */
-// eslint-disable-next-line no-undef
 export class DefaultMap<K, V> extends Map<K, V> {
   /** Saves the default value callback */
   private defaultVal: () => V;

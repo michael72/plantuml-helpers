@@ -13,10 +13,14 @@ export function autoFormatTxt(txt: string, rebuild = false): string {
   // auto formatting does not include the ending - add it later
   let ending = "";
   if (m) {
-    txt = m[1];
-    ending = m[2];
-    if (ending.length > 2) {
-      ending = crLf;
+    const matchedText = m[1];
+    const matchedEnding = m[2];
+    if (matchedText && matchedEnding) {
+      txt = matchedText;
+      ending = matchedEnding;
+      if (ending.length > 2) {
+        ending = crLf;
+      }
     }
   }
 

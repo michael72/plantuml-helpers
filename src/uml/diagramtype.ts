@@ -93,9 +93,12 @@ export function getType(content: Array<string>): DiagramType {
 function _getTypeByKeywords(line: string): DiagramType {
   const m = RegToken.exec(line);
   if (m) {
-    const t = keyMap.get(m[1]);
-    if (t != null) {
-      return t;
+    const keyword = m[1];
+    if (keyword) {
+      const t = keyMap.get(keyword);
+      if (t != null) {
+        return t;
+      }
     }
   }
   return DiagramType.Unknown;

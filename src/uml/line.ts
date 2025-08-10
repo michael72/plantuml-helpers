@@ -27,10 +27,10 @@ export class Line extends Attachable {
     public sides: Array<string>
   ) {
     super();
-    if (this.components[0].length == 0) {
+    if (this.components[0]?.length == 0) {
       this.components[0] = "[";
     }
-    if (this.components[1].length == 0) {
+    if (this.components[1]?.length == 0) {
       this.components[1] = "]";
     }
   }
@@ -44,22 +44,29 @@ export class Line extends Attachable {
       return;
     }
     const a = 4; // arrow-index
-    const arrow = Arrow.fromString(m[a]);
+    const arrowStr = m[a];
+    if (!arrowStr) {
+      return;
+    }
+    const arrow = Arrow.fromString(arrowStr);
     if (!arrow) {
       return;
     }
     const mirror = (idx: number): Array<string> => {
-      const left = m[a - idx];
-      const right = m[a + idx];
-      return [left ? left : "", right ? right : ""];
+      const left = m[a - idx] || "";
+      const right = m[a + idx] || "";
+      return [left, right];
     };
     const result = new this(mirror(2), arrow, mirror(1), mirror(3));
     if (result.arrow.tag.length > 0) {
       // check explicit direction set in arrow - e.g. -up->
-      const idx = this.DIRECTIONS.indexOf(result.arrow.tag[0]);
-      if (idx !== -1) {
-        result.arrow.tag = "";
-        result.setCombinedDirection(idx);
+      const firstChar = result.arrow.tag[0];
+      if (firstChar) {
+        const idx = this.DIRECTIONS.indexOf(firstChar);
+        if (idx !== -1) {
+          result.arrow.tag = "";
+          result.setCombinedDirection(idx);
+        }
       }
     }
     return result;
@@ -118,8 +125,8 @@ export class Line extends Attachable {
   componentNames(): string[] {
     // remove outer brackets
     return this.components
-      .map((c) => (c[0] == "[" ? c.substring(1, c.length - 1) : c))
-      .filter((c) => c.length > 1 || (c !== "[" && c !== "]" && c !== ""));
+      .map((c) => (c && c[0] == "[" ? c.substring(1, c.length - 1) : c))
+      .filter((c): c is string => c != null && (c.length > 1 || (c !== "[" && c !== "]" && c !== "")));
   }
 
   has(name: string): boolean {
@@ -127,13 +134,16 @@ export class Line extends Attachable {
   }
 
   reverse(): Line {
+    const comp0 = this.components[1] || "";
+    const comp1 = this.components[0] || "";
+    const side1 = this.sides[1];
     return new Line(
-      [this.components[1], this.components[0]],
+      [comp0, comp1],
       this.arrow.reverse(),
-      [this.multiplicities[1], this.multiplicities[0]],
+      [this.multiplicities[1] || "", this.multiplicities[0] || ""],
       // the label section (on the right side) might contain an arrow as well
       // this has to be turned around as well!
-      [this.sides[0], reverseHead(this.sides[1])]
+      [this.sides[0] || "", side1 ? reverseHead(side1) : ""]
     );
   }
 
@@ -168,9 +178,11 @@ export class Line extends Attachable {
     }
   }
 
-  toString(): string {
+  override toString(): string {
+    const side0 = this.sides[0] || "";
+    const side1 = this.sides[1] || "";
     const content =
-      this.sides[0] +
+      side0 +
       [
         this.components[0],
         this.multiplicities[0],
@@ -179,11 +191,11 @@ export class Line extends Attachable {
         this.components[1],
       ]
         .filter(
-          (s: string) =>
-            s.length > 1 || (s.length == 1 && s !== "[" && s !== "]")
+          (s: string | undefined): s is string =>
+            s != undefined && (s.length > 1 || (s.length == 1 && s !== "[" && s !== "]"))
         )
         .join(" ") +
-      this.sides[1];
+      side1;
 
     return content + this.attachedToString();
   }

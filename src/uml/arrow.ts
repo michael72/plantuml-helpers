@@ -74,7 +74,7 @@ export class Arrow {
   private static _tagIndex(arr: Array<string>): number {
     for (let i = 0; i < arr.length; ++i) {
       const s = arr[i];
-      if (this.REGEX_TAG.exec(s)) {
+      if (s && this.REGEX_TAG.exec(s)) {
         return i;
       }
     }
@@ -91,9 +91,13 @@ export class Arrow {
     let tag = "";
     const tagIdx = this._tagIndex(arr);
     if (tagIdx !== -1) {
-      [tag, arr[tagIdx]] = [arr[tagIdx], tag];
+      const tagElement = arr[tagIdx];
+      if (tagElement !== undefined) {
+        tag = tagElement;
+        arr[tagIdx] = "";
+      }
     }
-    const left = arr[0];
+    const left = arr[0] || "";
     // right direction is default - also for undirected arrows
     const direction = left.includes("<")
       ? ArrowDirection.Left
@@ -102,12 +106,13 @@ export class Arrow {
 
     // in case of horizontal arrow 1 is used - otherwise 2 or higher
     const arrowSizeVert = Math.max(2, arr.length - 1);
+    const right = arr[arr.length - 1] || "";
     return new this(
       left,
       line,
       arrowSizeVert,
       tag,
-      arr[arr.length - 1],
+      right,
       direction,
       layout
     );

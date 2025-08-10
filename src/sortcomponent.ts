@@ -32,11 +32,16 @@ export class SortComponent {
         lines.push(c);
       }
     }
-    lines.push(Line.fromString("__dummy->__dummy")!);
+    const dummyLine = Line.fromString("__dummy->__dummy");
+    if (dummyLine) {
+      lines.push(dummyLine);
+    }
 
     for (let i = 0; i < lines.length; ++i) {
       const line = lines[i];
-      const name = line.components[0];
+      if (!line) continue;
+      
+      const name = line.components[0] || "";
       const dir = line.layout();
       if (name === prevName && dir == prevDir) {
         cnt += 1;
@@ -48,7 +53,10 @@ export class SortComponent {
         if (cnt == 2) {
           // special case: only 2 same arrows going out:
           // rotate the first to right
-          lines[i - cnt].rotateRight();
+          const targetLine = lines[i - cnt];
+          if (targetLine) {
+            targetLine.rotateRight();
+          }
         }
         // 3 or more arrows going out
         else if (c != 0) {
@@ -63,7 +71,10 @@ export class SortComponent {
           let start = i - cnt;
           let end = start + c;
           for (let j = start; j < end; ++j) {
-            lines[j].rotateLeft();
+            const targetLine = lines[j];
+            if (targetLine) {
+              targetLine.rotateLeft();
+            }
           }
           start = end;
           end += c;
@@ -71,7 +82,10 @@ export class SortComponent {
             end += 1;
           }
           for (let j = start; j < end; ++j) {
-            lines[j].rotateRight();
+            const targetLine = lines[j];
+            if (targetLine) {
+              targetLine.rotateRight();
+            }
           }
         }
         cnt = 0;
@@ -113,13 +127,15 @@ export class SortComponent {
   private _initialSort(): Array<Line> {
     const nodes = this._sortByDependencies();
     return Array.from(this.component.lines()).sort((a: Line, b: Line) => {
-      let result =
-        nodes.indexOf(a.components[0]) - nodes.indexOf(b.components[0]);
+      const aComp0 = a.components[0] || "";
+      const bComp0 = b.components[0] || "";
+      let result = nodes.indexOf(aComp0) - nodes.indexOf(bComp0);
       if (result === 0) {
         result = a.combinedDirection() - b.combinedDirection();
         if (result === 0) {
-          result =
-            nodes.indexOf(a.components[1]) - nodes.indexOf(b.components[1]);
+          const aComp1 = a.components[1] || "";
+          const bComp1 = b.components[1] || "";
+          result = nodes.indexOf(aComp1) - nodes.indexOf(bComp1);
         }
       }
       return result;
@@ -151,7 +167,8 @@ export class SortComponent {
     const deps = new DefaultMap<string, Array<string>>(() => []);
     const fromSet = new Set<string>();
     for (const line of this.component.lines()) {
-      const [from, to] = line.components;
+      const from = line.components[0] || "";
+      const to = line.components[1] || "";
       deps.getDef(from).push(to);
       fromSet.add(from);
     }
@@ -190,10 +207,15 @@ export class SortComponent {
   }
 
   private _moveOrigToSorted(sorted: Line[], lineIdx: number, orig: Line[]) {
-    for (const c of sorted[lineIdx].components) {
+    const currentLine = sorted[lineIdx];
+    if (!currentLine) return sorted;
+    
+    for (const c of currentLine.components) {
+      if (!c) continue;
       for (let oidx = 0; oidx < orig.length; ++oidx) {
+        const origLine = orig[oidx];
         // move lines to sorted with elements that are already in the sorted lines
-        if (orig[oidx].has(c)) {
+        if (origLine && origLine.has(c)) {
           sorted = sorted.concat(orig.splice(oidx, 1));
           --oidx;
         }
@@ -264,7 +286,7 @@ export class SortComponent {
       for (const line of comp.lines()) {
         for (let i = 0; i < line.components.length; i++) {
           let c = line.components[i];
-          if (c.startsWith(".")) {
+          if (c && c.startsWith(".")) {
             c = c.substring(1);
             if (c.includes(".")) {
               // rename .a.b.c to a.b.c
@@ -320,6 +342,7 @@ export class SortComponent {
     names: Map<string, string>
   ) {
     for (const c of line.components) {
+      if (!c) continue;
       const isComponent = c.startsWith("[");
       const name = isComponent ? c.substring(1, c.length - 1) : c;
       if (!names.has(name)) {
@@ -411,7 +434,10 @@ export class SortComponent {
     const lines = Array.from(c.lines());
     for (const line of lines) {
       // remove leading spaces
-      line.sides[0] = line.sides[0].trimLeft();
+      const leftSide = line.sides[0];
+      if (leftSide) {
+        line.sides[0] = leftSide.trimLeft();
+      }
       if (c.isNamespace()) {
         this._addNamespace(line, c.name!);
       }
@@ -422,7 +448,7 @@ export class SortComponent {
   private _addNamespace(c: Line, compName: string) {
     for (let i = 0; i < c.components.length; ++i) {
       const name = c.components[i];
-      if (name.lastIndexOf(".") < 1) {
+      if (name && name.lastIndexOf(".") < 1) {
         c.components[i] = name.startsWith(".")
           ? name.substring(1)
           : compName + "." + name;
@@ -435,12 +461,14 @@ export class SortComponent {
     for (const line of this.component.lines()) {
       for (let i = 0; i < line.components.length; ++i) {
         let c = line.components[i];
-        if (c[0] == "[") {
+        if (c && c[0] == "[") {
           c = c.substring(1, c.length - 1);
         }
-        const name = componentNames.get(c);
-        if (name !== undefined) {
-          line.components[i] = name;
+        if (c) {
+          const name = componentNames.get(c);
+          if (name !== undefined) {
+            line.components[i] = name;
+          }
         }
       }
     }

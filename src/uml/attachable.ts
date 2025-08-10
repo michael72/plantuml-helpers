@@ -12,7 +12,7 @@ export class Attachable {
     return (
       this.attached != undefined &&
       this.attached.length > 0 &&
-      this.attached[this.attached.length - 1].startsWith("note ")
+      this.attached[this.attached.length - 1]?.startsWith("note ") === true
     );
   }
 
@@ -22,7 +22,7 @@ export class Attachable {
     while (this.attached && !this.isNoteAttached()) {
       const last = this.attached.pop();
       if (last == undefined) {
-        this.attached = undefined;
+        this.attached = [];
       } else {
         result = [last, ...result];
       }
