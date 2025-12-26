@@ -35,7 +35,7 @@ export class SortSequence {
       .concat(newContentPost);
   }
 
-  private _removeParticipants() {
+  private _removeParticipants(): Content[] {
     return this.component.content.filter((c: Content) => {
       return !(
         c instanceof Definition &&
@@ -46,7 +46,7 @@ export class SortSequence {
   }
 
   private _calculateWeight(
-    components: Array<string>,
+    components: string[],
     weights: Array<[string, string, number]>
   ): number {
     let sum = 0;
@@ -60,7 +60,7 @@ export class SortSequence {
   }
 
   private _calculateDirCount(
-    components: Array<string>,
+    components: string[],
     weights: Array<[string, string, number]>
   ): number {
     let sum = 0;
@@ -73,9 +73,9 @@ export class SortSequence {
     return sum;
   }
 
-  private _orderNames(): Array<string> {
+  private _orderNames(): string[] {
     const [depCount, names] = this._getCountsAndNames();
-    let filtered: Array<string> = [];
+    let filtered: string[] = [];
 
     const weights: Array<[string, string, number]> = [];
     for (const [k, v] of depCount) {
@@ -88,7 +88,7 @@ export class SortSequence {
     }
 
     let off_left = names[0] === "[" ? 1 : 0;
-    while (off_left != 0 && depCount.get("[," + names[off_left]) != undefined) {
+    while (off_left !== 0 && depCount.get("[," + names[off_left]) !== undefined) {
       off_left += 1;
     }
     const off_right = names[names.length - 1] === "]" ? 1 : 0;
@@ -99,12 +99,12 @@ export class SortSequence {
       numElems = names.length - off_left - off_right;
     }
 
-    let ordered: Array<string> = [...names];
+    let ordered: string[] = [...names];
     let checklist = [...ordered];
     let minWeight = this._calculateWeight(ordered, weights);
     let minDirCount = this._calculateDirCount(ordered, weights);
 
-    const swap = (arr: Array<string>, i: number, j: number) => {
+    const swap = (arr: string[], i: number, j: number): void => {
       const temp = arr[i];
       const elemI = arr[i];
       const elemJ = arr[j];
@@ -114,14 +114,14 @@ export class SortSequence {
       }
     };
 
-    const checkWeight = (recalc = false) => {
+    const checkWeight = (recalc = false): boolean => {
       const weight = this._calculateWeight(checklist, weights);
       if (weight <= minWeight || recalc) {
         const dirCount = this._calculateDirCount(checklist, weights);
         if (
           recalc ||
           weight < minWeight ||
-          (weight == minWeight && dirCount < minDirCount)
+          (weight === minWeight && dirCount < minDirCount)
         ) {
           minWeight = weight;
           minDirCount = dirCount;
@@ -132,8 +132,8 @@ export class SortSequence {
       return false;
     };
 
-    const rotate = (left: number, right: number) => {
-      let rotated: Array<string> = checklist.slice(left, right);
+    const rotate = (left: number, right: number): void => {
+      let rotated: string[] = checklist.slice(left, right);
       const popped = rotated.pop();
       if (popped !== undefined) {
         rotated.unshift(popped);
@@ -149,7 +149,7 @@ export class SortSequence {
 
     if (numElems < 9) {
       // perform all permutations - for >= 9 this takes too long
-      const counters = new Array<number>(numElems).fill(0);
+      const counters: number[] = new Array<number>(numElems).fill(0);
       let i = 1;
       while (i < ordered.length - off_left - off_right) {
         const counterI = counters[i];
@@ -205,17 +205,17 @@ export class SortSequence {
 
   private _isRealComponent(name: string): boolean {
     return (
-      name.length > 1 || (name.length == 1 && name[0] != "[" && name[0] != "]")
+      name.length > 1 || (name.length === 1 && name[0] !== "[" && name[0] !== "]")
     );
   }
 
   private _filterSimpleConnections(
-    names: Array<string>,
+    names: string[],
     depCount: DefaultMap<string, number>
-  ): Array<string> {
-    const filtered: Array<string> = [];
-    const deps = new DefaultMap<string, Array<string>>(() => {
-      return new Array<string>();
+  ): string[] {
+    const filtered: string[] = [];
+    const deps = new DefaultMap<string, string[]>(() => {
+      return [];
     });
     for (const connection of depCount.keys()) {
       const arr = connection.split(",");
@@ -228,7 +228,7 @@ export class SortSequence {
     }
 
     for (const name of names) {
-      if (deps.getDef(name).length == 1) {
+      if (deps.getDef(name).length === 1) {
         filtered.push(name);
       }
     }
@@ -238,9 +238,9 @@ export class SortSequence {
     return filtered;
   }
 
-  private _getCountsAndNames(): [DefaultMap<string, number>, Array<string>] {
+  private _getCountsAndNames(): [DefaultMap<string, number>, string[]] {
     const depCount = new DefaultMap<string, number>(() => 0);
-    const names = new Array<string>();
+    const names: string[] = [];
 
     for (const def of this.component.definitions()) {
       if (!names.includes(def.name)) {
@@ -254,7 +254,7 @@ export class SortSequence {
     return [depCount, names];
   }
 
-  private _addLineComponentsNames(line: Line, names: string[]) {
+  private _addLineComponentsNames(line: Line, names: string[]): void {
     for (const item of line.components) {
       if (item != null && item.length > 0 && !names.includes(item)) {
         if (item === "[") {
@@ -266,7 +266,7 @@ export class SortSequence {
     }
   }
 
-  private _updateLineStats(line: Line, depCount: DefaultMap<string, number>) {
+  private _updateLineStats(line: Line, depCount: DefaultMap<string, number>): void {
     const from = line.components[0] ?? "";
     const to = line.components[1] ?? "";
     const key = _toKey([from, to]);
@@ -275,14 +275,14 @@ export class SortSequence {
 
   private _getOrderedContent(
     ordered: string[]
-  ): [Array<Content>, Array<Content>] {
+  ): [Content[], Content[]] {
     // bring the names in `this.component` in the order as in `ordered`.
     // bring the definitions (if necessary) to the front
-    const newContentPre = new Array<Content>();
-    const newContentPost = new Array<Content>();
-    const unordered = new Array<string>();
-    const defs = new Array<Definition>(...this.component.definitions());
-    const defNames = defs.map((d: Definition) => {
+    const newContentPre: Content[] = [];
+    const newContentPost: Content[] = [];
+    const unordered: string[] = [];
+    const defs: Definition[] = Array.from(this.component.definitions());
+    const defNames = defs.map((d: Definition): string => {
       return d.name;
     });
     for (const c of this.component.content) {
@@ -315,14 +315,14 @@ export class SortSequence {
 
           // remove all other definitions by the current name from the original content
           let idxContent = 0;
-          const nextIndex = () => {
+          const nextIndex = (): boolean => {
             defNames[idx] = "";
             idx = defNames.indexOf(o);
             const currentDef = defs[idx];
             if (currentDef) {
               idxContent = this.component.content.indexOf(currentDef);
             }
-            return idxContent != -1 && idx != -1;
+            return idxContent !== -1 && idx !== -1;
           };
           while (nextIndex()) {
             this.component.content.splice(idxContent, 1);

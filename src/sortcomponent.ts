@@ -26,7 +26,7 @@ export class SortComponent {
     let prevDir: Layout | undefined = undefined;
     let cnt = 0;
 
-    const lines = new Array<Line>();
+    const lines: Line[] = [];
     for (const c of this.component.content) {
       if (c instanceof Line) {
         lines.push(c);
@@ -44,7 +44,7 @@ export class SortComponent {
       } else {
         const name = line.components[0] ?? "";
         const dir = line.layout();
-        if (name === prevName && dir == prevDir) {
+        if (name === prevName && dir === prevDir) {
           cnt += 1;
         } else {
           prevName = name;
@@ -109,8 +109,8 @@ export class SortComponent {
     const orig = this._initialSort();
     // leave all content that is not explicitly an arrow connection
     // before the arrow lines that are being sorted
-    const others: Array<Content> = Array.from(this.component.definitions());
-    let sorted = new Array<Line>();
+    const others: Content[] = Array.from(this.component.definitions());
+    let sorted: Line[] = [];
     let idx = 0;
 
     // now sort in the original sorted elements using already present
@@ -126,7 +126,7 @@ export class SortComponent {
     this.component.content = others.concat(sorted);
   }
 
-  private _initialSort(): Array<Line> {
+  private _initialSort(): Line[] {
     const nodes = this._sortByDependencies();
     return Array.from(this.component.lines()).sort((a: Line, b: Line) => {
       const aComp0 = a.components[0] ?? "";
@@ -144,7 +144,7 @@ export class SortComponent {
     });
   }
 
-  private _sortByDependencies(): Array<string> {
+  private _sortByDependencies(): string[] {
     // try to bring the components in order
     const { deps, froms } = this._calcDependencies();
 
@@ -165,8 +165,8 @@ export class SortComponent {
     });
   }
 
-  private _calcDependencies() {
-    const deps = new DefaultMap<string, Array<string>>(() => []);
+  private _calcDependencies(): { deps: DefaultMap<string, string[]>; froms: string[] } {
+    const deps = new DefaultMap<string, string[]>(() => []);
     const fromSet = new Set<string>();
     for (const line of this.component.lines()) {
       const from = line.components[0] ?? "";
@@ -178,7 +178,7 @@ export class SortComponent {
     return { deps, froms };
   }
 
-  private _calcPointedCounts(deps: DefaultMap<string, string[]>) {
+  private _calcPointedCounts(deps: DefaultMap<string, string[]>): DefaultMap<string, number> {
     const pointedCounts = new DefaultMap<string, number>(() => 0);
     for (const [k, v] of deps.entries()) {
       pointedCounts.set(k, 0);
@@ -198,7 +198,7 @@ export class SortComponent {
   private _addTransitiveDeps(
     deps: DefaultMap<string, string[]>,
     savedDeps: string[]
-  ) {
+  ): void {
     // addedDeps will contain the newly added dependencies, which will be used in the next round again
     let addedDeps = savedDeps;
     while (addedDeps.length !== 0) {
@@ -208,10 +208,10 @@ export class SortComponent {
     }
   }
 
-  private _moveOrigToSorted(sorted: Line[], lineIdx: number, orig: Line[]) {
+  private _moveOrigToSorted(sorted: Line[], lineIdx: number, orig: Line[]): Line[] {
     const currentLine = sorted[lineIdx];
     if (!currentLine) return sorted;
-    
+
     for (const c of currentLine.components) {
       if (c == null) {
         // skip
@@ -229,7 +229,7 @@ export class SortComponent {
     return sorted;
   }
 
-  private _sortPackages(component: Component = this.component) {
+  private _sortPackages(component: Component = this.component): void {
     component.forAll((c) => {
       if (c.children) {
         c.children = this._sorted(c.children);
@@ -238,7 +238,7 @@ export class SortComponent {
   }
 
   private _sorted(children: Component[]): Component[] {
-    return children.sort((c1: Component, c2: Component) => {
+    return children.sort((c1: Component, c2: Component): number => {
       let result = 0;
       // sort package definitions last that contain component definitions
       // which are used in lines first.
@@ -286,7 +286,7 @@ export class SortComponent {
     return names;
   }
 
-  private _removeLeadingDots(comp: Component) {
+  private _removeLeadingDots(comp: Component): void {
     if (comp.isNamespace()) {
       for (const line of comp.lines()) {
         for (let i = 0; i < line.components.length; i++) {
@@ -303,7 +303,7 @@ export class SortComponent {
     }
   }
 
-  private _getComponentNames(comp: Component) {
+  private _getComponentNames(comp: Component): Map<string, string> {
     const names = new Map<string, string>();
     if (comp.name != null && comp.name) {
       names.set(comp.name, comp.isComponent() ? `[${comp.name}]` : comp.name);
@@ -311,7 +311,7 @@ export class SortComponent {
     return names;
   }
 
-  private _extractLineDefinitions(comp: Component, names: Map<string, string>) {
+  private _extractLineDefinitions(comp: Component, names: Map<string, string>): { lineComponents: Set<string>; lineInterfaces: Set<string> } {
     const lineComponents = new Set<string>();
     const lineInterfaces = new Set<string>();
     for (const def of comp.definitions()) {
@@ -330,7 +330,7 @@ export class SortComponent {
     return { lineComponents, lineInterfaces };
   }
 
-  private _addDefinitions(def: Definition, components: Map<string, string>) {
+  private _addDefinitions(def: Definition, components: Map<string, string>): void {
     const isAlias = def.alias != null && def.alias.length > 0;
     const aliasName = isAlias ? def.alias! : def.name;
     const compName = def.isComponent() ? `[${aliasName}]` : aliasName;
@@ -345,7 +345,7 @@ export class SortComponent {
     lineComponents: Set<string>,
     lineInterfaces: Set<string>,
     names: Map<string, string>
-  ) {
+  ): void {
     for (const c of line.components) {
       if (c == null) {
         // skip
@@ -363,7 +363,7 @@ export class SortComponent {
     comp: Component,
     names: Map<string, string>,
     lineComponents: Set<string>
-  ) {
+  ): void {
     if (comp.children) {
       for (const c of comp.children) {
         const childComponents = this._componentNames(c, names);
@@ -380,7 +380,7 @@ export class SortComponent {
     lineInterfaces: Set<string>,
     names: Map<string, string>,
     parentNames: Map<string, string> | undefined
-  ) {
+  ): string[] {
     const isNamespace = comp.isNamespace();
     return Array.from(lineInterfaces).filter(
       (name) =>
@@ -393,7 +393,7 @@ export class SortComponent {
   private _hasComponents(
     lineComponents: Set<string>,
     names: Map<string, string>
-  ) {
+  ): boolean {
     // hasComponents -> is a component diagram, otherwise: class diagram
     return (
       lineComponents.size > 0 ||
@@ -404,9 +404,9 @@ export class SortComponent {
   private _addLineDefinitions(
     comp: Component,
     lineComponents: Set<string>,
-    lineInterfaces: Array<string>,
+    lineInterfaces: string[],
     defaultItem: string
-  ) {
+  ): void {
     if (comp.name != null && comp.name) {
       this._addDefinitionsByNames(lineInterfaces, comp, defaultItem);
       this._addDefinitionsByNames(lineComponents, comp);
@@ -417,7 +417,7 @@ export class SortComponent {
     names: Iterable<string>,
     comp: Component,
     defType = "component"
-  ) {
+  ): void {
     for (const name of names) {
       const def = new Definition(defType, name);
       comp.content = [def, ...comp.content];
@@ -426,8 +426,8 @@ export class SortComponent {
 
   /// collect the content of type `Line`, remove it from the actual content
   // and return it
-  private _extractLines(comp: Component): Array<Line> {
-    let extracted = new Array<Line>();
+  private _extractLines(comp: Component): Line[] {
+    let extracted: Line[] = [];
     comp.forAll((c) => {
       const lines = this._linesWithAdaptedNames(c);
       if (lines.length > 0) {
@@ -438,7 +438,7 @@ export class SortComponent {
     return extracted;
   }
 
-  private _linesWithAdaptedNames(c: Component): Array<Line> {
+  private _linesWithAdaptedNames(c: Component): Line[] {
     const lines = Array.from(c.lines());
     for (const line of lines) {
       // remove leading spaces
@@ -453,7 +453,7 @@ export class SortComponent {
     return lines;
   }
 
-  private _addNamespace(c: Line, compName: string) {
+  private _addNamespace(c: Line, compName: string): void {
     for (let i = 0; i < c.components.length; ++i) {
       const name = c.components[i];
       if (name != null && name.lastIndexOf(".") < 1) {

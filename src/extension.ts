@@ -116,7 +116,7 @@ function autoFormatContent(textEditor: vscode.TextEditor, rebuild: boolean): voi
             }
             last += 1;
           }
-          if (last == document.lineCount || line < 0) {
+          if (last === document.lineCount || line < 0) {
             void vscode.window.showErrorMessage(
               "No PlantUML found in current selection!"
             );
