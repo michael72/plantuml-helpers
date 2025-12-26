@@ -1,0 +1,19 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "..",
+    "outDir": "../out/test",
+    "noImplicitReturns": false,
+    "noUnusedParameters": false,
+    "noUnusedLocals": false,
+    "types": ["node", "mocha", "chai"]
+  },
+  "include": [
+    "../src/**/*.ts",
+    "**/*.ts"
+  ],
+  "exclude": [
+    "../node_modules",
+    "../out"
+  ]
+}

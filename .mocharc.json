@@ -1,9 +1,10 @@
 {
-    "extension": ["ts", "js"],
-    "spec": ["tests/**.{ts,js}"],
-    "node-option": [
-        "loader=ts-node/esm",
-        "loader=./yaml-loader.mjs",
-        "no-warnings"
-    ]
+  "extension": ["ts"],
+  "spec": ["test/**/*.spec.ts"],
+  "require": ["ts-node/register"],
+  "timeout": 5000,
+  "recursive": true,
+  "ts-node": {
+    "project": "test/tsconfig.json"
+  }
 }

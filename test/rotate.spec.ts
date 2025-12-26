@@ -1,8 +1,7 @@
 import { equal } from "assert";
-import { should } from "chai";
 import * as r from "../src/rotate";
 
-should();
+import 'chai/register-should';
 
 describe("Rotate", () => {
   it("should rotate arrows", () => {

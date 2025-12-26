@@ -1,9 +1,9 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
+ 
 import { Arrow, ArrowDirection, Layout } from "../../src/uml/arrow";
 
 import { equal } from "assert";
-import { expect, should } from "chai";
-should();
+import { expect } from "chai";
+import 'chai/register-should';
 
 describe("Arrow class", () => {
   it("should parse an arrow", () => {

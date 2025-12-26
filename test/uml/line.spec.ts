@@ -1,9 +1,9 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
+ 
 import { Line, CombinedDirection } from "../../src/uml/line";
 import { ArrowDirection } from "../../src/uml/arrow";
+//import { describe, it } from "mocha";
 
-import { should } from "chai";
-should();
+import 'chai/register-should';
 
 const equalArr = (actual: Array<string>, expected: Array<string>) => {
   actual.length.should.equal(expected.length);
@@ -122,8 +122,8 @@ describe("Line class", () => {
   it("should parse a line with quotes and dots as components", () => {
     const line = '"net foo" -- net.dummy';
     const parsed = Line.fromString(line)!;
-    parsed.components[0].should.equal('"net foo"');
-    parsed.components[1].should.equal("net.dummy");
+    parsed.components[0]!.should.equal('"net foo"');
+    parsed.components[1]!.should.equal("net.dummy");
     parsed.arrow.line.should.equal("-");
     parsed.toString().should.equal(line);
   });
