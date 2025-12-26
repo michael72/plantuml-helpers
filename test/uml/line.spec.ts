@@ -1,14 +1,11 @@
- 
+import { describe, it, expect } from "vitest";
 import { Line, CombinedDirection } from "../../src/uml/line";
 import { ArrowDirection } from "../../src/uml/arrow";
-//import { describe, it } from "mocha";
-
-import 'chai/register-should';
 
 const equalArr = (actual: Array<string>, expected: Array<string>) => {
-  actual.length.should.equal(expected.length);
+  expect(actual.length).toBe(expected.length);
   actual.map((a: string, idx: number) => {
-    a.should.equal(expected[idx]);
+    expect(a).toBe(expected[idx]);
   });
 };
 
@@ -19,52 +16,52 @@ describe("Line class", () => {
     equalArr(parsed.sides, ["", ""]);
     equalArr(parsed.multiplicities, ["", ""]);
     equalArr(parsed.components, ["A", "B"]);
-    parsed.arrow.direction.should.equal(ArrowDirection.Right);
-    parsed.toString().should.equal(line);
+    expect(parsed.arrow.direction).toBe(ArrowDirection.Right);
+    expect(parsed.toString()).toBe(line);
   });
 
   it("should reverse a complex component line", () => {
     const line = '   (CompA) "1-2" <|~~o "0:*" [CompB] : funny arrow ';
     const parsed = Line.fromString(line)!;
     const expected = '   [CompB] "0:*" o~~|> "1-2" (CompA) : funny arrow ';
-    parsed.reverse().toString().should.equal(expected);
+    expect(parsed.reverse().toString()).toBe(expected);
   });
 
   it("should preserve a hidden horizontal line", () => {
     const line = "A -[hidden] B";
     const parsed = Line.fromString(line)!;
     const expected = "B -[hidden] A";
-    parsed.reverse().toString().should.equal(expected);
+    expect(parsed.reverse().toString()).toBe(expected);
   });
 
   it("should preserve a hidden vertical line", () => {
     const line = "B -[hidden]- C";
     const parsed = Line.fromString(line)!;
     const expected = "C -[hidden]- B";
-    parsed.reverse().toString().should.equal(expected);
+    expect(parsed.reverse().toString()).toBe(expected);
   });
 
   it("should preserve an elongated line", () => {
     const line = "A ---> B";
     const parsed = Line.fromString(line)!;
     const expected = "B <--- A";
-    parsed.reverse().toString().should.equal(expected);
+    expect(parsed.reverse().toString()).toBe(expected);
   });
 
   it("should preserve an elongated line also when rotating", () => {
     const line = "A .... B";
     const parsed = Line.fromString(line)!;
     // right and down is default
-    parsed.combinedDirection().should.equal(CombinedDirection.Down);
+    expect(parsed.combinedDirection()).toBe(CombinedDirection.Down);
     // check left
     parsed.setCombinedDirection(CombinedDirection.Left);
-    parsed.toString().should.equal("B . A");
+    expect(parsed.toString()).toBe("B . A");
     // check right
     parsed.setCombinedDirection(CombinedDirection.Right);
-    parsed.toString().should.equal("A . B");
+    expect(parsed.toString()).toBe("A . B");
     // check up - now the length should be restored
     parsed.setCombinedDirection(CombinedDirection.Up);
-    parsed.toString().should.equal("B .... A");
+    expect(parsed.toString()).toBe("B .... A");
   });
 
   it("should preserve explicit direction left", () => {
@@ -72,7 +69,7 @@ describe("Line class", () => {
       const line = `A -${s}-> B`;
       const parsed = Line.fromString(line)!;
       const expected = "B <- A";
-      parsed.toString().should.equal(expected);
+      expect(parsed.toString()).toBe(expected);
     }
   });
 
@@ -81,7 +78,7 @@ describe("Line class", () => {
       const line = `A -${s}-> B`;
       const parsed = Line.fromString(line)!;
       const expected = "B <-- A";
-      parsed.toString().should.equal(expected);
+      expect(parsed.toString()).toBe(expected);
     }
   });
 
@@ -90,7 +87,7 @@ describe("Line class", () => {
       const line = `A -${s}-> B`;
       const parsed = Line.fromString(line)!;
       const expected = "A -> B";
-      parsed.toString().should.equal(expected);
+      expect(parsed.toString()).toBe(expected);
     }
   });
 
@@ -99,7 +96,7 @@ describe("Line class", () => {
       const line = `A -${s}-> B`;
       const parsed = Line.fromString(line)!;
       const expected = "A --> B";
-      parsed.toString().should.equal(expected);
+      expect(parsed.toString()).toBe(expected);
     }
   });
 
@@ -114,7 +111,7 @@ describe("Line class", () => {
         const line = `${left}${arrow}${right}`;
         const expected = `${left} ${arrow} ${right}`;
         const parsed = Line.fromString(line)!;
-        parsed.toString().should.equal(expected);
+        expect(parsed.toString()).toBe(expected);
       }
     }
   });
@@ -122,33 +119,33 @@ describe("Line class", () => {
   it("should parse a line with quotes and dots as components", () => {
     const line = '"net foo" -- net.dummy';
     const parsed = Line.fromString(line)!;
-    parsed.components[0]!.should.equal('"net foo"');
-    parsed.components[1]!.should.equal("net.dummy");
-    parsed.arrow.line.should.equal("-");
-    parsed.toString().should.equal(line);
+    expect(parsed.components[0]!).toBe('"net foo"');
+    expect(parsed.components[1]!).toBe("net.dummy");
+    expect(parsed.arrow.line).toBe("-");
+    expect(parsed.toString()).toBe(line);
   });
 
   it ("should rotate an arrow right", () => {
     const line = Line.fromString("A -> B")!;
     line.rotateRight();
-    line.toString().should.equal("A --> B");
+    expect(line.toString()).toBe("A --> B");
     line.rotateRight();
-    line.toString().should.equal("B <- A");
+    expect(line.toString()).toBe("B <- A");
     line.rotateRight();
-    line.toString().should.equal("B <-- A");
+    expect(line.toString()).toBe("B <-- A");
     line.rotateRight();
-    line.toString().should.equal("A -> B");
+    expect(line.toString()).toBe("A -> B");
   })
 
   it ("should rotate an arrow left", () => {
     const line = Line.fromString("A -> B")!;
     line.rotateLeft();
-    line.toString().should.equal("B <-- A");
+    expect(line.toString()).toBe("B <-- A");
     line.rotateLeft();
-    line.toString().should.equal("B <- A");
+    expect(line.toString()).toBe("B <- A");
     line.rotateLeft();
-    line.toString().should.equal("A --> B");
+    expect(line.toString()).toBe("A --> B");
     line.rotateLeft();
-    line.toString().should.equal("A -> B");
+    expect(line.toString()).toBe("A -> B");
   })
 });

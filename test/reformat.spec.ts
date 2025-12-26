@@ -1,25 +1,24 @@
-import { expect } from "chai";
+import { describe, it, expect } from "vitest";
 import * as reformat from "../src/reformat";
 import { DiagramType } from "../src/uml/diagramtype";
-import 'chai/register-should';
 
 describe("Reformat", () => {
   it("should throw an exception when sorting an empty string", () => {
-    expect(() => reformat.autoFormatTxt("")).to.throw(
+    expect(() => reformat.autoFormatTxt("")).toThrow(
       reformat.UNKNOWN_DIAGRAM_TYPE
     );
   });
 
   it("should throw an exception with no sortable content", () => {
     const chk = "Hello World!";
-    expect(() => reformat.autoFormatTxt(chk)).to.throw(
+    expect(() => reformat.autoFormatTxt(chk)).toThrow(
       reformat.UNKNOWN_DIAGRAM_TYPE
     );
   });
 
   it("should throw an exception with an unsupported diagram type", () => {
     const chk = "(Use Case)";
-    expect(() => reformat.autoFormatTxt(chk)).to.throw(
+    expect(() => reformat.autoFormatTxt(chk)).toThrow(
       "Unsupported diagram type: " + DiagramType.UseCase.toString()
     );
   });
@@ -28,13 +27,13 @@ describe("Reformat", () => {
     const lines = ["[B] -> [C]", "[A] -> [B]"];
     const orig = lines.join("\n");
     const expected = lines.reverse().join("\n");
-    expect(reformat.autoFormatTxt(orig)).to.be.equal(expected);
+    expect(reformat.autoFormatTxt(orig)).toBe(expected);
   });
 
   it("should leave the order intact when there is nothing to sort", () => {
     const lines = ["[C] -> [B]", "[A] -> [B]"];
     const orig = lines.join("\n");
-    expect(reformat.autoFormatTxt(orig)).to.be.equal(orig);
+    expect(reformat.autoFormatTxt(orig)).toBe(orig);
   });
 
   it("should draw inheritance vertical up, others horizontal", () => {
@@ -63,22 +62,22 @@ describe("Reformat", () => {
       "[Src] o-> [MyDerived2]\n";
 
     const actual = reformat.autoFormatTxt(original);
-    expect(actual).to.be.equal(expected);
+    expect(actual).toBe(expected);
   });
 
   it("should auto format inheritance vertical up", () => {
-    reformat.autoFormatTxt("A -|> B ").should.equal("B <|-- A ");
+    expect(reformat.autoFormatTxt("A -|> B ")).toBe("B <|-- A ");
   });
 
   it("should leave inheritance down when it is down", () => {
-    reformat.autoFormatTxt("A --|> B").should.equal("A --|> B");
+    expect(reformat.autoFormatTxt("A --|> B")).toBe("A --|> B");
   });
 
   it("should auto format composition horizontal right", () => {
     const original = "A *--> B\n" + "D o--> A";
     const expected = "D o-> A\n" + "A *-> B";
     const actual = reformat.autoFormatTxt(original);
-    actual.should.equal(expected);
+    expect(actual).toBe(expected);
   });
 
   it("should leave notes at their positions", () => {
@@ -93,7 +92,7 @@ describe("Reformat", () => {
       "note right: this is A\n" +
       "note left: and another note\n";
     const actual = reformat.autoFormatTxt(original);
-    actual.should.equal(expected);
+    expect(actual).toBe(expected);
   });
 
   it("should leave forward declarations at the beginning", () => {
@@ -109,7 +108,7 @@ describe("Reformat", () => {
       "[compA] *-> B\n";
 
     const actual = reformat.autoFormatTxt(original);
-    actual.should.equal(expected);
+    expect(actual).toBe(expected);
   });
 
   it("should add brackets on components where applicable", () => {
@@ -126,14 +125,14 @@ describe("Reformat", () => {
       "[compA] -> [B]\n" +
       "[compA] -> IC\n";
     const actual = reformat.autoFormatTxt(original);
-    actual.should.equal(expected);
+    expect(actual).toBe(expected);
   });
 
   it("should add brackets on components - simple case", () => {
     const original = "A -> [B]\nB -> C\n";
     const expected = "A -> [B]\n[B] -> C\n";
     const actual = reformat.autoFormatTxt(original);
-    actual.should.equal(expected);
+    expect(actual).toBe(expected);
   });
 
   it("should sort the components with most outgoing transitive dependencies first", () => {
@@ -151,7 +150,7 @@ describe("Reformat", () => {
       "[C] o-> D\n" +
       "F o-> [E]\n";
     const actual = reformat.autoFormatTxt(original);
-    actual.should.equal(expected);
+    expect(actual).toBe(expected);
   });
 
   it("should reverse sort packages depending on content dependencencies", () => {
@@ -180,7 +179,7 @@ describe("Reformat", () => {
       "[A] -> [B]\n" +
       "[B] -> [C]\n";
     const actual = reformat.autoFormatTxt(original);
-    expect(actual).to.be.equal(expected);
+    expect(actual).toBe(expected);
   });
 
   it("should re-arrange the package structure", () => {
@@ -233,7 +232,7 @@ describe("Reformat", () => {
       "D <|-- [C]\n" +
       "[E] o-> F\n";
     const actual = reformat.autoFormatTxt(original);
-    actual.should.equal(expected);
+    expect(actual).toBe(expected);
   });
 
   it("should re-format nested components", () => {
@@ -247,7 +246,7 @@ describe("Reformat", () => {
       "A -> B\n" +
       "A -> C\n";
     const actual = reformat.autoFormatTxt(original);
-    actual.should.equal(expected);
+    expect(actual).toBe(expected);
   });
   it("should reformat nested with global classes", () => {
     const original =
@@ -271,7 +270,7 @@ describe("Reformat", () => {
       "BaseClass <|-- Person\n" +
       '"net foo" -- net.dummy\n';
     const actual = reformat.autoFormatTxt(original);
-    actual.should.equal(expected);
+    expect(actual).toBe(expected);
   });
 
   it("should reformat nested empty components", () => {
@@ -284,7 +283,7 @@ describe("Reformat", () => {
       "}\n\n" +
       "[A] --|> IA\n";
     const actual = reformat.autoFormatTxt(original);
-    actual.should.equal(expected);
+    expect(actual).toBe(expected);
   });
 
   it("should support namespaces", () => {
@@ -329,7 +328,7 @@ net.dummy.Person <|-- net.foo.Person
 net.dummy.Meeting o- net.dummy.Person
 `;
     const actual = reformat.autoFormatTxt(original);
-    actual.should.equal(expected);
+    expect(actual).toBe(expected);
   });
 
   it("should rearrange on reformat", () => {
@@ -374,7 +373,7 @@ net.dummy.Person <|-- net.foo.Person
 net.dummy.Meeting o- net.dummy.Person
 `;
     const actual = reformat.autoFormatTxt(original, true);
-    actual.should.equal(expected);
+    expect(actual).toBe(expected);
   });
 
   it("should order a sequence diagram by dependency and clean it up", () => {
@@ -384,7 +383,7 @@ A -> B
     const expected = `A -> B
 `;
     const actual = reformat.autoFormatTxt(original);
-    actual.should.equal(expected);
+    expect(actual).toBe(expected);
   });
 
   it("should order a sequence diagram by dependency - adding definitions up-front and sort at the end", () => {
@@ -397,7 +396,7 @@ participant A
 actor B
 `;
     const actual = reformat.autoFormatTxt(original);
-    actual.should.equal(expected);
+    expect(actual).toBe(expected);
   });
 
   it("should reformat sequence diagrams", () => {
@@ -415,7 +414,7 @@ participant B
 participant C
 `;
     const actual = reformat.autoFormatTxt(original);
-    actual.should.equal(expected);
+    expect(actual).toBe(expected);
   });
 
   it("should leave the order of disjoint participants", () => {
@@ -428,7 +427,7 @@ C -> D
 `;
 
     const actual = reformat.autoFormatTxt(original);
-    actual.should.equal(expected);
+    expect(actual).toBe(expected);
   });
 
   it("should preserve line endings - only one", () => {
@@ -436,7 +435,7 @@ C -> D
     const expected = "A -> B\r\nB -> C\r\n";
 
     const actual = reformat.autoFormatTxt(original);
-    actual.should.equal(expected);
+    expect(actual).toBe(expected);
   });
 
   it("should preserve notes", () => {
@@ -446,7 +445,7 @@ A -> B
 note left of A: this is an A
 `;
     const actual = reformat.autoFormatTxt(original);
-    actual.should.equal(original);
+    expect(actual).toBe(original);
   });
 
   it("should preserve notes and add footer", () => {
@@ -458,7 +457,7 @@ note left of A: this is an A
 footer
 `;
     const actual = reformat.autoFormatTxt(original);
-    actual.should.equal(original);
+    expect(actual).toBe(original);
   });
 
   it("should put spaces between header, classes, connections and footer", () => {
@@ -478,7 +477,7 @@ A -> B
 footer
 `;
     const actual = reformat.autoFormatTxt(original);
-    actual.should.equal(expected);
+    expect(actual).toBe(expected);
   });
 
   it("should sort classes and preserve their content", () => {
@@ -523,7 +522,7 @@ B -> A
 A -> C
 `;
     const actual = reformat.autoFormatTxt(original);
-    actual.should.equal(expected);
+    expect(actual).toBe(expected);
   });
 
   it("should leave the content of a class as is", () => {
@@ -532,7 +531,7 @@ A -> C
 }
 `;
     const actual = reformat.autoFormatTxt(original);
-    actual.should.equal(original);
+    expect(actual).toBe(original);
   });
 
   it("should reformat in all directions", () => {
@@ -558,7 +557,7 @@ A -> C
 `;
 
     const actual = reformat.autoFormatTxt(original, true);
-    actual.should.equal(expected);
+    expect(actual).toBe(expected);
   });
 
   it("should reformat 2 outgoing same arrows - first is rotated left", () => {
@@ -571,7 +570,7 @@ E <|-- [G]`;
 [F] -|> E
 E <|-- [G]`;
     const actual = reformat.autoFormatTxt(original, true);
-    actual.should.equal(expected);
+    expect(actual).toBe(expected);
   });
 
   it("should reformat the doc example code", () => {
@@ -596,7 +595,7 @@ IConnector <|-- [Connector]
 [Connector] o-> Socket
 [ImageProvider] o-> [DataChannel]`;
     const actual = reformat.autoFormatTxt(original, true);
-    actual.should.equal(expected);
+    expect(actual).toBe(expected);
   });
 
   it("should reformat a simple sequence diagram", () => {
@@ -611,7 +610,7 @@ participant C
 participant A
 participant B`;
     const actual = reformat.autoFormatTxt(original, true);
-    actual.should.equal(expected);
+    expect(actual).toBe(expected);
   });
 
   it("should leave simple outgoing and incoming connections", () => {
@@ -620,7 +619,7 @@ A ->`;
     const expected = `-> A
 A ->`;
     const actual = reformat.autoFormatTxt(original, true);
-    actual.should.equal(expected);
+    expect(actual).toBe(expected);
   });
 
   it("should remove brackets of outgoing and incoming connections", () => {
@@ -629,7 +628,7 @@ A -> ]`;
     const expected = `-> A
 A ->`;
     const actual = reformat.autoFormatTxt(original, true);
-    actual.should.equal(expected);
+    expect(actual).toBe(expected);
   });
 
   it("should leave return arrows as is", () => {
@@ -638,7 +637,7 @@ A <-- B`;
     const expected = `A -> B
 A <-- B`;
     const actual = reformat.autoFormatTxt(original, true);
-    actual.should.equal(expected);
+    expect(actual).toBe(expected);
   });
 
   it("should consider ... (dot dot dot)", () => {
@@ -649,7 +648,7 @@ A <-- B`;
 ...
 A <-- B`;
     const actual = reformat.autoFormatTxt(original, true);
-    actual.should.equal(expected);
+    expect(actual).toBe(expected);
   });
 
   it("should sort incoming connections to the left", () => {
@@ -670,7 +669,7 @@ participant d
 participant c
 `;
     const actual = reformat.autoFormatTxt(original, true);
-    actual.should.equal(expected);
+    expect(actual).toBe(expected);
   });
 
   it("should remove superfluous definitions", () => {
@@ -695,7 +694,7 @@ participant b
 actor a
 participant c`;
     const actual = reformat.autoFormatTxt(original, true);
-    actual.should.equal(expected);
+    expect(actual).toBe(expected);
   });
 
   it("should sort complex sequence diagrams", () => {
@@ -744,7 +743,7 @@ participant j
 participant z
 participant k`;
     const actual = reformat.autoFormatTxt(original, true);
-    actual.should.equal(expected);
+    expect(actual).toBe(expected);
   });
 
   it("should sort even more complex sequence diagrams", () => {
@@ -804,6 +803,6 @@ participant j
 participant d
 participant yy`;
     const actual = reformat.autoFormatTxt(original, true);
-    actual.should.equal(expected);
+    expect(actual).toBe(expected);
   });
 });

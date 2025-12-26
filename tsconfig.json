@@ -6,7 +6,7 @@
     "lib": ["ES2022"],
     "sourceMap": true,
     "rootDir": ".",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "types": ["node"],
     "strict": true /* enable all strict type-checking options */,
     /* Additional Checks */

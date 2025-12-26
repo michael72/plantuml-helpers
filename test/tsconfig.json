@@ -6,7 +6,7 @@
     "noImplicitReturns": false,
     "noUnusedParameters": false,
     "noUnusedLocals": false,
-    "types": ["node", "mocha", "chai"]
+    "types": ["node", "vitest/globals"]
   },
   "include": [
     "../src/**/*.ts",
