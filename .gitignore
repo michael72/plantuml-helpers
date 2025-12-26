@@ -12,4 +12,5 @@ coverage/
 puml/
 coverage/
 .c8_output/
-
+*.js
+*.map

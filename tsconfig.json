@@ -5,7 +5,7 @@
     "outDir": "out",
     "lib": ["ES2022"],
     "sourceMap": true,
-    "rootDir": "src",
+    "rootDir": ".",
     "moduleResolution": "node",
     "types": ["node"],
     "strict": true /* enable all strict type-checking options */,
@@ -29,6 +29,6 @@
       }
     ]
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", ".vscode-test", "test/**/*.spec.ts"]
+  "include": ["src/**/*.ts", "test/**/*.spec.ts"],
+  "exclude": ["node_modules", ".vscode-test"]
 }

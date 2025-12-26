@@ -9,18 +9,22 @@
   "check-coverage": true,
   "all": true,
   "include": [
-    "src/*.ts",
-    "src/uml/*.ts"
+    "src/**/*.ts"
   ],
   "exclude": [
     "**/*.d.ts",
     "**/*.spec.ts",
     "**/*.js",
     "out/**",
-    "coverage/**"
+    "coverage/**",
+    "test/**",
+    "node_modules/**"
   ],
   "extension": [
     ".ts"
   ],
-  "loader": "ts-node/esm"
+  "statements": 80,
+  "branches": 70,
+  "functions": 80,
+  "lines": 80
 }

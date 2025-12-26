@@ -77,12 +77,15 @@
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
+    "compile:test": "tsc -p test/",
     "lint": "eslint src test --ext ts",
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
-    "test": "c8 --loader=tsx mocha",
+    "test": "c8 mocha",
+    "test:unit": "mocha test/**/*.spec.ts --require ts-node/register --project test/tsconfig.json",
+    "test:coverage": "c8 --reporter=html --reporter=text --reporter=lcov mocha",
     "posttest": "c8 report",
-    "watchtest": "c8 --loader=tsx mocha -w"
+    "watchtest": "mocha test/**/*.spec.ts --require ts-node/register --project test/tsconfig.json --watch"
   },
   "devDependencies": {
     "@eslint/js": "^9.33.0",

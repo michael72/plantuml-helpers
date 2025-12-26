@@ -1,7 +1,7 @@
-import { expect, should } from "chai";
+import { expect } from "chai";
 import * as reformat from "../src/reformat";
 import { DiagramType } from "../src/uml/diagramtype";
-should();
+import 'chai/register-should';
 
 describe("Reformat", () => {
   it("should throw an exception when sorting an empty string", () => {

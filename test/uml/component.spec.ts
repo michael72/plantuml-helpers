@@ -1,10 +1,9 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
+ 
 import { Component } from "../../src/uml/component";
 import { Definition } from "../../src/uml/definition";
 
-import { should } from "chai";
+import 'chai/register-should';
 import { strictEqual } from "assert";
-should();
 
 describe("Component", () => {
   describe("Component class", () => {
