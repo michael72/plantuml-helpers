@@ -7,7 +7,7 @@ orbs:
 jobs:
   build-and-test:
     docker:
-      - image: cimg/node:20.10
+      - image: cimg/node:lts
     steps:
       - checkout
       - restore_cache:
