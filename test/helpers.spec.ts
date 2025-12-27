@@ -1,10 +1,10 @@
-import { strictEqual } from "assert";
+import { describe, it, expect } from "vitest";
 import * as helpers from "../src/helpers";
 
 describe("Helpers", () => {
   it("should reverse an arrow head", () => {
-    strictEqual(helpers.reverseHead("<--"), ">--");
-    strictEqual(helpers.reverseHead("<"), ">");
-    strictEqual(helpers.reverseHead("?!"), "?!");
+    expect(helpers.reverseHead("<--")).toBe(">--");
+    expect(helpers.reverseHead("<")).toBe(">");
+    expect(helpers.reverseHead("?!")).toBe("?!");
   });
 });
