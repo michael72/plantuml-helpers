@@ -97,6 +97,8 @@ export class Arrow {
         arr[tagIdx] = "";
       }
     }
+    // split() always returns at least one element, so arr[0] is always defined
+    /* v8 ignore next */
     const left = arr[0] ?? "";
     // right direction is default - also for undirected arrows
     const direction = left.includes("<")
@@ -106,6 +108,8 @@ export class Arrow {
 
     // in case of horizontal arrow 1 is used - otherwise 2 or higher
     const arrowSizeVert = Math.max(2, arr.length - 1);
+    // split() always returns at least one element, so last element is always defined
+    /* v8 ignore next */
     const right = arr[arr.length - 1] ?? "";
     return new this(
       left,
