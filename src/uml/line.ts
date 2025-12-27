@@ -44,10 +44,7 @@ export class Line extends Attachable {
       return;
     }
     const a = 4; // arrow-index
-    const arrowStr = m[a];
-    if (arrowStr == null || arrowStr.length === 0) {
-      return;
-    }
+    const arrowStr = m[a] ?? "->";
     const arrow = Arrow.fromString(arrowStr);
     if (!arrow) {
       return;
@@ -125,7 +122,7 @@ export class Line extends Attachable {
   componentNames(): string[] {
     // remove outer brackets
     return this.components
-      .map((c) => (c != null && c[0] == "[" ? c.substring(1, c.length - 1) : c))
+      .map((c) => (c?.[0] == "[" ? c.substring(1, c.length - 1) : c))
       .filter((c): c is string => c != null && (c.length > 1 || (c !== "[" && c !== "]" && c !== "")));
   }
 

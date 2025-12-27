@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { Line, CombinedDirection } from "../../src/uml/line";
-import { ArrowDirection } from "../../src/uml/arrow";
+import { Arrow, ArrowDirection } from "../../src/uml/arrow";
 
 const equalArr = (actual: Array<string>, expected: Array<string>) => {
   expect(actual.length).toBe(expected.length);
@@ -147,5 +147,11 @@ describe("Line class", () => {
     expect(line.toString()).toBe("A --> B");
     line.rotateLeft();
     expect(line.toString()).toBe("A -> B");
+  })
+
+  it ("should initialize components with defaults", () => {
+    const line = new Line([], Arrow.fromString("->")!, [], []);
+    expect(line.components[0]).toBe("[")
+    expect(line.components[1]).toBe("]")
   })
 });
