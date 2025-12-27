@@ -44,6 +44,8 @@ export class Line extends Attachable {
       return;
     }
     const a = 4; // arrow-index
+    // The regex requires the arrow group to match, so m[a] is guaranteed to exist
+    /* v8 ignore next */
     const arrowStr = m[a] ?? "->";
     const arrow = Arrow.fromString(arrowStr);
     if (!arrow) {
@@ -131,15 +133,19 @@ export class Line extends Attachable {
   }
 
   reverse(): Line {
+    // Constructor ensures components[0] and components[1] exist
+    /* v8 ignore next 2 */
     const comp0 = this.components[1] ?? "";
     const comp1 = this.components[0] ?? "";
     const side1 = this.sides[1];
     return new Line(
       [comp0, comp1],
       this.arrow.reverse(),
+      /* v8 ignore next */
       [this.multiplicities[1] ?? "", this.multiplicities[0] ?? ""],
       // the label section (on the right side) might contain an arrow as well
       // this has to be turned around as well!
+      /* v8 ignore next */
       [this.sides[0] ?? "", side1 != null && side1.length > 0 ? reverseHead(side1) : ""]
     );
   }
@@ -176,6 +182,7 @@ export class Line extends Attachable {
   }
 
   override toString(): string {
+    /* v8 ignore next 2 */
     const side0 = this.sides[0] ?? "";
     const side1 = this.sides[1] ?? "";
     const content =
