@@ -9,7 +9,12 @@ jobs:
     docker:
       - image: cimg/node:lts
     steps:
-      - checkout
+      - run:
+          name: Checkout code (HTTPS)
+          command: |
+            git clone --depth 1 https://github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}.git .
+            git fetch origin ${CIRCLE_SHA1}
+            git checkout ${CIRCLE_SHA1}
       - restore_cache:
           keys:
             - dependency-cache-{{ checksum "package.json" }}
