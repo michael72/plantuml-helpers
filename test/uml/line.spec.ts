@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { Line, CombinedDirection } from "../../src/uml/line";
-import { Arrow, ArrowDirection } from "../../src/uml/arrow";
+import { Arrow, ArrowDirection, Layout } from "../../src/uml/arrow";
+import { Component } from "../../src/uml/component";
 
 const equalArr = (actual: Array<string>, expected: Array<string>) => {
   expect(actual.length).toBe(expected.length);
@@ -153,5 +154,129 @@ describe("Line class", () => {
     const line = new Line([], Arrow.fromString("->")!, [], []);
     expect(line.components[0]).toBe("[")
     expect(line.components[1]).toBe("]")
-  })
+  });
+
+  it("should return undefined for comment lines", () => {
+    expect(Line.fromString("' this is a comment")).toBeUndefined();
+  });
+
+  it("should return undefined for ellipsis lines", () => {
+    expect(Line.fromString("...")).toBeUndefined();
+    expect(Line.fromString("  ...  ")).toBeUndefined();
+  });
+
+  it("should return undefined for invalid arrow lines", () => {
+    expect(Line.fromString("A B")).toBeUndefined();
+    expect(Line.fromString("no arrow here")).toBeUndefined();
+  });
+
+  it("should return layout correctly", () => {
+    const horizontal = Line.fromString("A -> B")!;
+    const vertical = Line.fromString("A --> B")!;
+    expect(horizontal.layout()).toBe(Layout.Horizontal);
+    expect(vertical.layout()).toBe(Layout.Vertical);
+  });
+
+  it("should check if line has component with has()", () => {
+    const line = Line.fromString("A -> B")!;
+    expect(line.has("A")).toBe(true);
+    expect(line.has("B")).toBe(true);
+    expect(line.has("C")).toBe(false);
+  });
+
+  it("should extract component names correctly", () => {
+    const line = Line.fromString("[CompA] -> [CompB]")!;
+    expect(line.componentNames()).toEqual(["CompA", "CompB"]);
+  });
+
+  it("should filter single bracket chars from componentNames", () => {
+    const line = new Line(["[", "]"], Arrow.fromString("->")!, [], []);
+    expect(line.componentNames()).toEqual([]);
+  });
+
+  it("should set default direction for inheritance arrows", () => {
+    const line = Line.fromString("A <|- B")!;
+    line.setDefaultDirection(false);
+    expect(line.combinedDirection()).toBe(CombinedDirection.Up);
+  });
+
+  it("should set default direction for composition arrows", () => {
+    const line = Line.fromString("A o--> B")!;
+    line.setDefaultDirection(false);
+    expect(line.combinedDirection()).toBe(CombinedDirection.Right);
+  });
+
+  it("should set default direction with rebuild=true for inheritance", () => {
+    const line = Line.fromString("A <|-- B")!;
+    line.setDefaultDirection(true);
+    expect(line.combinedDirection()).toBe(CombinedDirection.Up);
+  });
+
+  it("should set default direction with rebuild=true for non-inheritance", () => {
+    const line = Line.fromString("A --> B")!;
+    line.setDefaultDirection(true);
+    expect(line.combinedDirection()).toBe(CombinedDirection.Right);
+  });
+
+  it("should not change direction for already correct layout", () => {
+    // Inheritance already vertical
+    const inheritanceLine = Line.fromString("A <|-- B")!;
+    inheritanceLine.setDefaultDirection(false);
+    expect(inheritanceLine.combinedDirection()).toBe(CombinedDirection.Up);
+
+    // Composition already horizontal
+    const compLine = Line.fromString("A o-> B")!;
+    compLine.setDefaultDirection(false);
+    // No change expected for already correct layout
+  });
+
+  it("should handle includes() with Component", () => {
+    const line = Line.fromString("A -> B")!;
+    const compA = Component.fromString(["component A {", "}"]);
+    const compC = Component.fromString(["component C {", "}"]);
+    expect(line.includes(compA)).toBe(true);
+    expect(line.includes(compC)).toBe(false);
+  });
+
+  it("should return false for includes when no match", () => {
+    const line = Line.fromString("A -> B")!;
+    const comp = Component.fromString(["component X {", "}"]);
+    expect(line.includes(comp)).toBe(false);
+  });
+
+  it("should handle reverse with sparse arrays", () => {
+    // Create line with minimal arrays to test ?? fallbacks
+    const line = new Line(
+      ["A"],  // Only one component - constructor sets [1] to "]"
+      Arrow.fromString("->")!,
+      ["m1"],  // Only one multiplicity
+      ["s1"]   // Only one side
+    );
+    const reversed = line.reverse();
+    // After constructor: ["A", "]"], reversed becomes ["]", "A"]
+    expect(reversed.components).toEqual(["]", "A"]);
+    expect(reversed.multiplicities).toEqual(["", "m1"]);
+  });
+
+  it("should handle toString with sparse sides array", () => {
+    // Create line with undefined sides
+    const line = new Line(
+      ["A", "B"],
+      Arrow.fromString("->")!,
+      [],
+      []
+    );
+    expect(line.toString()).toBe("A -> B");
+  });
+
+  it("should handle reverse with empty side correctly", () => {
+    const line = new Line(
+      ["A", "B"],
+      Arrow.fromString("->")!,
+      [],
+      ["", ""]  // Both sides empty
+    );
+    const reversed = line.reverse();
+    expect(reversed.sides).toEqual(["", ""]);
+  });
 });

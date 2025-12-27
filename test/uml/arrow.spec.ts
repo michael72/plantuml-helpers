@@ -59,4 +59,48 @@ describe("Arrow class", () => {
     expect(parsed.right).toBe("[");
     expect(parsed.tag).toBe("");
   });
+
+  it("should detect composition with 'o'", () => {
+    const arrowO = Arrow.fromString("o->")!;
+    expect(arrowO.left).toBe("o");
+    expect(arrowO.isComposition()).toBe(true);
+  });
+
+  it("should detect composition with '*'", () => {
+    const arrowStar = Arrow.fromString("*->")!;
+    expect(arrowStar.left).toBe("*");
+    expect(arrowStar.isComposition()).toBe(true);
+  });
+
+  it("should detect non-composition arrows", () => {
+    const arrow = Arrow.fromString("->")!;
+    expect(arrow.isComposition()).toBe(false);
+  });
+
+  it("should detect inheritance with |> on right", () => {
+    const arrow = Arrow.fromString("-|>")!;
+    expect(arrow.isInheritance()).toBe(true);
+  });
+
+  it("should detect inheritance with <| on left", () => {
+    const arrow = Arrow.fromString("<|-")!;
+    expect(arrow.isInheritance()).toBe(true);
+  });
+
+  it("should detect non-inheritance arrows", () => {
+    const arrow = Arrow.fromString("->")!;
+    expect(arrow.isInheritance()).toBe(false);
+  });
+
+  it("should parse arrows with different line types", () => {
+    expect(Arrow.fromString("==>")!.line).toBe("=");
+    expect(Arrow.fromString("~~>")!.line).toBe("~");
+    expect(Arrow.fromString("..>")!.line).toBe(".");
+  });
+
+  it("should handle vertical arrow string conversion correctly", () => {
+    const verticalArrow = Arrow.fromString("---->")!;
+    expect(verticalArrow.layout).toBe(Layout.Vertical);
+    expect(verticalArrow.toString()).toBe("---->");
+  });
 });
