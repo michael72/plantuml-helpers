@@ -11,10 +11,7 @@ jobs:
     steps:
       - run:
           name: Checkout code (HTTPS)
-          command: |
-            git clone --depth 1 https://github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}.git .
-            git fetch origin ${CIRCLE_SHA1}
-            git checkout ${CIRCLE_SHA1}
+          command: git clone --depth 1 --branch ${CIRCLE_BRANCH} https://github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}.git .
       - restore_cache:
           keys:
             - dependency-cache-{{ checksum "package.json" }}
