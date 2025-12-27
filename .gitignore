@@ -3,7 +3,6 @@ node_modules
 .vscode-test/
 .metals/
 *.vsix
-*-lock.json
 .nyc_output/
 coverage/
 *.orig
