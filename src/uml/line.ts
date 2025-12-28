@@ -154,8 +154,8 @@ export class Line extends Attachable {
       [this.multiplicities[1] ?? "", this.multiplicities[0] ?? ""],
       // the label section (on the right side) might contain an arrow as well
       // this has to be turned around as well!
-      /* v8 ignore next */
       [
+        /* v8 ignore next */
         this.sides[0] ?? "",
         side1 != null && side1.length > 0 ? reverseHead(side1) : "",
       ]
