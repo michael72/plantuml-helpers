@@ -111,14 +111,6 @@ export class Arrow {
     // split() always returns at least one element, so last element is always defined
     /* v8 ignore next */
     const right = arr[arr.length - 1] ?? "";
-    return new this(
-      left,
-      line,
-      arrowSizeVert,
-      tag,
-      right,
-      direction,
-      layout
-    );
+    return new this(left, line, arrowSizeVert, tag, right, direction, layout);
   }
 }

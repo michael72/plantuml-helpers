@@ -126,7 +126,7 @@ describe("Line class", () => {
     expect(parsed.toString()).toBe(line);
   });
 
-  it ("should rotate an arrow right", () => {
+  it("should rotate an arrow right", () => {
     const line = Line.fromString("A -> B")!;
     line.rotateRight();
     expect(line.toString()).toBe("A --> B");
@@ -136,9 +136,9 @@ describe("Line class", () => {
     expect(line.toString()).toBe("B <-- A");
     line.rotateRight();
     expect(line.toString()).toBe("A -> B");
-  })
+  });
 
-  it ("should rotate an arrow left", () => {
+  it("should rotate an arrow left", () => {
     const line = Line.fromString("A -> B")!;
     line.rotateLeft();
     expect(line.toString()).toBe("B <-- A");
@@ -148,12 +148,12 @@ describe("Line class", () => {
     expect(line.toString()).toBe("A --> B");
     line.rotateLeft();
     expect(line.toString()).toBe("A -> B");
-  })
+  });
 
-  it ("should initialize components with defaults", () => {
+  it("should initialize components with defaults", () => {
     const line = new Line([], Arrow.fromString("->")!, [], []);
-    expect(line.components[0]).toBe("[")
-    expect(line.components[1]).toBe("]")
+    expect(line.components[0]).toBe("[");
+    expect(line.components[1]).toBe("]");
   });
 
   it("should return undefined for comment lines", () => {
@@ -247,10 +247,10 @@ describe("Line class", () => {
   it("should handle reverse with sparse arrays", () => {
     // Create line with minimal arrays to test ?? fallbacks
     const line = new Line(
-      ["A"],  // Only one component - constructor sets [1] to "]"
+      ["A"], // Only one component - constructor sets [1] to "]"
       Arrow.fromString("->")!,
-      ["m1"],  // Only one multiplicity
-      ["s1"]   // Only one side
+      ["m1"], // Only one multiplicity
+      ["s1"] // Only one side
     );
     const reversed = line.reverse();
     // After constructor: ["A", "]"], reversed becomes ["]", "A"]
@@ -260,12 +260,7 @@ describe("Line class", () => {
 
   it("should handle toString with sparse sides array", () => {
     // Create line with undefined sides
-    const line = new Line(
-      ["A", "B"],
-      Arrow.fromString("->")!,
-      [],
-      []
-    );
+    const line = new Line(["A", "B"], Arrow.fromString("->")!, [], []);
     expect(line.toString()).toBe("A -> B");
   });
 
@@ -274,7 +269,7 @@ describe("Line class", () => {
       ["A", "B"],
       Arrow.fromString("->")!,
       [],
-      ["", ""]  // Both sides empty
+      ["", ""] // Both sides empty
     );
     const reversed = line.reverse();
     expect(reversed.sides).toEqual(["", ""]);

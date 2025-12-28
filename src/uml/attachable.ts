@@ -17,7 +17,11 @@ export class Attachable {
   moveAttached(): Array<string> {
     let result = new Array<string>();
     // move attached only if not a note (notes belong to the preceeding line)
-    while (this.attached && this.attached.length > 0 && !this.isNoteAttached()) {
+    while (
+      this.attached &&
+      this.attached.length > 0 &&
+      !this.isNoteAttached()
+    ) {
       const last = this.attached.pop();
       if (last !== undefined) {
         result = [last, ...result];

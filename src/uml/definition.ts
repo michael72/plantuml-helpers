@@ -36,7 +36,11 @@ export function joinContent(
 }
 
 export class Definition extends Attachable {
-  constructor(public type: string, public name: string, public alias?: string) {
+  constructor(
+    public type: string,
+    public name: string,
+    public alias?: string
+  ) {
     super();
   }
   static fromString(line: string): Definition | undefined {
@@ -56,18 +60,26 @@ export class Definition extends Attachable {
     } else {
       // check for component
       m = REGEX_COMPONENT.exec(line);
-      if (m && (m[1] != null || (m[2] != null && m[2].length > 0 && m[2][0] === "["))) {
+      if (
+        m &&
+        (m[1] != null || (m[2] != null && m[2].length > 0 && m[2][0] === "["))
+      ) {
         const name = m[2];
         if (name != null && name.length > 0) {
           return new this("component", shorten(name, "["), m[3]);
         }
       } else {
         m = REGEX_CLASS.exec(line) ?? REGEX_SEQUENCE.exec(line);
-        
+
         if (m) {
           const type = m[1];
           const name = m[2];
-          if (type != null && type.length > 0 && name != null && name.length > 0) {
+          if (
+            type != null &&
+            type.length > 0 &&
+            name != null &&
+            name.length > 0
+          ) {
             return new this(type, shorten(name, '"'), m[3]);
           }
         }
@@ -83,7 +95,9 @@ export class Definition extends Attachable {
   override toString(): string {
     const comp = `${this.type} ${this.name}`;
     const content =
-      this.alias != null && this.alias.length > 0 ? comp + " as " + this.alias : comp;
+      this.alias != null && this.alias.length > 0
+        ? comp + " as " + this.alias
+        : comp;
     return content + this.attachedToString();
   }
 

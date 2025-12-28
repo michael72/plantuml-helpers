@@ -8,11 +8,16 @@ export enum DiagramType {
   Unknown,
 }
 
-export const REGEX_INTERFACE = /^\s*(\(\)|interface)\s+((?:"[^"]+")|[^"\s]+)(?:\s+as\s+(\S+))?\s*$/;
-export const REGEX_COMPONENT = /^\s*(component\s+)?((?:\[[^*\]]+\])|[^[*\]\s]+)(?:\s+as\s+(\S+))?\s*$/;
-export const REGEX_CLASS = /^\s*(class|enum|abstract|abstract class|annotation)\s+([^[\]\s]+)(?:\s+as\s+(\S+))?\s*$/;
-export const REGEX_SEQUENCE = /^\s*(actor|participant)\s+([^[\]\s]+)(?:\s+as\s+(\S+))?\s*$/;
-export const REGEX_USE_CASE = /(?:^|\s+)(?::([^:]+):)|(?:\(([^:]+)\))(?:$|\s+)/g;
+export const REGEX_INTERFACE =
+  /^\s*(\(\)|interface)\s+((?:"[^"]+")|[^"\s]+)(?:\s+as\s+(\S+))?\s*$/;
+export const REGEX_COMPONENT =
+  /^\s*(component\s+)?((?:\[[^*\]]+\])|[^[*\]\s]+)(?:\s+as\s+(\S+))?\s*$/;
+export const REGEX_CLASS =
+  /^\s*(class|enum|abstract|abstract class|annotation)\s+([^[\]\s]+)(?:\s+as\s+(\S+))?\s*$/;
+export const REGEX_SEQUENCE =
+  /^\s*(actor|participant)\s+([^[\]\s]+)(?:\s+as\s+(\S+))?\s*$/;
+export const REGEX_USE_CASE =
+  /(?:^|\s+)(?::([^:]+):)|(?:\(([^:]+)\))(?:$|\s+)/g;
 export const REGEX_ACTIVITY = /(?:(?:^|\s+)\(\*\)(?:$|\s+))|(?:^\s*:.*)/g;
 export const REGEX_STATE = /(?:^|\s+)\[\*\](?:$|\s+)/g;
 const REGEX_COMP_USE = /(?:^|\s+)(?:\[[^*\]]+\])(?:$|\s+)/g;

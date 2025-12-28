@@ -162,7 +162,10 @@ export class SortComponent {
     });
   }
 
-  private _calcDependencies(): { deps: DefaultMap<string, string[]>; froms: string[] } {
+  private _calcDependencies(): {
+    deps: DefaultMap<string, string[]>;
+    froms: string[];
+  } {
     const deps = new DefaultMap<string, string[]>(() => []);
     const fromSet = new Set<string>();
     for (const line of this.component.lines()) {
@@ -173,7 +176,9 @@ export class SortComponent {
     return { deps, froms };
   }
 
-  private _calcPointedCounts(deps: DefaultMap<string, string[]>): DefaultMap<string, number> {
+  private _calcPointedCounts(
+    deps: DefaultMap<string, string[]>
+  ): DefaultMap<string, number> {
     const pointedCounts = new DefaultMap<string, number>(() => 0);
     for (const [k, v] of deps.entries()) {
       pointedCounts.set(k, 0);
@@ -203,7 +208,11 @@ export class SortComponent {
     }
   }
 
-  private _moveOrigToSorted(sorted: Line[], lineIdx: number, orig: Line[]): Line[] {
+  private _moveOrigToSorted(
+    sorted: Line[],
+    lineIdx: number,
+    orig: Line[]
+  ): Line[] {
     const currentLine = sorted[lineIdx];
     /* v8 ignore next */
     if (!currentLine) return sorted;
@@ -288,7 +297,7 @@ export class SortComponent {
       for (const line of comp.lines()) {
         for (let i = 0; i < line.components.length; i++) {
           let c = line.components[i];
-          if ((c?.startsWith(".")) === true) {
+          if (c?.startsWith(".") === true) {
             c = c.substring(1);
             if (c?.includes(".")) {
               // rename .a.b.c to a.b.c
@@ -308,7 +317,10 @@ export class SortComponent {
     return names;
   }
 
-  private _extractLineDefinitions(comp: Component, names: Map<string, string>): { lineComponents: Set<string>; lineInterfaces: Set<string> } {
+  private _extractLineDefinitions(
+    comp: Component,
+    names: Map<string, string>
+  ): { lineComponents: Set<string>; lineInterfaces: Set<string> } {
     const lineComponents = new Set<string>();
     const lineInterfaces = new Set<string>();
     for (const def of comp.definitions()) {
@@ -327,7 +339,10 @@ export class SortComponent {
     return { lineComponents, lineInterfaces };
   }
 
-  private _addDefinitions(def: Definition, components: Map<string, string>): void {
+  private _addDefinitions(
+    def: Definition,
+    components: Map<string, string>
+  ): void {
     const isAlias = def.alias != null && def.alias.length > 0;
     const aliasName = isAlias ? def.alias! : def.name;
     const compName = def.isComponent() ? `[${aliasName}]` : aliasName;
@@ -383,7 +398,7 @@ export class SortComponent {
     return Array.from(lineInterfaces).filter(
       (name) =>
         !names.has(name) &&
-        (!((parentNames?.has(name)) ?? false)) &&
+        !(parentNames?.has(name) ?? false) &&
         (!isNamespace || !name.includes("."))
     );
   }

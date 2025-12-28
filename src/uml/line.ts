@@ -37,12 +37,12 @@ export class Line extends Attachable {
 
   from(): string {
     /* v8 ignore next */
-    return this.components[0] ?? ""
+    return this.components[0] ?? "";
   }
 
   to(): string {
     /* v8 ignore next */
-    return this.components[1] ?? ""
+    return this.components[1] ?? "";
   }
 
   static fromString(line: string): Line | undefined {
@@ -135,7 +135,10 @@ export class Line extends Attachable {
     // remove outer brackets
     return this.components
       .map((c) => (c?.[0] == "[" ? c.substring(1, c.length - 1) : c))
-      .filter((c): c is string => c != null && (c.length > 1 || (c !== "[" && c !== "]" && c !== "")));
+      .filter(
+        (c): c is string =>
+          c != null && (c.length > 1 || (c !== "[" && c !== "]" && c !== ""))
+      );
   }
 
   has(name: string): boolean {
@@ -152,7 +155,10 @@ export class Line extends Attachable {
       // the label section (on the right side) might contain an arrow as well
       // this has to be turned around as well!
       /* v8 ignore next */
-      [this.sides[0] ?? "", side1 != null && side1.length > 0 ? reverseHead(side1) : ""]
+      [
+        this.sides[0] ?? "",
+        side1 != null && side1.length > 0 ? reverseHead(side1) : "",
+      ]
     );
   }
 
@@ -202,7 +208,8 @@ export class Line extends Attachable {
       ]
         .filter(
           (s: string | undefined): s is string =>
-            s != undefined && (s.length > 1 || (s.length == 1 && s !== "[" && s !== "]"))
+            s != undefined &&
+            (s.length > 1 || (s.length == 1 && s !== "[" && s !== "]"))
         )
         .join(" ") +
       side1;

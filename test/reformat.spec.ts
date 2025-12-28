@@ -686,7 +686,7 @@ actor a
 participant b
 participant c
 `;
-  // participant c at the front is superfluous
+    // participant c at the front is superfluous
     const expected = `actor a
 participant b as "B"
 a -> c
