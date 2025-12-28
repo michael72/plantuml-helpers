@@ -10,7 +10,7 @@ function _toKey(s: [string, string]): string {
 
 // The items with the most incoming dependencies should be on the right.
 // The items with the most outgoing dependencies should be on the left.
-// The strongest connected items should be neighbours.
+// The strongest connected items should be neighbors.
 // The items should be sorted by incoming/outgoing dependencies.
 // The order of lines with arrows and the direction of the arrows cannot be changed!
 // Sorting of sequences can only swap the definitions.
@@ -267,9 +267,7 @@ export class SortSequence {
   }
 
   private _updateLineStats(line: Line, depCount: DefaultMap<string, number>): void {
-    const from = line.components[0] ?? "";
-    const to = line.components[1] ?? "";
-    const key = _toKey([from, to]);
+    const key = _toKey([line.from(), line.to()]);
     depCount.set(key, depCount.getDef(key) + 1);
   }
 

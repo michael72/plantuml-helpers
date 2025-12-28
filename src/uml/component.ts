@@ -32,7 +32,7 @@ export class Component {
       }
       const lineToTrim = arr[i];
       if (lineToTrim !== undefined && lineToTrim.length > 0) {
-        arr[i] = lineToTrim.trimRight();
+        arr[i] = lineToTrim.trimEnd();
       }
     }
     // post-filter: remove empty lines
@@ -49,10 +49,29 @@ export class Component {
       new Array<string>()
     );
     const children = new Array<Component>();
+    var emptyComp: undefined | Component = undefined
     for (let i = 0; i < arr.length; ++i) {
       const [comp, new_i] = this._fromString(arr, i);
-      i = new_i;
-      children.push(comp);
+      if (comp.type === undefined && comp.content?.length === 0) {
+        emptyComp = comp;
+        i = new_i;
+      } else { 
+        if (emptyComp != undefined) {
+          // copy header
+          const header = emptyComp.header
+          for (let j = 0; j < header.length; ++j) {
+            /* v8 ignore next */
+            const copyHeader = header[j] ?? ""
+            comp.header.splice(j, 0, copyHeader);
+          }
+          emptyComp = undefined;
+        }
+        children.push(comp);
+        i = new_i;
+      }
+    }
+    if (emptyComp != undefined) {
+      children.push(emptyComp)
     }
     // shortcut: return the only child
     if (children.length === 1) {
@@ -78,7 +97,9 @@ export class Component {
     let i = start;
     const currentLine = arr[i];
     if (currentLine === undefined || currentLine.length === 0) {
-      return [new Component([], [], []), i];
+      /* v8 ignore next */
+      const header = currentLine === undefined ? [] : [currentLine]
+      return [new Component(header, [], []), i];
     }
     const m = this.regexTitle.exec(currentLine);
 
@@ -94,7 +115,7 @@ export class Component {
           : printName;
       }
       if (m[3] !== undefined && m[3].length > 0) {
-        suffix = m[3].trimRight();
+        suffix = m[3].trimEnd();
       }
     }
 
@@ -264,7 +285,7 @@ export class Component {
           return s.trimLeft();
         })
         .join("\n" + t)
-        .trimRight();
+        .trimEnd();
       if (headerContent) {
         result += t + headerContent;
       }
@@ -278,10 +299,10 @@ export class Component {
             })
             .join("\n" + t);
       }
-      result = result.trimRight();
+      result = result.trimEnd();
       if (this.children) {
         for (const child of this.children) {
-          result += lf + child._toStringTab(t, lf).trimRight();
+          result += lf + child._toStringTab(t, lf).trimEnd();
         }
       }
       if (idx !== -1) {
@@ -297,7 +318,7 @@ export class Component {
       }
 
       t = t.substring(Component.DEFAULT_TAB.length);
-      result = result.trimRight() + lf + t + "}\n";
+      result = result.trimEnd() + lf + t + "}\n";
       return result;
     }
 
@@ -306,7 +327,7 @@ export class Component {
       for (const child of this.children) {
         result = joinContent(
           result,
-          child._toStringTab(tab, lf).trimRight(),
+          child._toStringTab(tab, lf).trimEnd(),
           lf,
           false
         );

@@ -36,6 +36,12 @@ describe("Component", () => {
 
       expect(actual).toBe(original);
     });
+    it("should parse an empty array", () => {
+      const parsed = Component.fromString(["", ""], true);
+      const actual = parsed.toString();
+
+      expect(actual).toBe("");
+    });
     it("should parse two sibling packages", () => {
       const original =
         "package a {\n" +

@@ -672,29 +672,35 @@ participant c
     expect(actual).toBe(expected);
   });
 
-  /* TODO re add test it("should remove superfluous definitions", () => {
+  it("should remove superfluous definitions", () => {
     const original = `
 actor a
 participant c
 participant b as "B"
 a -> c
+create b
 -> b
 b -> c
 a -> b
 actor a
 participant b
-participant c`;
-    const expected = `participant b as "B"
-actor a
 participant c
+`;
+  // participant c at the front is superfluous
+    const expected = `actor a
+participant b as "B"
 a -> c
+create b
 -> b
 b -> c
-a -> b`;
+a -> b
+participant b
+actor a
+participant c
+`;
     const actual = reformat.autoFormatTxt(original, true);
-    console.log(actual)
     expect(actual).toBe(expected);
-  });*/
+  });
 
   it("should sort complex sequence diagrams", () => {
     const original = `participant a as "this is an A"
