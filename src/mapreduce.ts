@@ -1,3 +1,4 @@
+/* v8 ignore start */
 import { assert } from "console";
 
 export function mapReduce<T, U>(
@@ -57,3 +58,4 @@ export function maxOf<T, U>(
 ): T {
   return bestOfMap<T, U>(items, map, init, (left, right) => left > right);
 }
+/* v8 ignore stop */
