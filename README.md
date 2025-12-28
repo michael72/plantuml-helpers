@@ -2,6 +2,8 @@
 
 This is a small helper for editing PlantUML files.
 
+[![codecov](https://codecov.io/gh/michael72/plantuml-helpers/branch/master/graph/badge.svg)](https://codecov.io/gh/michael72/plantuml-helpers)
+
 ![Sample](doc/puml-helpers.gif)
 
 ## Features
