@@ -68,7 +68,10 @@ function rotateSelected(
   }
 }
 
-function autoFormatContent(textEditor: vscode.TextEditor, rebuild: boolean): void {
+function autoFormatContent(
+  textEditor: vscode.TextEditor,
+  rebuild: boolean
+): void {
   if (textEditor != null) {
     const document = textEditor.document;
     void textEditor.edit((editBuilder) => {
@@ -78,8 +81,10 @@ function autoFormatContent(textEditor: vscode.TextEditor, rebuild: boolean): voi
           let line = sel.active.line;
           while (line >= 0 && line < document.lineCount) {
             const text = document.lineAt(line).text.trim();
-            const nextLine = (line + 1) < document.lineCount ?
-              document.lineAt(line + 1).text.trim() : "";
+            const nextLine =
+              line + 1 < document.lineCount
+                ? document.lineAt(line + 1).text.trim()
+                : "";
             if (
               // auto format starting from the start of the document (without start)
               // or from opening bracket - including that bracket
@@ -102,16 +107,18 @@ function autoFormatContent(textEditor: vscode.TextEditor, rebuild: boolean): voi
           let last = line;
           while (last >= 0 && last < document.lineCount) {
             const text = document.lineAt(last).text.trim();
-            if (text === "@enduml" || text === "```" || (text.includes("}") && bracketCount === 1)) {
+            if (
+              text === "@enduml" ||
+              text === "```" ||
+              (text.includes("}") && bracketCount === 1)
+            ) {
               if (!text.includes("}")) {
                 last -= 1;
               }
               break;
-            }
-            else if (text.includes("{")) {
+            } else if (text.includes("{")) {
               bracketCount += 1;
-            }
-            else if (text.includes("}")) {
+            } else if (text.includes("}")) {
               bracketCount -= 1;
             }
             last += 1;

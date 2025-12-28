@@ -26,7 +26,14 @@ export class Component {
     for (let i = 0; i < arr.length; ++i) {
       const currentLine = arr[i];
       const prevLine = arr[i - 1];
-      if (i > 0 && currentLine !== undefined && currentLine.length > 0 && prevLine !== undefined && prevLine.length > 0 && currentLine.trim().startsWith("{")) {
+      if (
+        i > 0 &&
+        currentLine !== undefined &&
+        currentLine.length > 0 &&
+        prevLine !== undefined &&
+        prevLine.length > 0 &&
+        currentLine.trim().startsWith("{")
+      ) {
         arr[i - 1] = prevLine + " " + currentLine;
         arr[i] = "";
       }
@@ -49,19 +56,19 @@ export class Component {
       new Array<string>()
     );
     const children = new Array<Component>();
-    var emptyComp: undefined | Component = undefined
+    var emptyComp: undefined | Component = undefined;
     for (let i = 0; i < arr.length; ++i) {
       const [comp, new_i] = this._fromString(arr, i);
       if (comp.type === undefined && comp.content?.length === 0) {
         emptyComp = comp;
         i = new_i;
-      } else { 
+      } else {
         if (emptyComp != undefined) {
           // copy header
-          const header = emptyComp.header
+          const header = emptyComp.header;
           for (let j = 0; j < header.length; ++j) {
             /* v8 ignore next */
-            const copyHeader = header[j] ?? ""
+            const copyHeader = header[j] ?? "";
             comp.header.splice(j, 0, copyHeader);
           }
           emptyComp = undefined;
@@ -71,7 +78,7 @@ export class Component {
       }
     }
     if (emptyComp != undefined) {
-      children.push(emptyComp)
+      children.push(emptyComp);
     }
     // shortcut: return the only child
     if (children.length === 1) {
@@ -98,7 +105,7 @@ export class Component {
     const currentLine = arr[i];
     if (currentLine === undefined || currentLine.length === 0) {
       /* v8 ignore next */
-      const header = currentLine === undefined ? [] : [currentLine]
+      const header = currentLine === undefined ? [] : [currentLine];
       return [new Component(header, [], []), i];
     }
     const m = this.regexTitle.exec(currentLine);
@@ -169,7 +176,7 @@ export class Component {
         }
       }
     }
-   if (prevLine) {
+    if (prevLine) {
       footer = prevLine.moveAttached();
     }
 

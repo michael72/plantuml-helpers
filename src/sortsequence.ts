@@ -82,13 +82,21 @@ export class SortSequence {
       const arr = k.split(",");
       const left = arr[0];
       const right = arr[1];
-      if (left != null && left.length > 0 && right != null && right.length > 0) {
+      if (
+        left != null &&
+        left.length > 0 &&
+        right != null &&
+        right.length > 0
+      ) {
         weights.push([left, right, v]);
       }
     }
 
     let off_left = names[0] === "[" ? 1 : 0;
-    while (off_left !== 0 && depCount.get("[," + names[off_left]) !== undefined) {
+    while (
+      off_left !== 0 &&
+      depCount.get("[," + names[off_left]) !== undefined
+    ) {
       off_left += 1;
     }
     const off_right = names[names.length - 1] === "]" ? 1 : 0;
@@ -205,7 +213,8 @@ export class SortSequence {
 
   private _isRealComponent(name: string): boolean {
     return (
-      name.length > 1 || (name.length === 1 && name[0] !== "[" && name[0] !== "]")
+      name.length > 1 ||
+      (name.length === 1 && name[0] !== "[" && name[0] !== "]")
     );
   }
 
@@ -221,7 +230,14 @@ export class SortSequence {
       const arr = connection.split(",");
       const left = arr[0];
       const right = arr[1];
-      if (left != null && left.length > 0 && right != null && right.length > 0 && this._isRealComponent(left) && this._isRealComponent(right)) {
+      if (
+        left != null &&
+        left.length > 0 &&
+        right != null &&
+        right.length > 0 &&
+        this._isRealComponent(left) &&
+        this._isRealComponent(right)
+      ) {
         deps.getDef(left).push(right);
         deps.getDef(right).push(left);
       }
@@ -266,14 +282,15 @@ export class SortSequence {
     }
   }
 
-  private _updateLineStats(line: Line, depCount: DefaultMap<string, number>): void {
+  private _updateLineStats(
+    line: Line,
+    depCount: DefaultMap<string, number>
+  ): void {
     const key = _toKey([line.from(), line.to()]);
     depCount.set(key, depCount.getDef(key) + 1);
   }
 
-  private _getOrderedContent(
-    ordered: string[]
-  ): [Content[], Content[]] {
+  private _getOrderedContent(ordered: string[]): [Content[], Content[]] {
     // bring the names in `this.component` in the order as in `ordered`.
     // bring the definitions (if necessary) to the front
     const newContentPre: Content[] = [];

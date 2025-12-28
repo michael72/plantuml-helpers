@@ -84,10 +84,12 @@
     "test:unit": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:ui": "vitest --ui",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "beautify": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\""
   },
   "devDependencies": {
     "@eslint/js": "^9.33.0",
+    "prettier": "^3.4.2",
     "@types/node": "^24.2.1",
     "@types/vscode": "^1.102.0",
     "@typescript-eslint/eslint-plugin": "^8.39.0",
