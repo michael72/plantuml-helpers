@@ -13,7 +13,7 @@ export class SortComponent {
     for (const line of this.component.lines()) {
       line.setDefaultDirection(rebuild);
     }
-    this._sort();
+    this._sort(this._initialSort());
     this._sortPackages();
     if (rebuild) {
       this._rebuild();
@@ -24,18 +24,12 @@ export class SortComponent {
   private _rebuild(): void {
     let prevName = "";
     let prevDir: Layout | undefined = undefined;
-    let cnt = 0;
+    let cnt = 1; // count from same starting node in same direction
 
-    const lines: Line[] = [];
-    for (const c of this.component.content) {
-      if (c instanceof Line) {
-        lines.push(c);
-      }
-    }
-    const dummyLine = Line.fromString("__dummy->__dummy");
-    if (dummyLine) {
-      lines.push(dummyLine);
-    }
+    const lines = [
+      ...this.component.lines(),
+      Line.fromString("__dummy->__dummy"),
+    ];
 
     for (let i = 0; i < lines.length; ++i) {
       const line = lines[i];
@@ -50,33 +44,26 @@ export class SortComponent {
         } else {
           prevName = name;
           prevDir = dir;
-          cnt += 1;
-          let c = (cnt - (cnt % 3)) / 3;
           if (cnt == 2) {
             // special case: only 2 same arrows going out:
             // rotate the first to right
-            const targetLine = lines[i - cnt];
-            if (targetLine) {
-              targetLine.rotateRight();
-            }
+            lines[i - cnt]?.rotateRight();
           }
           // 3 or more arrows going out
-          else if (c != 0) {
+          else if (cnt >= 3) {
             // leave the last arrows in the same direction
             // rotate the first ones to the left
             // rotate the in-between arrows to the right
             // <- ... | -> ... | ^ ...
             // rotate more when in horizontal layout: vertical arrows can also be drawn diagonally
+            let c = (cnt - (cnt % 3)) / 3; // c = number of rounds
             if (dir == Layout.Horizontal && cnt % 3 == 2) {
               c += 1;
             }
             let start = i - cnt;
             let end = start + c;
             for (let j = start; j < end; ++j) {
-              const targetLine = lines[j];
-              if (targetLine) {
-                targetLine.rotateLeft();
-              }
+              lines[j]?.rotateLeft();
             }
             start = end;
             end += c;
@@ -84,13 +71,10 @@ export class SortComponent {
               end += 1;
             }
             for (let j = start; j < end; ++j) {
-              const targetLine = lines[j];
-              if (targetLine) {
-                targetLine.rotateRight();
-              }
+              lines[j]?.rotateRight();
             }
           }
-          cnt = 0;
+          cnt = 1;
         }
       }
     }
@@ -106,8 +90,7 @@ export class SortComponent {
     this._renameComponents(componentNames);
   }
 
-  private _sort(): void {
-    const orig = this._initialSort();
+  private _sort(orig: Line[]): void {
     // leave all content that is not explicitly an arrow connection
     // before the arrow lines that are being sorted
     const others: Content[] = Array.from(this.component.definitions());
