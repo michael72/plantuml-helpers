@@ -1,6 +1,6 @@
-import { Attachable } from "./attachable";
-import { toString, joinContent, Content, Definition } from "./definition";
-import { Line } from "./line";
+import { Attachable } from "./attachable.js";
+import { toString, joinContent, Content, Definition } from "./definition.js";
+import { Line } from "./line.js";
 
 export class Component {
   constructor(

@@ -1,4 +1,4 @@
-import { reverse, reverseHead } from "../helpers";
+import { reverse, reverseHead } from "../helpers.js";
 
 export enum ArrowDirection {
   Left,

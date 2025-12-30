@@ -1,8 +1,8 @@
-import { DefaultMap } from "./helpers";
+import { DefaultMap } from "./helpers.js";
 
-import { Component } from "./uml/component";
-import { Content, Definition } from "./uml/definition";
-import { Line } from "./uml/line";
+import { Component } from "./uml/component.js";
+import { Content, Definition } from "./uml/definition.js";
+import { Line } from "./uml/line.js";
 
 function _toKey(s: [string, string]): string {
   return s[0] + "," + s[1];

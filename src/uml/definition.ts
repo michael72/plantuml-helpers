@@ -1,11 +1,11 @@
-import { Attachable } from "./attachable";
+import { Attachable } from "./attachable.js";
 import {
   REGEX_INTERFACE,
   REGEX_CLASS,
   REGEX_COMPONENT,
   REGEX_SEQUENCE,
-} from "./diagramtype";
-import { Line } from "./line";
+} from "./diagramtype.js";
+import { Line } from "./line.js";
 
 export type Content = Line | Definition;
 

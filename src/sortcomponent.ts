@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { DefaultMap } from "./helpers";
-import { Layout } from "./uml/arrow";
-import { Component } from "./uml/component";
-import { Content, Definition } from "./uml/definition";
-import { Line } from "./uml/line";
+import { DefaultMap } from "./helpers.js";
+import { Layout } from "./uml/arrow.js";
+import { Component } from "./uml/component.js";
+import { Content, Definition } from "./uml/definition.js";
+import { Line } from "./uml/line.js";
 
 export class SortComponent {
   constructor(private component: Component) {}

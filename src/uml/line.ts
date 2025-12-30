@@ -1,7 +1,7 @@
-import { reverseHead } from "../helpers";
-import { Arrow, Layout, ArrowDirection } from "./arrow";
-import { Attachable } from "./attachable";
-import { Component } from "./component";
+import { reverseHead } from "../helpers.js";
+import { Arrow, Layout, ArrowDirection } from "./arrow.js";
+import { Attachable } from "./attachable.js";
+import { Component } from "./component.js";
 
 /** Combined direction is ordered clockwise. */
 export enum CombinedDirection {
