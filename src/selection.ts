@@ -1,65 +1,37 @@
 import * as vscode from "vscode";
+import { findUmlBoundaries } from "./umlBoundary.js";
 
+/**
+ * Extracts the UML diagram selection from a text editor.
+ * Uses the cursor position to find the diagram boundaries.
+ *
+ * @param textEditor The VS Code text editor
+ * @returns A Selection covering the UML diagram, or undefined if not found
+ */
 export function extractUml(
   textEditor: vscode.TextEditor
 ): vscode.Selection | undefined {
   const document = textEditor.document;
+
   for (const sel of textEditor.selections) {
     if (sel.isEmpty || sel.isSingleLine) {
-      let line = sel.active.line;
-      while (line >= 0 && line < document.lineCount) {
-        const text = document.lineAt(line).text.trim();
-        const nextLine =
-          line + 1 < document.lineCount
-            ? document.lineAt(line + 1).text.trim()
-            : "";
-        if (
-          // auto format starting from the start of the document (without start)
-          // or from opening bracket - including that bracket
-          text.startsWith("@startuml") ||
-          text === "```plantuml" ||
-          text.includes("{") ||
-          nextLine === "{"
-        ) {
-          if (text === "{") {
-            // add identifier _before_ the opening bracket (like package etc.)
-            line -= 1;
-          } else if (nextLine !== "{" && !text.includes("{")) {
-            line += 1;
-          }
-          break;
-        }
-        line -= 1;
+      // Convert document to lines array
+      const lines: string[] = [];
+      for (let i = 0; i < document.lineCount; i++) {
+        lines.push(document.lineAt(i).text);
       }
-      let bracketCount = 0;
-      let last = line;
-      while (last >= 0 && last < document.lineCount) {
-        const text = document.lineAt(last).text.trim();
-        if (
-          text === "@enduml" ||
-          text === "```" ||
-          (text.includes("}") && bracketCount === 1)
-        ) {
-          if (!text.includes("}")) {
-            last -= 1;
-          }
-          break;
-        } else if (text.includes("{")) {
-          bracketCount += 1;
-        } else if (text.includes("}")) {
-          bracketCount -= 1;
-        }
-        last += 1;
-      }
-      if (last === document.lineCount || line < 0) {
+
+      // Find boundaries using pure function
+      const boundary = findUmlBoundaries(lines, sel.active.line);
+      if (boundary === undefined) {
         return undefined;
       }
 
       return new vscode.Selection(
-        line,
+        boundary.startLine,
         0,
-        last,
-        document.lineAt(last).range.end.character
+        boundary.endLine,
+        document.lineAt(boundary.endLine).range.end.character
       );
     }
     return sel;
