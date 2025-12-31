@@ -77,6 +77,19 @@ describe("findUmlBoundaries", () => {
       expect(result).toEqual({ startLine: 1, endLine: 3 });
     });
 
+    it("should handle nested braces - finds outer block when cursor at start", () => {
+      const lines = [
+        "package Outer {",
+        "  package Inner {",
+        "    class A",
+        "  }",
+        "}",
+      ];
+      const result = findUmlBoundaries(lines, 0);
+      // From cursor at line 0, finds Outer package and skips past Inner's closing brace
+      expect(result).toEqual({ startLine: 0, endLine: 4 });
+    });
+
     it("should find component diagram", () => {
       const lines = ["component MyComponent {", "  [A] -> [B]", "}"];
       const result = findUmlBoundaries(lines, 1);
