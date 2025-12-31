@@ -44,6 +44,7 @@ function encodeToPlantUmlBase64(data: Uint8Array): string {
   const length = data.length;
 
   for (let i = 0; i < length; i += 3) {
+    /* v8 ignore next - first data byte is always available */
     const b1 = data[i] ?? 0;
     const b2 = data[i + 1] ?? 0;
     const b3 = data[i + 2] ?? 0;

@@ -215,9 +215,10 @@ A <-> B
     it("should handle very long input", () => {
       const longContent =
         "@startuml\n" +
-        Array.from({ length: 500 }, (_, i) => `Class${i} -> Class${i + 1}`).join(
-          "\n"
-        ) +
+        Array.from(
+          { length: 500 },
+          (_, i) => `Class${i} -> Class${i + 1}`
+        ).join("\n") +
         "\n@enduml";
 
       const result = encodePlantUml(longContent);

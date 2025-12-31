@@ -1,3 +1,5 @@
+/* v8 ignore start - this UI file is not tested */
+
 import * as vscode from "vscode";
 import { findUmlBoundaries } from "./umlBoundary.js";
 
@@ -38,3 +40,5 @@ export function extractUml(
   }
   return undefined;
 }
+
+/* v8 ignore stop */

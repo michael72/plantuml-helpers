@@ -1,3 +1,5 @@
+/* v8 ignore start - this UI file is not tested */
+
 import * as vscode from "vscode";
 
 /**
@@ -429,3 +431,5 @@ function getNonce(): string {
   }
   return text;
 }
+
+/* v8 ignore stop */
