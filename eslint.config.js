@@ -17,6 +17,8 @@ export default [
         // Node.js globals
         TextEncoder: 'readonly',
         Buffer: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
       },
     },
     plugins: {

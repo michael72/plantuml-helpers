@@ -8,6 +8,12 @@ import { PlantUmlPreviewPanel } from "./previewPanel.js";
 import { extractUml } from "./selection.js";
 import { fetchSvg } from "./plantumlService.js";
 
+// Track the current preview state
+let currentPreviewDocumentUri: string | undefined;
+let lastDiagramText: string | undefined;
+let updateTimeout: ReturnType<typeof setTimeout> | undefined;
+const UPDATE_DELAY_MS = 500; // Debounce delay
+
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext): void {
@@ -59,22 +65,36 @@ export function activate(context: vscode.ExtensionContext): void {
         return;
       }
 
+      // Track the current document for live updates
+      currentPreviewDocumentUri = textEditor.document.uri.toString();
+
       const diagramText = textEditor.document.getText(range);
-      const panel = PlantUmlPreviewPanel.createOrShow(context.extensionUri);
+      lastDiagramText = diagramText;
 
-      panel.showLoading();
+      await updatePreview(context.extensionUri, diagramText);
+    }
+  );
 
-      try {
-        const svg = await fetchSvg(diagramText);
-        panel.updateSvg(svg);
-      } catch (error) {
-        const message =
-          error instanceof Error ? error.message : "Unknown error occurred";
-        panel.showError(message);
-        void vscode.window.showErrorMessage(
-          `Failed to generate diagram: ${message}`
-        );
+  // Listen for text document changes to update the preview
+  const textChangeListener = vscode.workspace.onDidChangeTextDocument(
+    (event) => {
+      // Only update if we have an active preview and the changed document matches
+      if (
+        PlantUmlPreviewPanel.currentPanel === undefined ||
+        currentPreviewDocumentUri === undefined ||
+        event.document.uri.toString() !== currentPreviewDocumentUri
+      ) {
+        return;
       }
+
+      // Debounce updates
+      if (updateTimeout) {
+        clearTimeout(updateTimeout);
+      }
+
+      updateTimeout = setTimeout(() => {
+        void updatePreviewFromDocument(context.extensionUri, event.document);
+      }, UPDATE_DELAY_MS);
     }
   );
 
@@ -85,9 +105,59 @@ export function activate(context: vscode.ExtensionContext): void {
     autoFormat,
     reFormat,
     showPreview,
+    textChangeListener,
   ]) {
     context.subscriptions.push(s);
   }
+}
+
+/**
+ * Updates the preview panel with the given diagram text.
+ */
+async function updatePreview(
+  extensionUri: vscode.Uri,
+  diagramText: string
+): Promise<void> {
+  const panel = PlantUmlPreviewPanel.createOrShow(extensionUri);
+  panel.showLoading();
+
+  try {
+    const svg = await fetchSvg(diagramText);
+    panel.updateSvg(svg);
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Unknown error occurred";
+    panel.showError(message);
+  }
+}
+
+/**
+ * Extracts the diagram from a document and updates the preview if changed.
+ */
+async function updatePreviewFromDocument(
+  extensionUri: vscode.Uri,
+  document: vscode.TextDocument
+): Promise<void> {
+  // Find the diagram in the document using the active editor position
+  const textEditor = vscode.window.activeTextEditor;
+  if (textEditor?.document.uri.toString() !== document.uri.toString()) {
+    return;
+  }
+
+  const range = extractUml(textEditor);
+  if (!range) {
+    return;
+  }
+
+  const diagramText = document.getText(range);
+
+  // Only update if the diagram text actually changed
+  if (diagramText === lastDiagramText) {
+    return;
+  }
+
+  lastDiagramText = diagramText;
+  await updatePreview(extensionUri, diagramText);
 }
 
 export function deactivate(): void {

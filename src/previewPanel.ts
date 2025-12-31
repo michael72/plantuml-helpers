@@ -26,6 +26,22 @@ export class PlantUmlPreviewPanel {
       null,
       this._disposables
     );
+
+    // Handle messages from the webview
+    this._panel.webview.onDidReceiveMessage(
+      (message: { command: string }) => {
+        switch (message.command) {
+          case "autoFormat":
+            void vscode.commands.executeCommand("pumlhelper.autoFormat");
+            return;
+          case "resetArrows":
+            void vscode.commands.executeCommand("pumlhelper.reFormat");
+            return;
+        }
+      },
+      null,
+      this._disposables
+    );
   }
 
   /**
@@ -137,33 +153,87 @@ export class PlantUmlPreviewPanel {
       padding: 40px;
     }
 
-    .controls {
+    .toolbar {
       margin-bottom: 16px;
       display: flex;
-      gap: 8px;
+      gap: 4px;
+      background-color: var(--vscode-editor-background);
+      padding: 4px;
+      border-radius: 4px;
     }
 
-    button {
-      background-color: var(--vscode-button-background);
-      color: var(--vscode-button-foreground);
+    .toolbar-group {
+      display: flex;
+      gap: 2px;
+    }
+
+    .toolbar-separator {
+      width: 1px;
+      background-color: var(--vscode-widget-border, #444);
+      margin: 0 8px;
+    }
+
+    .icon-button {
+      background-color: transparent;
+      color: var(--vscode-icon-foreground, var(--vscode-editor-foreground));
       border: none;
-      padding: 6px 12px;
-      border-radius: 2px;
+      padding: 6px 8px;
+      border-radius: 4px;
       cursor: pointer;
-      font-family: var(--vscode-font-family);
-      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 28px;
+      height: 28px;
     }
 
-    button:hover {
-      background-color: var(--vscode-button-hoverBackground);
+    .icon-button:hover {
+      background-color: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
+    }
+
+    .icon-button:active {
+      background-color: var(--vscode-toolbar-activeBackground, rgba(99, 102, 103, 0.31));
+    }
+
+    .icon-button svg {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+    }
+
+    .zoom-level {
+      font-family: var(--vscode-font-family);
+      font-size: 12px;
+      color: var(--vscode-descriptionForeground);
+      min-width: 40px;
+      text-align: center;
+      line-height: 28px;
     }
   </style>
 </head>
 <body>
-  <div class="controls">
-    <button onclick="zoomIn()">Zoom In</button>
-    <button onclick="zoomOut()">Zoom Out</button>
-    <button onclick="resetZoom()">Reset</button>
+  <div class="toolbar">
+    <div class="toolbar-group">
+      <button class="icon-button" onclick="zoomOut()" title="Zoom Out">
+        <svg viewBox="0 0 16 16"><path d="M7.5 1a6.5 6.5 0 1 0 4.13 11.53l2.92 2.93a.75.75 0 0 0 1.06-1.06l-2.93-2.92A6.5 6.5 0 0 0 7.5 1zM2 7.5a5.5 5.5 0 1 1 11 0 5.5 5.5 0 0 1-11 0zm3.25 0a.75.75 0 0 1 .75-.75h5a.75.75 0 0 1 0 1.5H6a.75.75 0 0 1-.75-.75z"/></svg>
+      </button>
+      <span class="zoom-level" id="zoom-level">100%</span>
+      <button class="icon-button" onclick="zoomIn()" title="Zoom In">
+        <svg viewBox="0 0 16 16"><path d="M7.5 1a6.5 6.5 0 1 0 4.13 11.53l2.92 2.93a.75.75 0 0 0 1.06-1.06l-2.93-2.92A6.5 6.5 0 0 0 7.5 1zM2 7.5a5.5 5.5 0 1 1 11 0 5.5 5.5 0 0 1-11 0zm4.75-2a.75.75 0 0 1 .75.75V7h.75a.75.75 0 0 1 0 1.5H7.5v.75a.75.75 0 0 1-1.5 0V8.5h-.75a.75.75 0 0 1 0-1.5H6v-.75A.75.75 0 0 1 6.75 5.5z"/></svg>
+      </button>
+      <button class="icon-button" onclick="resetZoom()" title="Reset Zoom to 100%">
+        <svg viewBox="0 0 16 16"><path d="M4.5 2A2.5 2.5 0 0 0 2 4.5v7A2.5 2.5 0 0 0 4.5 14h7a2.5 2.5 0 0 0 2.5-2.5v-7A2.5 2.5 0 0 0 11.5 2h-7zM3.5 4.5a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1v-7z"/></svg>
+      </button>
+    </div>
+    <div class="toolbar-separator"></div>
+    <div class="toolbar-group">
+      <button class="icon-button" onclick="autoFormat()" title="Auto Format - Optimize arrow layout">
+        <svg viewBox="0 0 16 16"><path d="M2.5 4a.5.5 0 0 0 0 1h11a.5.5 0 0 0 0-1h-11zm0 4a.5.5 0 0 0 0 1h7a.5.5 0 0 0 0-1h-7zm0 4a.5.5 0 0 0 0 1h11a.5.5 0 0 0 0-1h-11z"/><path d="M12.354 7.146a.5.5 0 0 1 0 .708l-2 2a.5.5 0 0 1-.708-.708L11.293 7.5 9.646 5.854a.5.5 0 1 1 .708-.708l2 2z"/></svg>
+      </button>
+      <button class="icon-button" onclick="resetArrows()" title="Reset Arrow Directions to Defaults">
+        <svg viewBox="0 0 16 16"><path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 1 1 .908-.418A6 6 0 1 1 8 2v1z"/><path d="M8 1.5V5l3-2.5L8 0v1.5z"/></svg>
+      </button>
+    </div>
   </div>
   <div class="container">
     ${
@@ -173,8 +243,16 @@ export class PlantUmlPreviewPanel {
     }
   </div>
   <script nonce="${nonce}">
+    const vscode = acquireVsCodeApi();
     let currentZoom = 1;
     const zoomStep = 0.1;
+
+    function updateZoomDisplay() {
+      const zoomLevel = document.getElementById('zoom-level');
+      if (zoomLevel) {
+        zoomLevel.textContent = Math.round(currentZoom * 100) + '%';
+      }
+    }
 
     function zoomIn() {
       currentZoom += zoomStep;
@@ -197,6 +275,15 @@ export class PlantUmlPreviewPanel {
         container.style.transform = 'scale(' + currentZoom + ')';
         container.style.transformOrigin = 'top left';
       }
+      updateZoomDisplay();
+    }
+
+    function autoFormat() {
+      vscode.postMessage({ command: 'autoFormat' });
+    }
+
+    function resetArrows() {
+      vscode.postMessage({ command: 'resetArrows' });
     }
   </script>
 </body>
