@@ -58,17 +58,17 @@ export class PlantUmlPreviewPanel {
   public static createOrShow(extensionUri: vscode.Uri): PlantUmlPreviewPanel {
     const column = vscode.ViewColumn.Beside;
 
-    // If panel already exists, show it
+    // If panel already exists, show it without stealing focus
     if (PlantUmlPreviewPanel.currentPanel) {
-      PlantUmlPreviewPanel.currentPanel._panel.reveal(column);
+      PlantUmlPreviewPanel.currentPanel._panel.reveal(column, true);
       return PlantUmlPreviewPanel.currentPanel;
     }
 
-    // Otherwise, create a new panel
+    // Otherwise, create a new panel (preserveFocus: true to keep editor focused)
     const panel = vscode.window.createWebviewPanel(
       PlantUmlPreviewPanel.viewType,
       "PlantUML Preview",
-      column,
+      { viewColumn: column, preserveFocus: true },
       {
         enableScripts: true,
         retainContextWhenHidden: true,
