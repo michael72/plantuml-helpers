@@ -4,6 +4,7 @@
 import * as vscode from "vscode";
 import * as rotate from "./rotate.js";
 import * as reformat from "./reformat.js";
+import { PlantUmlPreviewPanel } from "./previewPanel.js";
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -38,7 +39,22 @@ export function activate(context: vscode.ExtensionContext): void {
       autoFormatContent(textEditor, true);
     }
   );
-  for (const s of [swapLine, rotateLeft, rotateRight, autoFormat, reFormat]) {
+
+  const showPreview = vscode.commands.registerCommand(
+    "pumlhelper.showPreview",
+    () => {
+      PlantUmlPreviewPanel.createOrShow(context.extensionUri);
+    }
+  );
+
+  for (const s of [
+    swapLine,
+    rotateLeft,
+    rotateRight,
+    autoFormat,
+    reFormat,
+    showPreview,
+  ]) {
     context.subscriptions.push(s);
   }
 }

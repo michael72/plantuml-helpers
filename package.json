@@ -50,6 +50,11 @@
         "command": "pumlhelper.reFormat",
         "title": "Reset Arrow Directions to Defaults",
         "category": "PlantUMLHelpers"
+      },
+      {
+        "command": "pumlhelper.showPreview",
+        "title": "Show PlantUML Preview",
+        "category": "PlantUMLHelpers"
       }
     ],
     "keybindings": [
@@ -64,6 +69,10 @@
       {
         "command": "pumlhelper.rotateLineRight",
         "key": "Alt+0"
+      },
+      {
+        "command": "pumlhelper.showPreview",
+        "key": "Alt+P"
       }
     ]
   },
