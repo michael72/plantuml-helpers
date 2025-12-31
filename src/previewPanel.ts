@@ -1,6 +1,11 @@
 import * as vscode from "vscode";
 
 /**
+ * Message handler type for webview messages.
+ */
+export type MessageHandler = (command: string) => void;
+
+/**
  * Manages the PlantUML preview webview panel.
  * This panel displays SVG content rendered from PlantUML diagrams.
  */
@@ -10,6 +15,7 @@ export class PlantUmlPreviewPanel {
 
   private readonly _panel: vscode.WebviewPanel;
   private _disposables: vscode.Disposable[] = [];
+  private _messageHandler: MessageHandler | undefined;
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private constructor(panel: vscode.WebviewPanel, _extensionUri: vscode.Uri) {
@@ -30,18 +36,20 @@ export class PlantUmlPreviewPanel {
     // Handle messages from the webview
     this._panel.webview.onDidReceiveMessage(
       (message: { command: string }) => {
-        switch (message.command) {
-          case "autoFormat":
-            void vscode.commands.executeCommand("pumlhelper.autoFormat");
-            return;
-          case "resetArrows":
-            void vscode.commands.executeCommand("pumlhelper.reFormat");
-            return;
+        if (this._messageHandler) {
+          this._messageHandler(message.command);
         }
       },
       null,
       this._disposables
     );
+  }
+
+  /**
+   * Sets the message handler for webview commands.
+   */
+  public setMessageHandler(handler: MessageHandler): void {
+    this._messageHandler = handler;
   }
 
   /**

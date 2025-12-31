@@ -119,6 +119,12 @@ async function updatePreview(
   diagramText: string
 ): Promise<void> {
   const panel = PlantUmlPreviewPanel.createOrShow(extensionUri);
+
+  // Set up message handler for toolbar commands
+  panel.setMessageHandler((command: string) => {
+    void handlePreviewCommand(command);
+  });
+
   panel.showLoading();
 
   try {
@@ -128,6 +134,71 @@ async function updatePreview(
     const message =
       error instanceof Error ? error.message : "Unknown error occurred";
     panel.showError(message);
+  }
+}
+
+/**
+ * Handles commands from the preview panel toolbar.
+ */
+async function handlePreviewCommand(command: string): Promise<void> {
+  if (currentPreviewDocumentUri === undefined) {
+    return;
+  }
+
+  // Find the editor for the tracked document
+  const editor = vscode.window.visibleTextEditors.find(
+    (e) => e.document.uri.toString() === currentPreviewDocumentUri
+  );
+
+  if (!editor) {
+    void vscode.window.showErrorMessage(
+      "Source editor is no longer visible. Please reopen the preview."
+    );
+    return;
+  }
+
+  // Perform the requested action
+  if (command === "autoFormat") {
+    await performFormatting(editor, false);
+  } else if (command === "resetArrows") {
+    await performFormatting(editor, true);
+  }
+}
+
+/**
+ * Performs formatting on the editor and refreshes the preview.
+ */
+async function performFormatting(
+  textEditor: vscode.TextEditor,
+  rebuild: boolean
+): Promise<void> {
+  const range = extractUml(textEditor);
+  if (range === undefined) {
+    void vscode.window.showErrorMessage(
+      "No PlantUML found in current selection!"
+    );
+    return;
+  }
+
+  const oldText = textEditor.document.getText(range);
+  try {
+    const newText = reformat.autoFormatTxt(oldText, rebuild);
+    if (oldText.trim() === newText.trim()) {
+      void vscode.window.showInformationMessage(
+        "The diagram was already sorted."
+      );
+    } else {
+      await textEditor.edit((editBuilder) => {
+        editBuilder.replace(range, newText);
+      });
+      // The preview will auto-update via onDidChangeTextDocument
+    }
+  } catch (e) {
+    if (e instanceof Error) {
+      void vscode.window.showErrorMessage(e.message);
+    } else {
+      throw e;
+    }
   }
 }
 
