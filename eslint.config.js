@@ -13,6 +13,11 @@ export default [
         sourceType: 'module',
         project: ['./tsconfig.eslint.json'],
       },
+      globals: {
+        // Node.js globals
+        TextEncoder: 'readonly',
+        Buffer: 'readonly',
+      },
     },
     plugins: {
       '@typescript-eslint': tseslint,

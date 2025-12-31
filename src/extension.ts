@@ -6,6 +6,7 @@ import * as rotate from "./rotate.js";
 import * as reformat from "./reformat.js";
 import { PlantUmlPreviewPanel } from "./previewPanel.js";
 import { extractUml } from "./selection.js";
+import { fetchSvg } from "./plantumlService.js";
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -43,8 +44,37 @@ export function activate(context: vscode.ExtensionContext): void {
 
   const showPreview = vscode.commands.registerCommand(
     "pumlhelper.showPreview",
-    () => {
-      PlantUmlPreviewPanel.createOrShow(context.extensionUri);
+    async () => {
+      const textEditor = vscode.window.activeTextEditor;
+      if (!textEditor) {
+        void vscode.window.showErrorMessage("No active text editor");
+        return;
+      }
+
+      const range = extractUml(textEditor);
+      if (!range) {
+        void vscode.window.showErrorMessage(
+          "No PlantUML diagram found at cursor position"
+        );
+        return;
+      }
+
+      const diagramText = textEditor.document.getText(range);
+      const panel = PlantUmlPreviewPanel.createOrShow(context.extensionUri);
+
+      panel.showLoading();
+
+      try {
+        const svg = await fetchSvg(diagramText);
+        panel.updateSvg(svg);
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Unknown error occurred";
+        panel.showError(message);
+        void vscode.window.showErrorMessage(
+          `Failed to generate diagram: ${message}`
+        );
+      }
     }
   );
 
