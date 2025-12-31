@@ -50,6 +50,11 @@
         "command": "pumlhelper.reFormat",
         "title": "Reset Arrow Directions to Defaults",
         "category": "PlantUMLHelpers"
+      },
+      {
+        "command": "pumlhelper.showPreview",
+        "title": "Show PlantUML Preview",
+        "category": "PlantUMLHelpers"
       }
     ],
     "keybindings": [
@@ -64,8 +69,22 @@
       {
         "command": "pumlhelper.rotateLineRight",
         "key": "Alt+0"
+      },
+      {
+        "command": "pumlhelper.showPreview",
+        "key": "Alt+P"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "PlantUML Helpers",
+      "properties": {
+        "plantumlHelpers.server": {
+          "type": "string",
+          "default": "https://www.plantuml.com/plantuml",
+          "description": "PlantUML server URL. Can be changed to a local server (e.g., http://localhost:8080/plantuml)"
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",

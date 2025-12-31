@@ -4,6 +4,15 @@
 import * as vscode from "vscode";
 import * as rotate from "./rotate.js";
 import * as reformat from "./reformat.js";
+import { PlantUmlPreviewPanel } from "./previewPanel.js";
+import { extractUml } from "./selection.js";
+import { fetchSvg } from "./plantumlService.js";
+
+// Track the current preview state
+let currentPreviewDocumentUri: string | undefined;
+let lastDiagramText: string | undefined;
+let updateTimeout: ReturnType<typeof setTimeout> | undefined;
+const UPDATE_DELAY_MS = 500; // Debounce delay
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -38,9 +47,188 @@ export function activate(context: vscode.ExtensionContext): void {
       autoFormatContent(textEditor, true);
     }
   );
-  for (const s of [swapLine, rotateLeft, rotateRight, autoFormat, reFormat]) {
+
+  const showPreview = vscode.commands.registerCommand(
+    "pumlhelper.showPreview",
+    async () => {
+      const textEditor = vscode.window.activeTextEditor;
+      if (!textEditor) {
+        void vscode.window.showErrorMessage("No active text editor");
+        return;
+      }
+
+      const range = extractUml(textEditor);
+      if (!range) {
+        void vscode.window.showErrorMessage(
+          "No PlantUML diagram found at cursor position"
+        );
+        return;
+      }
+
+      // Track the current document for live updates
+      currentPreviewDocumentUri = textEditor.document.uri.toString();
+
+      const diagramText = textEditor.document.getText(range);
+      lastDiagramText = diagramText;
+
+      await updatePreview(context.extensionUri, diagramText);
+    }
+  );
+
+  // Listen for text document changes to update the preview
+  const textChangeListener = vscode.workspace.onDidChangeTextDocument(
+    (event) => {
+      // Only update if we have an active preview and the changed document matches
+      if (
+        PlantUmlPreviewPanel.currentPanel === undefined ||
+        currentPreviewDocumentUri === undefined ||
+        event.document.uri.toString() !== currentPreviewDocumentUri
+      ) {
+        return;
+      }
+
+      // Debounce updates
+      if (updateTimeout) {
+        clearTimeout(updateTimeout);
+      }
+
+      updateTimeout = setTimeout(() => {
+        void updatePreviewFromDocument(context.extensionUri, event.document);
+      }, UPDATE_DELAY_MS);
+    }
+  );
+
+  for (const s of [
+    swapLine,
+    rotateLeft,
+    rotateRight,
+    autoFormat,
+    reFormat,
+    showPreview,
+    textChangeListener,
+  ]) {
     context.subscriptions.push(s);
   }
+}
+
+/**
+ * Updates the preview panel with the given diagram text.
+ */
+async function updatePreview(
+  extensionUri: vscode.Uri,
+  diagramText: string
+): Promise<void> {
+  const panel = PlantUmlPreviewPanel.createOrShow(extensionUri);
+
+  // Set up message handler for toolbar commands
+  panel.setMessageHandler((command: string) => {
+    void handlePreviewCommand(command);
+  });
+
+  panel.showLoading();
+
+  try {
+    const svg = await fetchSvg(diagramText);
+    panel.updateSvg(svg);
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Unknown error occurred";
+    panel.showError(message);
+  }
+}
+
+/**
+ * Handles commands from the preview panel toolbar.
+ */
+async function handlePreviewCommand(command: string): Promise<void> {
+  if (currentPreviewDocumentUri === undefined) {
+    return;
+  }
+
+  // Find the editor for the tracked document
+  const editor = vscode.window.visibleTextEditors.find(
+    (e) => e.document.uri.toString() === currentPreviewDocumentUri
+  );
+
+  if (!editor) {
+    void vscode.window.showErrorMessage(
+      "Source editor is no longer visible. Please reopen the preview."
+    );
+    return;
+  }
+
+  // Perform the requested action
+  if (command === "autoFormat") {
+    await performFormatting(editor, false);
+  } else if (command === "resetArrows") {
+    await performFormatting(editor, true);
+  }
+}
+
+/**
+ * Performs formatting on the editor and refreshes the preview.
+ */
+async function performFormatting(
+  textEditor: vscode.TextEditor,
+  rebuild: boolean
+): Promise<void> {
+  const range = extractUml(textEditor);
+  if (range === undefined) {
+    void vscode.window.showErrorMessage(
+      "No PlantUML found in current selection!"
+    );
+    return;
+  }
+
+  const oldText = textEditor.document.getText(range);
+  try {
+    const newText = reformat.autoFormatTxt(oldText, rebuild);
+    if (oldText.trim() === newText.trim()) {
+      void vscode.window.showInformationMessage(
+        "The diagram was already sorted."
+      );
+    } else {
+      await textEditor.edit((editBuilder) => {
+        editBuilder.replace(range, newText);
+      });
+      // The preview will auto-update via onDidChangeTextDocument
+    }
+  } catch (e) {
+    if (e instanceof Error) {
+      void vscode.window.showErrorMessage(e.message);
+    } else {
+      throw e;
+    }
+  }
+}
+
+/**
+ * Extracts the diagram from a document and updates the preview if changed.
+ */
+async function updatePreviewFromDocument(
+  extensionUri: vscode.Uri,
+  document: vscode.TextDocument
+): Promise<void> {
+  // Find the diagram in the document using the active editor position
+  const textEditor = vscode.window.activeTextEditor;
+  if (textEditor?.document.uri.toString() !== document.uri.toString()) {
+    return;
+  }
+
+  const range = extractUml(textEditor);
+  if (!range) {
+    return;
+  }
+
+  const diagramText = document.getText(range);
+
+  // Only update if the diagram text actually changed
+  if (diagramText === lastDiagramText) {
+    return;
+  }
+
+  lastDiagramText = diagramText;
+  await updatePreview(extensionUri, diagramText);
 }
 
 export function deactivate(): void {
@@ -74,72 +262,15 @@ function autoFormatContent(
   rebuild: boolean
 ): void {
   if (textEditor != null) {
-    const document = textEditor.document;
     void textEditor.edit((editBuilder) => {
-      for (const sel of textEditor.selections) {
-        let range = sel;
-        if (sel.isEmpty || sel.isSingleLine) {
-          let line = sel.active.line;
-          while (line >= 0 && line < document.lineCount) {
-            const text = document.lineAt(line).text.trim();
-            const nextLine =
-              line + 1 < document.lineCount
-                ? document.lineAt(line + 1).text.trim()
-                : "";
-            if (
-              // auto format starting from the start of the document (without start)
-              // or from opening bracket - including that bracket
-              text.startsWith("@startuml") ||
-              text === "```plantuml" ||
-              text.includes("{") ||
-              nextLine === "{"
-            ) {
-              if (text === "{") {
-                // add identifier _before_ the opening bracket (like package etc.)
-                line -= 1;
-              } else if (nextLine !== "{" && !text.includes("{")) {
-                line += 1;
-              }
-              break;
-            }
-            line -= 1;
-          }
-          let bracketCount = 0;
-          let last = line;
-          while (last >= 0 && last < document.lineCount) {
-            const text = document.lineAt(last).text.trim();
-            if (
-              text === "@enduml" ||
-              text === "```" ||
-              (text.includes("}") && bracketCount === 1)
-            ) {
-              if (!text.includes("}")) {
-                last -= 1;
-              }
-              break;
-            } else if (text.includes("{")) {
-              bracketCount += 1;
-            } else if (text.includes("}")) {
-              bracketCount -= 1;
-            }
-            last += 1;
-          }
-          if (last === document.lineCount || line < 0) {
-            void vscode.window.showErrorMessage(
-              "No PlantUML found in current selection!"
-            );
-            return;
-          }
-
-          range = new vscode.Selection(
-            line,
-            0,
-            last,
-            document.lineAt(last).range.end.character
-          );
-          textEditor.selection = range;
-        }
-        const oldText = document.getText(range);
+      const range = extractUml(textEditor);
+      if (range === undefined) {
+        void vscode.window.showErrorMessage(
+          "No PlantUML found in current selection!"
+        );
+        return;
+      } else {
+        const oldText = textEditor.document.getText(range);
         try {
           const newText = reformat.autoFormatTxt(oldText, rebuild);
           if (oldText.trim() === newText.trim()) {
