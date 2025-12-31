@@ -214,23 +214,23 @@ export class PlantUmlPreviewPanel {
 <body>
   <div class="toolbar">
     <div class="toolbar-group">
-      <button class="icon-button" onclick="zoomOut()" title="Zoom Out">
+      <button class="icon-button" id="btn-zoom-out" title="Zoom Out">
         <svg viewBox="0 0 16 16"><path d="M7.5 1a6.5 6.5 0 1 0 4.13 11.53l2.92 2.93a.75.75 0 0 0 1.06-1.06l-2.93-2.92A6.5 6.5 0 0 0 7.5 1zM2 7.5a5.5 5.5 0 1 1 11 0 5.5 5.5 0 0 1-11 0zm3.25 0a.75.75 0 0 1 .75-.75h5a.75.75 0 0 1 0 1.5H6a.75.75 0 0 1-.75-.75z"/></svg>
       </button>
       <span class="zoom-level" id="zoom-level">100%</span>
-      <button class="icon-button" onclick="zoomIn()" title="Zoom In">
+      <button class="icon-button" id="btn-zoom-in" title="Zoom In">
         <svg viewBox="0 0 16 16"><path d="M7.5 1a6.5 6.5 0 1 0 4.13 11.53l2.92 2.93a.75.75 0 0 0 1.06-1.06l-2.93-2.92A6.5 6.5 0 0 0 7.5 1zM2 7.5a5.5 5.5 0 1 1 11 0 5.5 5.5 0 0 1-11 0zm4.75-2a.75.75 0 0 1 .75.75V7h.75a.75.75 0 0 1 0 1.5H7.5v.75a.75.75 0 0 1-1.5 0V8.5h-.75a.75.75 0 0 1 0-1.5H6v-.75A.75.75 0 0 1 6.75 5.5z"/></svg>
       </button>
-      <button class="icon-button" onclick="resetZoom()" title="Reset Zoom to 100%">
+      <button class="icon-button" id="btn-reset-zoom" title="Reset Zoom to 100%">
         <svg viewBox="0 0 16 16"><path d="M4.5 2A2.5 2.5 0 0 0 2 4.5v7A2.5 2.5 0 0 0 4.5 14h7a2.5 2.5 0 0 0 2.5-2.5v-7A2.5 2.5 0 0 0 11.5 2h-7zM3.5 4.5a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1v-7z"/></svg>
       </button>
     </div>
     <div class="toolbar-separator"></div>
     <div class="toolbar-group">
-      <button class="icon-button" onclick="autoFormat()" title="Auto Format - Optimize arrow layout">
+      <button class="icon-button" id="btn-auto-format" title="Auto Format - Optimize arrow layout">
         <svg viewBox="0 0 16 16"><path d="M2.5 4a.5.5 0 0 0 0 1h11a.5.5 0 0 0 0-1h-11zm0 4a.5.5 0 0 0 0 1h7a.5.5 0 0 0 0-1h-7zm0 4a.5.5 0 0 0 0 1h11a.5.5 0 0 0 0-1h-11z"/><path d="M12.354 7.146a.5.5 0 0 1 0 .708l-2 2a.5.5 0 0 1-.708-.708L11.293 7.5 9.646 5.854a.5.5 0 1 1 .708-.708l2 2z"/></svg>
       </button>
-      <button class="icon-button" onclick="resetArrows()" title="Reset Arrow Directions to Defaults">
+      <button class="icon-button" id="btn-reset-arrows" title="Reset Arrow Directions to Defaults">
         <svg viewBox="0 0 16 16"><path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 1 1 .908-.418A6 6 0 1 1 8 2v1z"/><path d="M8 1.5V5l3-2.5L8 0v1.5z"/></svg>
       </button>
     </div>
@@ -243,48 +243,55 @@ export class PlantUmlPreviewPanel {
     }
   </div>
   <script nonce="${nonce}">
-    const vscode = acquireVsCodeApi();
-    let currentZoom = 1;
-    const zoomStep = 0.1;
+    (function() {
+      const vscode = acquireVsCodeApi();
+      let currentZoom = 1;
+      const zoomStep = 0.1;
 
-    function updateZoomDisplay() {
-      const zoomLevel = document.getElementById('zoom-level');
-      if (zoomLevel) {
-        zoomLevel.textContent = Math.round(currentZoom * 100) + '%';
+      function updateZoomDisplay() {
+        const zoomLevel = document.getElementById('zoom-level');
+        if (zoomLevel) {
+          zoomLevel.textContent = Math.round(currentZoom * 100) + '%';
+        }
       }
-    }
 
-    function zoomIn() {
-      currentZoom += zoomStep;
-      applyZoom();
-    }
-
-    function zoomOut() {
-      currentZoom = Math.max(0.1, currentZoom - zoomStep);
-      applyZoom();
-    }
-
-    function resetZoom() {
-      currentZoom = 1;
-      applyZoom();
-    }
-
-    function applyZoom() {
-      const container = document.getElementById('svg-container');
-      if (container) {
-        container.style.transform = 'scale(' + currentZoom + ')';
-        container.style.transformOrigin = 'top left';
+      function applyZoom() {
+        const container = document.getElementById('svg-container');
+        if (container) {
+          container.style.transform = 'scale(' + currentZoom + ')';
+          container.style.transformOrigin = 'top left';
+        }
+        updateZoomDisplay();
       }
-      updateZoomDisplay();
-    }
 
-    function autoFormat() {
-      vscode.postMessage({ command: 'autoFormat' });
-    }
+      // Zoom In
+      document.getElementById('btn-zoom-in').addEventListener('click', function() {
+        currentZoom += zoomStep;
+        applyZoom();
+      });
 
-    function resetArrows() {
-      vscode.postMessage({ command: 'resetArrows' });
-    }
+      // Zoom Out
+      document.getElementById('btn-zoom-out').addEventListener('click', function() {
+        currentZoom = Math.max(0.1, currentZoom - zoomStep);
+        applyZoom();
+      });
+
+      // Reset Zoom
+      document.getElementById('btn-reset-zoom').addEventListener('click', function() {
+        currentZoom = 1;
+        applyZoom();
+      });
+
+      // Auto Format
+      document.getElementById('btn-auto-format').addEventListener('click', function() {
+        vscode.postMessage({ command: 'autoFormat' });
+      });
+
+      // Reset Arrows
+      document.getElementById('btn-reset-arrows').addEventListener('click', function() {
+        vscode.postMessage({ command: 'resetArrows' });
+      });
+    })();
   </script>
 </body>
 </html>`;
