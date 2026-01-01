@@ -16,12 +16,13 @@ export class PlantUmlPreviewPanel {
   public static readonly viewType = "plantumlPreview";
 
   private readonly _panel: vscode.WebviewPanel;
+  private readonly _extensionUri: vscode.Uri;
   private _disposables: vscode.Disposable[] = [];
   private _messageHandler: MessageHandler | undefined;
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  private constructor(panel: vscode.WebviewPanel, _extensionUri: vscode.Uri) {
+  private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri) {
     this._panel = panel;
+    this._extensionUri = extensionUri;
 
     // Set initial content
     this._updateContent("");
@@ -110,8 +111,21 @@ export class PlantUmlPreviewPanel {
     this._panel.webview.html = this._getWebviewContent(svgContent);
   }
 
+  private _getScriptUri(): vscode.Uri {
+    return this._panel.webview.asWebviewUri(
+      vscode.Uri.joinPath(
+        this._extensionUri,
+        "out",
+        "src",
+        "webview",
+        "previewScript.js"
+      )
+    );
+  }
+
   private _getWebviewContent(svgContent: string): string {
     const nonce = getNonce();
+    const scriptUri = this._getScriptUri();
 
     return `<!DOCTYPE html>
 <html lang="en">
@@ -121,38 +135,52 @@ export class PlantUmlPreviewPanel {
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data: https:; style-src 'unsafe-inline'; script-src 'nonce-${nonce}';">
   <title>PlantUML Preview</title>
   <style>
-    body {
+    html, body {
       margin: 0;
-      padding: 16px;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
       background-color: var(--vscode-editor-background);
       color: var(--vscode-editor-foreground);
+    }
+
+    body {
       display: flex;
       flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
       box-sizing: border-box;
     }
 
-    .container {
+    .toolbar-wrapper {
+      flex-shrink: 0;
       display: flex;
       justify-content: center;
-      align-items: flex-start;
-      width: 100%;
+      padding: 16px 16px 0 16px;
+    }
+
+    .container {
+      flex: 1;
       overflow: auto;
+      padding: 16px;
+      box-sizing: border-box;
+    }
+
+    .zoom-wrapper {
+      display: block;
+      transform-origin: top left;
+      width: fit-content;
+      margin: 0 auto;
     }
 
     .svg-container {
-      background-color: white;
+      background-color: transparent;
       padding: 16px;
       border-radius: 4px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-      max-width: 100%;
-      overflow: auto;
     }
 
     .svg-container svg {
-      max-width: 100%;
-      height: auto;
+      display: block;
     }
 
     .placeholder {
@@ -164,7 +192,6 @@ export class PlantUmlPreviewPanel {
     }
 
     .toolbar {
-      margin-bottom: 16px;
       display: flex;
       gap: 4px;
       background-color: var(--vscode-editor-background);
@@ -222,87 +249,39 @@ export class PlantUmlPreviewPanel {
   </style>
 </head>
 <body>
-  <div class="toolbar">
-    <div class="toolbar-group">
-      <button class="icon-button" id="btn-zoom-out" title="Zoom Out">
-        <svg viewBox="0 0 16 16"><path d="M7.5 1a6.5 6.5 0 1 0 4.13 11.53l2.92 2.93a.75.75 0 0 0 1.06-1.06l-2.93-2.92A6.5 6.5 0 0 0 7.5 1zM2 7.5a5.5 5.5 0 1 1 11 0 5.5 5.5 0 0 1-11 0zm3.25 0a.75.75 0 0 1 .75-.75h5a.75.75 0 0 1 0 1.5H6a.75.75 0 0 1-.75-.75z"/></svg>
-      </button>
-      <span class="zoom-level" id="zoom-level">100%</span>
-      <button class="icon-button" id="btn-zoom-in" title="Zoom In">
-        <svg viewBox="0 0 16 16"><path d="M7.5 1a6.5 6.5 0 1 0 4.13 11.53l2.92 2.93a.75.75 0 0 0 1.06-1.06l-2.93-2.92A6.5 6.5 0 0 0 7.5 1zM2 7.5a5.5 5.5 0 1 1 11 0 5.5 5.5 0 0 1-11 0zm4.75-2a.75.75 0 0 1 .75.75V7h.75a.75.75 0 0 1 0 1.5H7.5v.75a.75.75 0 0 1-1.5 0V8.5h-.75a.75.75 0 0 1 0-1.5H6v-.75A.75.75 0 0 1 6.75 5.5z"/></svg>
-      </button>
-      <button class="icon-button" id="btn-reset-zoom" title="Reset Zoom to 100%">
-        <svg viewBox="0 0 16 16"><path d="M4.5 2A2.5 2.5 0 0 0 2 4.5v7A2.5 2.5 0 0 0 4.5 14h7a2.5 2.5 0 0 0 2.5-2.5v-7A2.5 2.5 0 0 0 11.5 2h-7zM3.5 4.5a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1v-7z"/></svg>
-      </button>
-    </div>
-    <div class="toolbar-separator"></div>
-    <div class="toolbar-group">
-      <button class="icon-button" id="btn-auto-format" title="Auto Format - Optimize arrow layout">
-        <svg viewBox="0 0 16 16"><path d="M2.5 4a.5.5 0 0 0 0 1h11a.5.5 0 0 0 0-1h-11zm0 4a.5.5 0 0 0 0 1h7a.5.5 0 0 0 0-1h-7zm0 4a.5.5 0 0 0 0 1h11a.5.5 0 0 0 0-1h-11z"/><path d="M12.354 7.146a.5.5 0 0 1 0 .708l-2 2a.5.5 0 0 1-.708-.708L11.293 7.5 9.646 5.854a.5.5 0 1 1 .708-.708l2 2z"/></svg>
-      </button>
-      <button class="icon-button" id="btn-reset-arrows" title="Reset Arrow Directions to Defaults">
-        <svg viewBox="0 0 16 16"><path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 1 1 .908-.418A6 6 0 1 1 8 2v1z"/><path d="M8 1.5V5l3-2.5L8 0v1.5z"/></svg>
-      </button>
+  <div class="toolbar-wrapper">
+    <div class="toolbar">
+      <div class="toolbar-group">
+        <button class="icon-button" id="btn-zoom-out" title="Zoom Out">
+          <svg viewBox="0 0 16 16"><path d="M7.5 1a6.5 6.5 0 1 0 4.13 11.53l2.92 2.93a.75.75 0 0 0 1.06-1.06l-2.93-2.92A6.5 6.5 0 0 0 7.5 1zM2 7.5a5.5 5.5 0 1 1 11 0 5.5 5.5 0 0 1-11 0zm3.25 0a.75.75 0 0 1 .75-.75h5a.75.75 0 0 1 0 1.5H6a.75.75 0 0 1-.75-.75z"/></svg>
+        </button>
+        <span class="zoom-level" id="zoom-level">100%</span>
+        <button class="icon-button" id="btn-zoom-in" title="Zoom In">
+          <svg viewBox="0 0 16 16"><path d="M7.5 1a6.5 6.5 0 1 0 4.13 11.53l2.92 2.93a.75.75 0 0 0 1.06-1.06l-2.93-2.92A6.5 6.5 0 0 0 7.5 1zM2 7.5a5.5 5.5 0 1 1 11 0 5.5 5.5 0 0 1-11 0zm4.75-2a.75.75 0 0 1 .75.75V7h.75a.75.75 0 0 1 0 1.5H7.5v.75a.75.75 0 0 1-1.5 0V8.5h-.75a.75.75 0 0 1 0-1.5H6v-.75A.75.75 0 0 1 6.75 5.5z"/></svg>
+        </button>
+        <button class="icon-button" id="btn-reset-zoom" title="Reset Zoom to 100%">
+          <svg viewBox="0 0 16 16"><path d="M4.5 2A2.5 2.5 0 0 0 2 4.5v7A2.5 2.5 0 0 0 4.5 14h7a2.5 2.5 0 0 0 2.5-2.5v-7A2.5 2.5 0 0 0 11.5 2h-7zM3.5 4.5a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1v-7z"/></svg>
+        </button>
+      </div>
+      <div class="toolbar-separator"></div>
+      <div class="toolbar-group">
+        <button class="icon-button" id="btn-auto-format" title="Auto Format - Optimize arrow layout">
+          <svg viewBox="0 0 16 16"><path d="M2.5 4a.5.5 0 0 0 0 1h11a.5.5 0 0 0 0-1h-11zm0 4a.5.5 0 0 0 0 1h7a.5.5 0 0 0 0-1h-7zm0 4a.5.5 0 0 0 0 1h11a.5.5 0 0 0 0-1h-11z"/><path d="M12.354 7.146a.5.5 0 0 1 0 .708l-2 2a.5.5 0 0 1-.708-.708L11.293 7.5 9.646 5.854a.5.5 0 1 1 .708-.708l2 2z"/></svg>
+        </button>
+        <button class="icon-button" id="btn-reset-arrows" title="Reset Arrow Directions to Defaults">
+          <svg viewBox="0 0 16 16"><path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 1 1 .908-.418A6 6 0 1 1 8 2v1z"/><path d="M8 1.5V5l3-2.5L8 0v1.5z"/></svg>
+        </button>
+      </div>
     </div>
   </div>
-  <div class="container">
+  <div class="container" id="scroll-container">
     ${
       svgContent
-        ? `<div class="svg-container" id="svg-container">${svgContent}</div>`
+        ? `<div class="zoom-wrapper" id="zoom-wrapper"><div class="svg-container" id="svg-container">${svgContent}</div></div>`
         : `<div class="placeholder">No diagram to display.<br><br>Place your cursor in a PlantUML diagram and run the preview command.</div>`
     }
   </div>
-  <script nonce="${nonce}">
-    (function() {
-      const vscode = acquireVsCodeApi();
-      let currentZoom = 1;
-      const zoomStep = 0.1;
-
-      function updateZoomDisplay() {
-        const zoomLevel = document.getElementById('zoom-level');
-        if (zoomLevel) {
-          zoomLevel.textContent = Math.round(currentZoom * 100) + '%';
-        }
-      }
-
-      function applyZoom() {
-        const container = document.getElementById('svg-container');
-        if (container) {
-          container.style.transform = 'scale(' + currentZoom + ')';
-          container.style.transformOrigin = 'top left';
-        }
-        updateZoomDisplay();
-      }
-
-      // Zoom In
-      document.getElementById('btn-zoom-in').addEventListener('click', function() {
-        currentZoom += zoomStep;
-        applyZoom();
-      });
-
-      // Zoom Out
-      document.getElementById('btn-zoom-out').addEventListener('click', function() {
-        currentZoom = Math.max(0.1, currentZoom - zoomStep);
-        applyZoom();
-      });
-
-      // Reset Zoom
-      document.getElementById('btn-reset-zoom').addEventListener('click', function() {
-        currentZoom = 1;
-        applyZoom();
-      });
-
-      // Auto Format
-      document.getElementById('btn-auto-format').addEventListener('click', function() {
-        vscode.postMessage({ command: 'autoFormat' });
-      });
-
-      // Reset Arrows
-      document.getElementById('btn-reset-arrows').addEventListener('click', function() {
-        vscode.postMessage({ command: 'resetArrows' });
-      });
-    })();
-  </script>
+  <script nonce="${nonce}" src="${scriptUri.toString()}"></script>
 </body>
 </html>`;
   }

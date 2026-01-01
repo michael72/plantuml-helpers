@@ -62,13 +62,13 @@ export function activate(context: vscode.ExtensionContext): void {
         void vscode.window.showErrorMessage(
           "No PlantUML diagram found at cursor position"
         );
-        return;
       }
 
       // Track the current document for live updates
       currentPreviewDocumentUri = textEditor.document.uri.toString();
 
-      const diagramText = textEditor.document.getText(range);
+      const diagramText =
+        range === undefined ? "" : textEditor.document.getText(range);
       lastDiagramText = diagramText;
 
       await updatePreview(context.extensionUri, diagramText);
