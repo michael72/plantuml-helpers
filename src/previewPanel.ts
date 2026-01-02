@@ -19,6 +19,7 @@ export class PlantUmlPreviewPanel {
   private readonly _extensionUri: vscode.Uri;
   private _disposables: vscode.Disposable[] = [];
   private _messageHandler: MessageHandler | undefined;
+  private _pendingUpdateTimer: ReturnType<typeof setTimeout> | undefined;
 
   private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri) {
     this._panel = panel;
@@ -94,20 +95,38 @@ export class PlantUmlPreviewPanel {
   }
 
   /**
-   * Shows an error message in the preview panel.
+   * Shows an error message in the preview panel after a 500ms delay.
+   * Cancels any pending update timer.
    */
   public showError(message: string): void {
-    this._panel.webview.html = this._getErrorHtml(message);
+    this._cancelPendingTimer();
+    this._pendingUpdateTimer = setTimeout(() => {
+      this._pendingUpdateTimer = undefined;
+      this._panel.webview.html = this._getErrorHtml(message);
+    }, 500);
   }
 
   /**
-   * Shows a loading indicator in the preview panel.
+   * Shows a loading indicator in the preview panel after a 500ms delay.
+   * Cancels any pending update timer.
    */
   public showLoading(): void {
-    this._panel.webview.html = this._getLoadingHtml();
+    this._cancelPendingTimer();
+    this._pendingUpdateTimer = setTimeout(() => {
+      this._pendingUpdateTimer = undefined;
+      this._panel.webview.html = this._getLoadingHtml();
+    }, 500);
+  }
+
+  private _cancelPendingTimer(): void {
+    if (this._pendingUpdateTimer !== undefined) {
+      clearTimeout(this._pendingUpdateTimer);
+      this._pendingUpdateTimer = undefined;
+    }
   }
 
   private _updateContent(svgContent: string): void {
+    this._cancelPendingTimer();
     this._panel.webview.html = this._getWebviewContent(svgContent);
   }
 
@@ -390,6 +409,7 @@ export class PlantUmlPreviewPanel {
   public dispose(): void {
     PlantUmlPreviewPanel.currentPanel = undefined;
 
+    this._cancelPendingTimer();
     this._panel.dispose();
 
     while (this._disposables.length) {
