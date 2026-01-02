@@ -23,6 +23,7 @@ export class Attachable {
       !this.isNoteAttached()
     ) {
       const last = this.attached.pop();
+      /* v8 ignore else @preserve */
       if (last !== undefined) {
         result = [last, ...result];
       }

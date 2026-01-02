@@ -31,7 +31,7 @@ export async function fetchSvg(diagramText: string): Promise<string> {
 
     const request = protocol.get(url, (response) => {
       // Handle redirects
-      /* v8 ignore next - there should be a response inside the callback */
+      /* v8 ignore next @preserve - there should be a response inside the callback */
       const statusCode = response.statusCode ?? 0;
       const location = response.headers.location ?? "";
       if (statusCode >= 300 && statusCode < 400 && location.length > 0) {
@@ -66,9 +66,10 @@ export async function fetchSvg(diagramText: string): Promise<string> {
     });
 
     request.setTimeout(30000, () => {
-      /* v8 ignore next 2 */
+      /* v8 ignore start */
       request.destroy();
       reject(new Error("Request to PlantUML server timed out"));
+      /* v8 ignore stop */
     });
   });
 }
@@ -78,11 +79,11 @@ export async function fetchSvg(diagramText: string): Promise<string> {
  */
 function fetchFromUrl(url: string): Promise<string> {
   return new Promise((resolve, reject) => {
-    /* v8 ignore next */
+    /* v8 ignore next @preserve */
     const protocol = url.startsWith("https") ? https : http;
 
     const request = protocol.get(url, (response) => {
-      /* v8 ignore next 8 */
+      /* v8 ignore start */
       if (response.statusCode !== 200) {
         reject(
           new Error(
@@ -91,6 +92,7 @@ function fetchFromUrl(url: string): Promise<string> {
         );
         return;
       }
+      /* v8 ignore stop */
 
       let data = "";
       response.setEncoding("utf8");
@@ -105,9 +107,10 @@ function fetchFromUrl(url: string): Promise<string> {
 
     request.on("error", reject);
     request.setTimeout(30000, () => {
-      /* v8 ignore next 2 */
+      /* v8 ignore start */
       request.destroy();
       reject(new Error("Request to PlantUML server timed out"));
+      /* v8 ignore stop */
     });
   });
 }

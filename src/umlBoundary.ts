@@ -26,7 +26,7 @@ export function findUmlBoundaries(
   let startLine = cursorLine;
   while (startLine >= 0 && startLine < lineCount) {
     const currentLine = lines[startLine];
-    /* v8 ignore next */
+    /* v8 ignore next @preserve */
     if (currentLine === undefined) break;
     const text = currentLine.trim();
     const nextLineText = lines[startLine + 1];
@@ -59,7 +59,7 @@ export function findUmlBoundaries(
   let endLine = startLine;
   while (endLine >= 0 && endLine < lineCount) {
     const endLineText = lines[endLine];
-    /* v8 ignore next */
+    /* v8 ignore next @preserve */
     if (endLineText === undefined) break;
     const text = endLineText.trim();
     if (

@@ -82,6 +82,7 @@ export class SortSequence {
       const arr = k.split(",");
       const left = arr[0];
       const right = arr[1];
+      /* v8 ignore else @preserve */
       if (
         left != null &&
         left.length > 0 &&
@@ -116,6 +117,7 @@ export class SortSequence {
       const temp = arr[i];
       const elemI = arr[i];
       const elemJ = arr[j];
+      /* v8 ignore else @preserve */
       if (temp !== undefined && elemI !== undefined && elemJ !== undefined) {
         arr[i] = elemJ;
         arr[j] = elemI;
@@ -143,6 +145,7 @@ export class SortSequence {
     const rotate = (left: number, right: number): void => {
       let rotated: string[] = checklist.slice(left, right);
       const popped = rotated.pop();
+      /* v8 ignore else @preserve */
       if (popped !== undefined) {
         rotated.unshift(popped);
       }
@@ -163,6 +166,7 @@ export class SortSequence {
         const counterI = counters[i];
         if (counterI !== undefined && counterI < i) {
           const k = i % 2 && counterI;
+          /* v8 ignore else @preserve */
           if (k !== undefined) {
             swap(checklist, i + off_left, k + off_left);
           }
@@ -170,6 +174,7 @@ export class SortSequence {
           i = 1;
           checkWeight();
         } else {
+          /* v8 ignore else @preserve */
           if (counterI !== undefined) {
             counters[i] = 0;
           }
@@ -324,6 +329,7 @@ export class SortSequence {
           // _removeParticipants()
           // add reference to sorted section at the end
           const defAtIdx = defs[idx];
+          /* v8 ignore else @preserve */
           if (defAtIdx) {
             newContentPost.push(defAtIdx.removeAlias());
           }

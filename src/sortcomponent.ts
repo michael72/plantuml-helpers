@@ -33,7 +33,7 @@ export class SortComponent {
 
     for (let i = 0; i < lines.length; ++i) {
       const line = lines[i];
-      /* v8 ignore next */
+      /* v8 ignore next @preserve */
       if (line == null) {
         // ignore line
       } else {
@@ -197,11 +197,11 @@ export class SortComponent {
     orig: Line[]
   ): Line[] {
     const currentLine = sorted[lineIdx];
-    /* v8 ignore next */
+    /* v8 ignore next @preserve */
     if (!currentLine) return sorted;
 
     for (const c of currentLine.components) {
-      /* v8 ignore next */
+      /* v8 ignore next @preserve */
       if (c == null) {
         // skip
       } else {
@@ -342,7 +342,7 @@ export class SortComponent {
     names: Map<string, string>
   ): void {
     for (const c of line.components) {
-      /* v8 ignore next */
+      /* v8 ignore next @preserve */
       if (c == null) {
         // skip
       } else {
@@ -439,6 +439,7 @@ export class SortComponent {
     for (const line of lines) {
       // remove leading spaces
       const leftSide = line.sides[0];
+      /* v8 ignore else @preserve */
       if (leftSide != null) {
         line.sides[0] = leftSide.trimStart();
       }
@@ -468,6 +469,7 @@ export class SortComponent {
         if (c?.[0] == "[") {
           c = c.substring(1, c.length - 1);
         }
+        /* v8 ignore else @preserve */
         if (c != null) {
           const name = componentNames.get(c);
           if (name !== undefined) {

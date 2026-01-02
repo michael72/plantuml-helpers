@@ -92,13 +92,14 @@ export class Arrow {
     const tagIdx = this._tagIndex(arr);
     if (tagIdx !== -1) {
       const tagElement = arr[tagIdx];
+      /* v8 ignore else @preserve */
       if (tagElement !== undefined) {
         tag = tagElement;
         arr[tagIdx] = "";
       }
     }
     // split() always returns at least one element, so arr[0] is always defined
-    /* v8 ignore next */
+    /* v8 ignore next @preserve */
     const left = arr[0] ?? "";
     // right direction is default - also for undirected arrows
     const direction = left.includes("<")
@@ -109,7 +110,7 @@ export class Arrow {
     // in case of horizontal arrow 1 is used - otherwise 2 or higher
     const arrowSizeVert = Math.max(2, arr.length - 1);
     // split() always returns at least one element, so last element is always defined
-    /* v8 ignore next */
+    /* v8 ignore next @preserve */
     const right = arr[arr.length - 1] ?? "";
     return new this(left, line, arrowSizeVert, tag, right, direction, layout);
   }

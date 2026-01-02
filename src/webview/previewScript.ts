@@ -1,7 +1,6 @@
 /* eslint-disable */
 /* v8 ignore start - this webview script is not tested */
 /* global document */
-import 'typed-query-selector'
 
 /**
  * VS Code API interface for webview communication.
