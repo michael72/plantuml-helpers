@@ -9,10 +9,9 @@ import { extractUml } from "./selection.js";
 import { fetchSvg } from "./plantumlService.js";
 
 // Track the current preview state
-let currentPreviewDocumentUri: string | undefined;
 let lastDiagramText: string | undefined;
 let updateTimeout: ReturnType<typeof setTimeout> | undefined;
-const UPDATE_DELAY_MS = 500; // Debounce delay
+const UPDATE_DELAY_MS = 100; // Debounce delay
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -52,26 +51,23 @@ export function activate(context: vscode.ExtensionContext): void {
     "pumlhelper.showPreview",
     async () => {
       const textEditor = vscode.window.activeTextEditor;
-      if (!textEditor) {
+      if (textEditor) {
+        const range = extractUml(textEditor);
+        if (!range) {
+          void vscode.window.showErrorMessage(
+            "No PlantUML diagram found at cursor position"
+          );
+        }
+
+        const diagramText =
+          textEditor === undefined || range === undefined
+            ? ""
+            : textEditor.document.getText(range);
+        lastDiagramText = diagramText;
+      } else {
         void vscode.window.showErrorMessage("No active text editor");
-        return;
       }
-
-      const range = extractUml(textEditor);
-      if (!range) {
-        void vscode.window.showErrorMessage(
-          "No PlantUML diagram found at cursor position"
-        );
-      }
-
-      // Track the current document for live updates
-      currentPreviewDocumentUri = textEditor.document.uri.toString();
-
-      const diagramText =
-        range === undefined ? "" : textEditor.document.getText(range);
-      lastDiagramText = diagramText;
-
-      await updatePreview(context.extensionUri, diagramText);
+      await updatePreview(context.extensionUri, lastDiagramText ?? "");
     }
   );
 
@@ -79,11 +75,7 @@ export function activate(context: vscode.ExtensionContext): void {
   const textChangeListener = vscode.workspace.onDidChangeTextDocument(
     (event) => {
       // Only update if we have an active preview and the changed document matches
-      if (
-        PlantUmlPreviewPanel.currentPanel === undefined ||
-        currentPreviewDocumentUri === undefined ||
-        event.document.uri.toString() !== currentPreviewDocumentUri
-      ) {
+      if (!PlantUmlPreviewPanel.currentPanel) {
         return;
       }
 
@@ -141,14 +133,8 @@ async function updatePreview(
  * Handles commands from the preview panel toolbar.
  */
 async function handlePreviewCommand(command: string): Promise<void> {
-  if (currentPreviewDocumentUri === undefined) {
-    return;
-  }
-
   // Find the editor for the tracked document
-  const editor = vscode.window.visibleTextEditors.find(
-    (e) => e.document.uri.toString() === currentPreviewDocumentUri
-  );
+  const editor = vscode.window.activeTextEditor;
 
   if (!editor) {
     void vscode.window.showErrorMessage(
