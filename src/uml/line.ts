@@ -36,12 +36,12 @@ export class Line extends Attachable {
   }
 
   from(): string {
-    /* v8 ignore next */
+    /* v8 ignore next @preserve */
     return this.components[0] ?? "";
   }
 
   to(): string {
-    /* v8 ignore next */
+    /* v8 ignore next @preserve */
     return this.components[1] ?? "";
   }
 
@@ -55,7 +55,7 @@ export class Line extends Attachable {
     }
     const a = 4; // arrow-index
     // The regex requires the arrow group to match, so m[a] is guaranteed to exist
-    /* v8 ignore next */
+    /* v8 ignore next @preserve */
     const arrowStr = m[a] ?? "->";
     const arrow = Arrow.fromString(arrowStr);
     if (!arrow) {
@@ -70,6 +70,7 @@ export class Line extends Attachable {
     if (result.arrow.tag.length > 0) {
       // check explicit direction set in arrow - e.g. -up->
       const firstChar = result.arrow.tag[0];
+      /* v8 ignore else @preserve */
       if (firstChar != null && firstChar.length > 0) {
         const idx = this.DIRECTIONS.indexOf(firstChar);
         if (idx !== -1) {
@@ -150,12 +151,11 @@ export class Line extends Attachable {
     return new Line(
       [this.to(), this.from()],
       this.arrow.reverse(),
-      /* v8 ignore next */
       [this.multiplicities[1] ?? "", this.multiplicities[0] ?? ""],
       // the label section (on the right side) might contain an arrow as well
       // this has to be turned around as well!
       [
-        /* v8 ignore next */
+        /* v8 ignore next @preserve */
         this.sides[0] ?? "",
         side1 != null && side1.length > 0 ? reverseHead(side1) : "",
       ]
@@ -194,7 +194,6 @@ export class Line extends Attachable {
   }
 
   override toString(): string {
-    /* v8 ignore next 2 */
     const side0 = this.sides[0] ?? "";
     const side1 = this.sides[1] ?? "";
     const content =

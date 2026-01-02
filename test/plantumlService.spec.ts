@@ -66,6 +66,10 @@ function createMockRequest(): http.ClientRequest {
 describe("plantumlService", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Reset vscode mock to default https URL (vi.clearAllMocks only clears call history, not implementations)
+    vi.mocked(vscode.workspace.getConfiguration).mockReturnValue({
+      get: vi.fn((_key: string, defaultValue: string) => defaultValue),
+    } as unknown as vscode.WorkspaceConfiguration);
   });
 
   afterEach(() => {

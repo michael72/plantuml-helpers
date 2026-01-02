@@ -67,7 +67,7 @@ export class Component {
           // copy header
           const header = emptyComp.header;
           for (let j = 0; j < header.length; ++j) {
-            /* v8 ignore next */
+            /* v8 ignore next @preserve */
             const copyHeader = header[j] ?? "";
             comp.header.splice(j, 0, copyHeader);
           }
@@ -83,6 +83,7 @@ export class Component {
     // shortcut: return the only child
     if (children.length === 1) {
       const firstChild = children[0];
+      /* v8 ignore else @preserve */
       if (firstChild) {
         return firstChild;
       }
@@ -104,7 +105,7 @@ export class Component {
     let i = start;
     const currentLine = arr[i];
     if (currentLine === undefined || currentLine.length === 0) {
-      /* v8 ignore next */
+      /* v8 ignore next @preserve */
       const header = currentLine === undefined ? [] : [currentLine];
       return [new Component(header, [], []), i];
     }

@@ -54,6 +54,7 @@ export class Definition extends Attachable {
     // check interface definition
     if (m) {
       const name = m[2];
+      /* v8 ignore else @preserve */
       if (name != null && name.length > 0) {
         return new this("interface", shorten(name, '"'), m[3]);
       }
@@ -65,6 +66,7 @@ export class Definition extends Attachable {
         (m[1] != null || (m[2] != null && m[2].length > 0 && m[2][0] === "["))
       ) {
         const name = m[2];
+        /* v8 ignore else @preserve */
         if (name != null && name.length > 0) {
           return new this("component", shorten(name, "["), m[3]);
         }
@@ -74,6 +76,7 @@ export class Definition extends Attachable {
         if (m) {
           const type = m[1];
           const name = m[2];
+          /* v8 ignore else @preserve */
           if (
             type != null &&
             type.length > 0 &&
