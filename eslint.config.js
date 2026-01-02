@@ -91,6 +91,7 @@ export default [
   // Ignore patterns (equivalent to .eslintignore)
   {
     ignores: [
+      "src/webview/*.ts",
       'out/**',
       'node_modules/**',
       '.vscode-test/**',

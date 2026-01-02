@@ -1,4 +1,3 @@
-/* eslint-disable */
 /* v8 ignore start - this webview script is not tested */
 /* global document */
 
