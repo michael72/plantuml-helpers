@@ -7,6 +7,7 @@ import * as reformat from "./reformat.js";
 import { PlantUmlPreviewPanel } from "./previewPanel.js";
 import { extractUml } from "./selection.js";
 import { fetchSvg } from "./plantumlService.js";
+import { plantUmlPlugin } from "./markdownItPlugin.js";
 
 // Track the current preview state
 let lastDiagramText: string | undefined;
@@ -15,7 +16,7 @@ const UPDATE_DELAY_MS = 100; // Debounce delay
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
-export function activate(context: vscode.ExtensionContext): void {
+export function activate(context: vscode.ExtensionContext) {
   const swapLine = vscode.commands.registerTextEditorCommand(
     "pumlhelper.swapLine",
     (textEditor: vscode.TextEditor) => {
@@ -101,6 +102,13 @@ export function activate(context: vscode.ExtensionContext): void {
   ]) {
     context.subscriptions.push(s);
   }
+
+  return {
+    extendMarkdownIt(md: unknown) {
+      plantUmlPlugin(md as Parameters<typeof plantUmlPlugin>[0]);
+      return md;
+    },
+  };
 }
 
 /**

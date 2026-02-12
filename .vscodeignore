@@ -5,7 +5,8 @@ doc/**
 coverage/**
 .gitignore
 vsc-extension-quickstart.md
-**/tsconfig.json
+**/tsconfig*.json
+**/update_script.sh
 **/package-lock.json
 **/*.cpuprofile
 **/*.vsix
@@ -15,3 +16,9 @@ vsc-extension-quickstart.md
 .*/**
 puml/**
 .out/**
+codecov.yml
+eslint.config.js
+*.zip
+*.vsix
+LICENSE
+
