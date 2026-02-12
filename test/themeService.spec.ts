@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   showInformationMessage: vi.fn(),
   withProgress: vi.fn(),
   registerCommand: vi.fn(),
+  executeCommand: vi.fn(),
   configUpdate: vi.fn(),
 }));
 
@@ -45,6 +46,7 @@ vi.mock("vscode", () => ({
   },
   commands: {
     registerCommand: mocks.registerCommand,
+    executeCommand: mocks.executeCommand
   },
   ProgressLocation: {
     Notification: 15,
@@ -186,6 +188,13 @@ Help on themes
       mockThemeSetting("cerulean");
       const input = "A -> B";
       expect(addTheme(input)).toBe(input);
+    });
+
+    it("should not add !theme when a directive is present", () => {
+      const directive = "!include http://externalserver/some/external/puml";
+      mockThemeSetting(directive);
+      const input = "@startuml\nA -> B\n@enduml";
+      expect(addTheme(input)).toBe(`@startuml\n${directive}\nA -> B\n@enduml`);
     });
   });
 
