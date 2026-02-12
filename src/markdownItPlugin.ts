@@ -2,6 +2,7 @@ import process from "node:process";
 import { execFileSync } from "child_process";
 import { encodePlantUml } from "./plantumlEncoder.js";
 import { getServerUrl } from "./plantumlService.js";
+import { addTheme } from "./themeService.js";
 
 // markdown-it types needed for the plugin signature
 interface MarkdownIt {
@@ -69,9 +70,12 @@ export function plantUmlPlugin(md: MarkdownIt): void {
     if (token?.info.trim().toLowerCase() === "plantuml") {
       const code = token.content.trim();
       // Wrap in @startuml/@enduml if not already present
-      const diagramText = code.startsWith("@start")
+      const wrapped = code.startsWith("@start")
         ? code
         : `@startuml\n${code}\n@enduml`;
+
+      // Apply configured theme if applicable
+      const diagramText = addTheme(wrapped);
 
       const encoded = encodePlantUml(diagramText);
       const serverUrl = getServerUrl();
@@ -89,4 +93,3 @@ export function plantUmlPlugin(md: MarkdownIt): void {
     return self.renderToken(tokens, idx, options);
   };
 }
-

@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   execFileSync: vi.fn(),
   encodePlantUml: vi.fn(),
   getServerUrl: vi.fn(),
+  addTheme: vi.fn((text: string) => text),  // pass-through by default
 }));
 
 vi.mock("child_process", () => ({
@@ -17,6 +18,10 @@ vi.mock("../src/plantumlEncoder", () => ({
 
 vi.mock("../src/plantumlService", () => ({
   getServerUrl: mocks.getServerUrl,
+}));
+
+vi.mock("../src/themeService", () => ({
+  addTheme: mocks.addTheme,
 }));
 
 vi.mock("vscode", () => ({
@@ -60,7 +65,7 @@ function createMockMd(existingFence?: FenceRule): MockMarkdownIt {
   return {
     renderer: {
       rules: {
-        fence: existingFence,
+        fence: existingFence!,
       },
     },
   };

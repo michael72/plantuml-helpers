@@ -8,6 +8,7 @@ import { PlantUmlPreviewPanel } from "./previewPanel.js";
 import { extractUml } from "./selection.js";
 import { fetchSvg } from "./plantumlService.js";
 import { plantUmlPlugin } from "./markdownItPlugin.js";
+import { registerSetThemeCommand } from "./themeService.js";
 
 // Track the current preview state
 let lastDiagramText: string | undefined;
@@ -91,6 +92,8 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
 
+  const setTheme = registerSetThemeCommand();
+
   for (const s of [
     swapLine,
     rotateLeft,
@@ -99,6 +102,7 @@ export function activate(context: vscode.ExtensionContext) {
     reFormat,
     showPreview,
     textChangeListener,
+    setTheme,
   ]) {
     context.subscriptions.push(s);
   }

@@ -60,6 +60,11 @@
         "command": "pumlhelper.showPreview",
         "title": "Show PlantUML Preview",
         "category": "PlantUMLHelpers"
+      },
+      {
+        "command": "pumlhelper.setTheme",
+        "title": "Set theme",
+        "category": "PlantUMLHelpers"
       }
     ],
     "keybindings": [
@@ -87,6 +92,11 @@
           "type": "string",
           "default": "https://www.plantuml.com/plantuml",
           "description": "PlantUML server URL. Can be changed to a local server (e.g., http://localhost:8080/plantuml)"
+        },
+        "plantumlHelpers.theme": {
+          "type": "string",
+          "default": "_none_",
+          "description": "PlantUML theme used for rendering diagrams. Use the 'Set theme' command to pick from available themes."
         }
       }
     }
