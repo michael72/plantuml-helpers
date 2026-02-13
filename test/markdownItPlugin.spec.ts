@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   execFileSync: vi.fn(),
   encodePlantUml: vi.fn(),
   getServerUrl: vi.fn(),
+  getRenderMethod: vi.fn(),
   addTheme: vi.fn((text: string) => text),  // pass-through by default
 }));
 
@@ -18,6 +19,7 @@ vi.mock("../src/plantumlEncoder", () => ({
 
 vi.mock("../src/plantumlService", () => ({
   getServerUrl: mocks.getServerUrl,
+  getRenderMethod: mocks.getRenderMethod,
 }));
 
 vi.mock("../src/themeService", () => ({
@@ -87,6 +89,7 @@ describe("markdownItPlantUml", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.getServerUrl.mockReturnValue("https://www.plantuml.com/plantuml");
+    mocks.getRenderMethod.mockReturnValue("get");
     mocks.encodePlantUml.mockReturnValue("SomeEncodedString");
   });
 
@@ -243,6 +246,151 @@ describe("markdownItPlantUml", () => {
     });
   });
 
+  describe("POST mode rendering", () => {
+    it("should use POST when renderMethod is 'post'", () => {
+      mocks.getRenderMethod.mockReturnValue("post");
+
+      const md = createMockMd();
+      plantUmlPlugin(md as Parameters<typeof plantUmlPlugin>[0]);
+
+      mocks.execFileSync.mockReturnValue("<svg>post result</svg>");
+
+      const tokens = [createToken("plantuml", "A -> B")];
+      const result = md.renderer.rules.fence!(
+        tokens,
+        0,
+        {},
+        {},
+        createMockSelf()
+      );
+
+      expect(result).toContain("<svg>post result</svg>");
+
+      // Verify the script uses m.request (POST) instead of m.get
+      const scriptArg = mocks.execFileSync.mock.calls[0]?.[1]?.[1] as string;
+      expect(scriptArg).toContain("m.request(");
+      expect(scriptArg).toContain('"POST"');
+      expect(scriptArg).toContain('"text/plain"');
+
+      // Should NOT call encodePlantUml in POST mode
+      expect(mocks.encodePlantUml).not.toHaveBeenCalled();
+    });
+
+    it("should use POST with deflate when renderMethod is 'post-deflate'", () => {
+      mocks.getRenderMethod.mockReturnValue("post-deflate");
+
+      const md = createMockMd();
+      plantUmlPlugin(md as Parameters<typeof plantUmlPlugin>[0]);
+
+      mocks.execFileSync.mockReturnValue("<svg>deflate result</svg>");
+
+      const tokens = [createToken("plantuml", "A -> B")];
+      const result = md.renderer.rules.fence!(
+        tokens,
+        0,
+        {},
+        {},
+        createMockSelf()
+      );
+
+      expect(result).toContain("<svg>deflate result</svg>");
+
+      // Verify the script uses deflate compression
+      const scriptArg = mocks.execFileSync.mock.calls[0]?.[1]?.[1] as string;
+      expect(scriptArg).toContain("m.request(");
+      expect(scriptArg).toContain("zlib.deflateRawSync");
+      expect(scriptArg).toContain('"application/octet-stream"');
+    });
+
+    it("should construct correct POST URL with /svg/ path", () => {
+      mocks.getRenderMethod.mockReturnValue("post");
+      mocks.getServerUrl.mockReturnValue("http://localhost:8080/plantuml");
+
+      const md = createMockMd();
+      plantUmlPlugin(md as Parameters<typeof plantUmlPlugin>[0]);
+
+      mocks.execFileSync.mockReturnValue("<svg></svg>");
+
+      const tokens = [createToken("plantuml", "A -> B")];
+      md.renderer.rules.fence!(tokens, 0, {}, {}, createMockSelf());
+
+      const scriptArg = mocks.execFileSync.mock.calls[0]?.[1]?.[1] as string;
+      expect(scriptArg).toContain("http://localhost:8080/plantuml/svg/");
+    });
+
+    it("should include diagram text in POST script", () => {
+      mocks.getRenderMethod.mockReturnValue("post");
+
+      const md = createMockMd();
+      plantUmlPlugin(md as Parameters<typeof plantUmlPlugin>[0]);
+
+      mocks.execFileSync.mockReturnValue("<svg></svg>");
+
+      const tokens = [createToken("plantuml", "A -> B")];
+      md.renderer.rules.fence!(tokens, 0, {}, {}, createMockSelf());
+
+      const scriptArg = mocks.execFileSync.mock.calls[0]?.[1]?.[1] as string;
+      // The diagram text should be embedded in the script (JSON-stringified)
+      expect(scriptArg).toContain("@startuml");
+      expect(scriptArg).toContain("A -> B");
+    });
+
+    it("should handle POST errors gracefully", () => {
+      mocks.getRenderMethod.mockReturnValue("post");
+
+      const md = createMockMd();
+      plantUmlPlugin(md as Parameters<typeof plantUmlPlugin>[0]);
+
+      mocks.execFileSync.mockImplementation(() => {
+        throw new Error("Connection refused");
+      });
+
+      const tokens = [createToken("plantuml", "A -> B")];
+      const result = md.renderer.rules.fence!(
+        tokens,
+        0,
+        {},
+        {},
+        createMockSelf()
+      );
+
+      expect(result).toContain("PlantUML render error");
+      expect(result).toContain("Connection refused");
+    });
+
+    it("should use http module for http POST URLs", () => {
+      mocks.getRenderMethod.mockReturnValue("post");
+      mocks.getServerUrl.mockReturnValue("http://localhost:8080/plantuml");
+
+      const md = createMockMd();
+      plantUmlPlugin(md as Parameters<typeof plantUmlPlugin>[0]);
+
+      mocks.execFileSync.mockReturnValue("<svg></svg>");
+
+      const tokens = [createToken("plantuml", "A -> B")];
+      md.renderer.rules.fence!(tokens, 0, {}, {}, createMockSelf());
+
+      const scriptArg = mocks.execFileSync.mock.calls[0]?.[1]?.[1] as string;
+      expect(scriptArg).toContain('require("http")');
+    });
+
+    it("should use https module for https POST URLs", () => {
+      mocks.getRenderMethod.mockReturnValue("post");
+      mocks.getServerUrl.mockReturnValue("https://www.plantuml.com/plantuml");
+
+      const md = createMockMd();
+      plantUmlPlugin(md as Parameters<typeof plantUmlPlugin>[0]);
+
+      mocks.execFileSync.mockReturnValue("<svg></svg>");
+
+      const tokens = [createToken("plantuml", "A -> B")];
+      md.renderer.rules.fence!(tokens, 0, {}, {}, createMockSelf());
+
+      const scriptArg = mocks.execFileSync.mock.calls[0]?.[1]?.[1] as string;
+      expect(scriptArg).toContain('require("https")');
+    });
+  });
+
   describe("non-plantuml fence fallback", () => {
     it("should delegate to existing fence rule for non-plantuml blocks", () => {
       const originalFence = vi
@@ -330,7 +478,7 @@ describe("markdownItPlantUml", () => {
       plantUmlPlugin(md as Parameters<typeof plantUmlPlugin>[0]);
 
       mocks.execFileSync.mockImplementation(() => {
-        throw "string error";  
+        throw "string error";
       });
 
       const tokens = [createToken("plantuml", "A -> B")];
