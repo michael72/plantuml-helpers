@@ -127,7 +127,7 @@
     "@vitest/coverage-v8": "^4.0.18",
     "@vitest/ui": "^4.0.18",
     "@vscode/vsce": "^3.7.1",
-    "eslint": "^9.39.1",
+    "eslint": "^10.0.0",
     "markdown-it": "^14.1.1",
     "prettier": "^3.8.1",
     "tsx": "^4.21.0",
