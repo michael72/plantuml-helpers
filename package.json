@@ -93,6 +93,16 @@
           "default": "https://www.plantuml.com/plantuml",
           "description": "PlantUML server URL. Can be changed to a local server (e.g., http://localhost:8080/plantuml)"
         },
+        "plantumlHelpers.renderMethod": {
+          "type": "string",
+          "enum": [
+            "get",
+            "post",
+            "post-deflate"
+          ],
+          "default": "get",
+          "description": "Method to communicate with the PlantUML server. 'get' encodes the diagram in the URL (default), 'post' sends the diagram as plain text in the request body, 'post-deflate' sends a deflate-compressed diagram in the request body."
+        },
         "plantumlHelpers.theme": {
           "type": "string",
           "default": "_none_",
