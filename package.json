@@ -118,7 +118,7 @@
     "clean": "rm -Rf node_modules out package-lock.json && npm install"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.1",
+    "@eslint/js": "^10.0.1",
     "@types/markdown-it": "^14.1.2",
     "@types/node": "^25.3.0",
     "@types/vscode": "^1.109.0",
