@@ -120,7 +120,7 @@
   "devDependencies": {
     "@eslint/js": "^9.39.1",
     "@types/markdown-it": "^14.1.2",
-    "@types/node": "^25.3.0",
+    "@types/node": "^25.3.2",
     "@types/vscode": "^1.109.0",
     "@typescript-eslint/eslint-plugin": "^8.56.0",
     "@typescript-eslint/parser": "^8.55.0",
