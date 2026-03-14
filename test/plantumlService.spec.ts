@@ -30,7 +30,11 @@ vi.mock("vscode", () => ({
 }));
 
 import * as vscode from "vscode";
-import { getServerUrl, getRenderMethod, fetchSvg } from "../src/plantumlService";
+import {
+  getServerUrl,
+  getRenderMethod,
+  fetchSvg,
+} from "../src/plantumlService";
 
 // Create a mock response helper that emits events on next tick
 function createMockResponse(
@@ -285,10 +289,7 @@ describe("plantumlService", () => {
       const mockRequest = createMockRequest();
 
       mocks.httpsRequest.mockImplementation(
-        (
-          _opts: unknown,
-          callback: (res: http.IncomingMessage) => void
-        ) => {
+        (_opts: unknown, callback: (res: http.IncomingMessage) => void) => {
           callback(mockResponse);
           emitResponseEvents(mockResponse);
           return mockRequest;
@@ -302,13 +303,16 @@ describe("plantumlService", () => {
       expect(mocks.httpsRequest).toHaveBeenCalled();
 
       // Verify request options
-      const options = mocks.httpsRequest.mock.calls[0]![0] as http.RequestOptions;
+      const options = mocks.httpsRequest.mock
+        .calls[0]![0] as http.RequestOptions;
       expect(options.method).toBe("POST");
       expect(options.path).toBe("/plantuml/svg/");
-      expect((options.headers as Record<string, unknown>)["Content-Type"]).toBe("text/plain");
-      expect((options.headers as Record<string, unknown>)["Content-Length"]).toBe(
-        Buffer.byteLength(diagramText)
+      expect((options.headers as Record<string, unknown>)["Content-Type"]).toBe(
+        "text/plain"
       );
+      expect(
+        (options.headers as Record<string, unknown>)["Content-Length"]
+      ).toBe(Buffer.byteLength(diagramText));
 
       // Verify body was written
       expect(mockRequest.write).toHaveBeenCalledWith(
@@ -330,10 +334,7 @@ describe("plantumlService", () => {
       const mockRequest = createMockRequest();
 
       mocks.httpsRequest.mockImplementation(
-        (
-          _opts: unknown,
-          callback: (res: http.IncomingMessage) => void
-        ) => {
+        (_opts: unknown, callback: (res: http.IncomingMessage) => void) => {
           callback(mockResponse);
           emitResponseEvents(mockResponse);
           return mockRequest;
@@ -346,14 +347,15 @@ describe("plantumlService", () => {
       expect(result).toBe(svgContent);
 
       // Verify request options for compressed POST
-      const options = mocks.httpsRequest.mock.calls[0]![0] as http.RequestOptions;
+      const options = mocks.httpsRequest.mock
+        .calls[0]![0] as http.RequestOptions;
       expect(options.method).toBe("POST");
       expect((options.headers as Record<string, unknown>)["Content-Type"]).toBe(
         "text/plain"
       );
-      expect((options.headers as Record<string, unknown>)["Content-Encoding"]).toBe(
-        "deflate"
-      );
+      expect(
+        (options.headers as Record<string, unknown>)["Content-Encoding"]
+      ).toBe("deflate");
 
       // Verify body was written (compressed, so it should be a Buffer)
       const writtenBody = (mockRequest.write as ReturnType<typeof vi.fn>).mock
@@ -378,10 +380,7 @@ describe("plantumlService", () => {
       const mockRequest = createMockRequest();
 
       mocks.httpRequest.mockImplementation(
-        (
-          _opts: unknown,
-          callback: (res: http.IncomingMessage) => void
-        ) => {
+        (_opts: unknown, callback: (res: http.IncomingMessage) => void) => {
           callback(mockResponse);
           emitResponseEvents(mockResponse);
           return mockRequest;
@@ -394,7 +393,8 @@ describe("plantumlService", () => {
       expect(mocks.httpRequest).toHaveBeenCalled();
       expect(mocks.httpsRequest).not.toHaveBeenCalled();
 
-      const options = mocks.httpRequest.mock.calls[0]![0] as http.RequestOptions;
+      const options = mocks.httpRequest.mock
+        .calls[0]![0] as http.RequestOptions;
       expect(options.hostname).toBe("localhost");
       expect(options.port).toBe("8080");
       expect(options.path).toBe("/plantuml/svg/");
@@ -412,10 +412,7 @@ describe("plantumlService", () => {
       const mockRequest = createMockRequest();
 
       mocks.httpsRequest.mockImplementation(
-        (
-          _opts: unknown,
-          callback: (res: http.IncomingMessage) => void
-        ) => {
+        (_opts: unknown, callback: (res: http.IncomingMessage) => void) => {
           callback(mockResponse);
           return mockRequest;
         }
@@ -467,10 +464,7 @@ describe("plantumlService", () => {
 
       // POST request returns redirect
       mocks.httpsRequest.mockImplementation(
-        (
-          _opts: unknown,
-          callback: (res: http.IncomingMessage) => void
-        ) => {
+        (_opts: unknown, callback: (res: http.IncomingMessage) => void) => {
           callback(redirectResponse);
           return mockRequest;
         }

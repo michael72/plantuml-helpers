@@ -11,7 +11,8 @@ import { findUmlBoundaries } from "./umlBoundary.js";
  * @returns A Selection covering the UML diagram, or undefined if not found
  */
 export function extractUml(
-  textEditor: vscode.TextEditor
+  textEditor: vscode.TextEditor,
+  withBrackets: boolean
 ): vscode.Selection | undefined {
   const document = textEditor.document;
 
@@ -24,7 +25,7 @@ export function extractUml(
       }
 
       // Find boundaries using pure function
-      const boundary = findUmlBoundaries(lines, sel.active.line);
+      const boundary = findUmlBoundaries(lines, sel.active.line, withBrackets);
       if (boundary === undefined) {
         return undefined;
       }

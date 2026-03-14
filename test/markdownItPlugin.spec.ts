@@ -19,7 +19,11 @@ vi.mock("../src/themeService", () => ({
   addTheme: mocks.addTheme,
 }));
 
-import { plantUmlPlugin, _resetCaches, _cacheStats } from "../src/markdownItPlugin";
+import {
+  plantUmlPlugin,
+  _resetCaches,
+  _cacheStats,
+} from "../src/markdownItPlugin";
 
 // --- Test helpers ---
 
@@ -163,10 +167,7 @@ describe("markdownItPlantUml", () => {
     it("should return the fetched SVG on the second render pass", async () => {
       const md = createMockMd();
       const onAllFetched = vi.fn();
-      plantUmlPlugin(
-        md as Parameters<typeof plantUmlPlugin>[0],
-        onAllFetched
-      );
+      plantUmlPlugin(md as Parameters<typeof plantUmlPlugin>[0], onAllFetched);
 
       mocks.fetchSvg.mockResolvedValue("<svg><text>diagram</text></svg>");
 
@@ -260,10 +261,7 @@ describe("markdownItPlantUml", () => {
     it("should call onAllFetched when a single fetch completes", async () => {
       const md = createMockMd();
       const onAllFetched = vi.fn();
-      plantUmlPlugin(
-        md as Parameters<typeof plantUmlPlugin>[0],
-        onAllFetched
-      );
+      plantUmlPlugin(md as Parameters<typeof plantUmlPlugin>[0], onAllFetched);
 
       mocks.fetchSvg.mockResolvedValue("<svg></svg>");
 
@@ -278,10 +276,7 @@ describe("markdownItPlantUml", () => {
     it("should call onAllFetched only after ALL fetches complete", async () => {
       const md = createMockMd();
       const onAllFetched = vi.fn();
-      plantUmlPlugin(
-        md as Parameters<typeof plantUmlPlugin>[0],
-        onAllFetched
-      );
+      plantUmlPlugin(md as Parameters<typeof plantUmlPlugin>[0], onAllFetched);
 
       let callCount = 0;
       mocks.encodePlantUml.mockImplementation(() => `encoded_${++callCount}`);
@@ -325,10 +320,7 @@ describe("markdownItPlantUml", () => {
     it("should call onAllFetched even when fetches fail", async () => {
       const md = createMockMd();
       const onAllFetched = vi.fn();
-      plantUmlPlugin(
-        md as Parameters<typeof plantUmlPlugin>[0],
-        onAllFetched
-      );
+      plantUmlPlugin(md as Parameters<typeof plantUmlPlugin>[0], onAllFetched);
 
       mocks.fetchSvg.mockRejectedValue(new Error("Network error"));
 
@@ -391,14 +383,12 @@ describe("markdownItPlantUml", () => {
     it("should prune unreferenced SVG cache entries after all fetches complete", async () => {
       const md = createMockMd();
       const onAllFetched = vi.fn();
-      plantUmlPlugin(
-        md as Parameters<typeof plantUmlPlugin>[0],
-        onAllFetched
-      );
+      plantUmlPlugin(md as Parameters<typeof plantUmlPlugin>[0], onAllFetched);
 
       // Distinct keys per distinct content
       mocks.encodePlantUml.mockImplementation(
-        (text: string) => `key_${Buffer.from(text).toString("base64").slice(0, 12)}`
+        (text: string) =>
+          `key_${Buffer.from(text).toString("base64").slice(0, 12)}`
       );
       mocks.fetchSvg.mockResolvedValue("<svg>A</svg>");
 

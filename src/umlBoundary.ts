@@ -18,7 +18,8 @@ export interface UmlBoundary {
  */
 export function findUmlBoundaries(
   lines: string[],
-  cursorLine: number
+  cursorLine: number,
+  withBrackets: boolean
 ): UmlBoundary | undefined {
   const lineCount = lines.length;
 
@@ -40,13 +41,16 @@ export function findUmlBoundaries(
       // or from opening bracket - including that bracket
       text.startsWith("@startuml") ||
       text === "```plantuml" ||
-      text.includes("{") ||
-      nextLine === "{"
+      (withBrackets && (text.includes("{") || nextLine === "{"))
     ) {
-      if (text === "{") {
-        // add identifier _before_ the opening bracket (like package etc.)
-        startLine -= 1;
-      } else if (nextLine !== "{" && !text.includes("{")) {
+      if (withBrackets) {
+        if (text === "{") {
+          // add identifier _before_ the opening bracket (like package etc.)
+          startLine -= 1;
+        } else if (nextLine !== "{" && !text.includes("{")) {
+          startLine += 1;
+        }
+      } else {
         startLine += 1;
       }
       break;
@@ -65,16 +69,18 @@ export function findUmlBoundaries(
     if (
       text === "@enduml" ||
       text === "```" ||
-      (text.includes("}") && bracketCount === 1)
+      (withBrackets && text.includes("}") && bracketCount === 1)
     ) {
-      if (!text.includes("}")) {
+      if (!withBrackets || !text.includes("}")) {
         endLine -= 1;
       }
       break;
-    } else if (text.includes("{")) {
-      bracketCount += 1;
-    } else if (text.includes("}")) {
-      bracketCount -= 1;
+    } else if (withBrackets) {
+      if (text.includes("{")) {
+        bracketCount += 1;
+      } else if (text.includes("}")) {
+        bracketCount -= 1;
+      }
     }
     endLine += 1;
   }

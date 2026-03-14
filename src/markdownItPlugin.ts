@@ -99,7 +99,7 @@ function emptyPlaceholder(): string {
 function fetchInBackground(
   diagramText: string,
   encodedKey: string,
-  onAllFetched?: () => void,
+  onAllFetched?: () => void
 ): void {
   pendingFetches++;
 
@@ -119,10 +119,10 @@ function fetchInBackground(
         // so the corresponding SVG entries get cleaned up on the next
         // fetch cycle after the diagram at that position changes.
         const activeKeys = new Set(
-          [...slotCache.values()].map((s) => s.encodedKey),
+          [...slotCache.values()].map((s) => s.encodedKey)
         );
         for (const key of svgCache.keys()) {
-            /* v8 ignore next @preserve */
+          /* v8 ignore next @preserve */
           if (!activeKeys.has(key)) {
             svgCache.delete(key);
           }
@@ -150,7 +150,7 @@ function fetchInBackground(
  */
 export function plantUmlPlugin(
   md: MarkdownIt,
-  onAllFetched?: () => void,
+  onAllFetched?: () => void
 ): void {
   const defaultFence = md.renderer.rules.fence;
 

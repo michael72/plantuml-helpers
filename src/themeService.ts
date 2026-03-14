@@ -63,11 +63,8 @@ export function addTheme(diagramText: string): string {
   }
 
   // Insert "!theme <name>\n" after the first @start... line
-  const themeExpression = theme.startsWith("!") ? theme : `!theme ${theme}`
-  return diagramText.replace(
-    /^(@start\w+.*\n)/m,
-    `$1${themeExpression}\n`
-  );
+  const themeExpression = theme.startsWith("!") ? theme : `!theme ${theme}`;
+  return diagramText.replace(/^(@start\w+.*\n)/m, `$1${themeExpression}\n`);
 }
 
 /**
@@ -106,7 +103,7 @@ export function registerSetThemeCommand(): vscode.Disposable {
         `PlantUML theme set to "${picked}".`
       );
     }
-    await vscode.commands.executeCommand('markdown.preview.refresh');
+    await vscode.commands.executeCommand("markdown.preview.refresh");
   });
 }
 

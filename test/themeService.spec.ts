@@ -46,7 +46,7 @@ vi.mock("vscode", () => ({
   },
   commands: {
     registerCommand: mocks.registerCommand,
-    executeCommand: mocks.executeCommand
+    executeCommand: mocks.executeCommand,
   },
   ProgressLocation: {
     Notification: 15,
@@ -261,7 +261,11 @@ Help on themes
       mocks.registerCommand.mockImplementation(
         (_cmd: string, handler: () => Promise<void>) => {
           // Store handler to call it
-          (registerSetThemeCommand as unknown as { _handler: () => Promise<void> })._handler = handler;
+          (
+            registerSetThemeCommand as unknown as {
+              _handler: () => Promise<void>;
+            }
+          )._handler = handler;
           return { dispose: vi.fn() };
         }
       );
@@ -287,7 +291,8 @@ Help on themes
       );
 
       registerSetThemeCommand();
-      const handler = mocks.registerCommand.mock.calls[0]?.[1] as () => Promise<void>;
+      const handler = mocks.registerCommand.mock
+        .calls[0]?.[1] as () => Promise<void>;
       await handler();
 
       expect(mocks.showWarningMessage).toHaveBeenCalledWith(
@@ -318,7 +323,8 @@ Help on themes
       );
 
       registerSetThemeCommand();
-      const handler = mocks.registerCommand.mock.calls[0]?.[1] as () => Promise<void>;
+      const handler = mocks.registerCommand.mock
+        .calls[0]?.[1] as () => Promise<void>;
       await handler();
 
       expect(mocks.configUpdate).toHaveBeenCalledWith("theme", "cerulean", 1);

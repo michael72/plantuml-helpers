@@ -54,7 +54,7 @@ export function activate(context: vscode.ExtensionContext) {
     async () => {
       const textEditor = vscode.window.activeTextEditor;
       if (textEditor) {
-        const range = extractUml(textEditor);
+        const range = extractUml(textEditor, false);
         if (!range) {
           void vscode.window.showErrorMessage(
             "No PlantUML diagram found at cursor position"
@@ -170,7 +170,7 @@ async function performFormatting(
   textEditor: vscode.TextEditor,
   rebuild: boolean
 ): Promise<void> {
-  const range = extractUml(textEditor);
+  const range = extractUml(textEditor, true);
   if (range === undefined) {
     void vscode.window.showErrorMessage(
       "No PlantUML found in current selection!"
@@ -213,7 +213,7 @@ async function updatePreviewFromDocument(
     return;
   }
 
-  const range = extractUml(textEditor);
+  const range = extractUml(textEditor, false);
   if (!range) {
     return;
   }
@@ -261,7 +261,7 @@ function autoFormatContent(
 ): void {
   if (textEditor != null) {
     void textEditor.edit((editBuilder) => {
-      const range = extractUml(textEditor);
+      const range = extractUml(textEditor, true);
       if (range === undefined) {
         void vscode.window.showErrorMessage(
           "No PlantUML found in current selection!"
