@@ -349,7 +349,10 @@ describe("plantumlService", () => {
       const options = mocks.httpsRequest.mock.calls[0]![0] as http.RequestOptions;
       expect(options.method).toBe("POST");
       expect((options.headers as Record<string, unknown>)["Content-Type"]).toBe(
-        "application/octet-stream"
+        "text/plain"
+      );
+      expect((options.headers as Record<string, unknown>)["Content-Encoding"]).toBe(
+        "deflate"
       );
 
       // Verify body was written (compressed, so it should be a Buffer)

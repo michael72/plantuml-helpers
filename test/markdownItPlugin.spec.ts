@@ -298,8 +298,9 @@ describe("markdownItPlantUml", () => {
       // Verify the script uses deflate compression
       const scriptArg = mocks.execFileSync.mock.calls[0]?.[1]?.[1] as string;
       expect(scriptArg).toContain("m.request(");
-      expect(scriptArg).toContain("zlib.deflateRawSync");
-      expect(scriptArg).toContain('"application/octet-stream"');
+      expect(scriptArg).toContain("zlib.deflateSync");
+      expect(scriptArg).toContain('"Content-Encoding"');
+      expect(scriptArg).toContain('"deflate"');
     });
 
     it("should construct correct POST URL with /svg/ path", () => {

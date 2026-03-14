@@ -79,19 +79,19 @@ function postSvgSync(
     if (compress) {
       scriptLines.push(
         `const zlib = require("zlib");`,
-        `const body = zlib.deflateRawSync(Buffer.from(text, "utf-8"), { level: 9 });`,
-        `const contentType = "application/octet-stream";`
+        `const body = zlib.deflateSync(Buffer.from(text, "utf-8"), { level: 9 });`
       );
     } else {
       scriptLines.push(
-        `const body = Buffer.from(text, "utf-8");`,
-        `const contentType = "text/plain";`
+        `const body = Buffer.from(text, "utf-8");`
       );
     }
 
     scriptLines.push(
       `const url = new URL(${JSON.stringify(postUrl)});`,
-      `const opts = { hostname: url.hostname, port: url.port || undefined, path: url.pathname, method: "POST", headers: { "Content-Type": contentType, "Content-Length": body.length } };`,
+      `const headers = { "Content-Type": "text/plain", "Content-Length": body.length };`,
+      compress ? `headers["Content-Encoding"] = "deflate";` : "",
+      `const opts = { hostname: url.hostname, port: url.port || undefined, path: url.pathname, method: "POST", headers: headers };`,
       `const req = m.request(opts, (r) => {`,
       `  let d = "";`,
       `  r.on("data", (c) => d += c);`,

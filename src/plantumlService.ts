@@ -113,27 +113,29 @@ async function fetchSvgViaPost(
   const parsedUrl = new URL(postUrl);
 
   let body: Buffer;
-  let contentType: string;
 
   if (compress) {
-    body = zlib.deflateRawSync(Buffer.from(diagramText, "utf-8"), { level: 9 });
-    contentType = "application/octet-stream";
+    body = zlib.deflateSync(Buffer.from(diagramText, "utf-8"), { level: 9 });
   } else {
     body = Buffer.from(diagramText, "utf-8");
-    contentType = "text/plain";
   }
 
   const protocol = parsedUrl.protocol === "https:" ? https : http;
+
+  const headers: Record<string, string | number> = {
+    "Content-Type": "text/plain",
+    "Content-Length": body.length,
+  };
+  if (compress) {
+    headers["Content-Encoding"] = "deflate";
+  }
 
   const options: http.RequestOptions = {
     hostname: parsedUrl.hostname,
     port: parsedUrl.port || undefined,
     path: parsedUrl.pathname,
     method: "POST",
-    headers: {
-      "Content-Type": contentType,
-      "Content-Length": body.length,
-    },
+    headers,
   };
 
   return new Promise((resolve, reject) => {
