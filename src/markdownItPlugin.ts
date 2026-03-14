@@ -1,7 +1,5 @@
-import process from "node:process";
-import { execFileSync } from "child_process";
 import { encodePlantUml } from "./plantumlEncoder.js";
-import { getServerUrl, getRenderMethod } from "./plantumlService.js";
+import { fetchSvg } from "./plantumlService.js";
 import { addTheme } from "./themeService.js";
 
 // markdown-it types needed for the plugin signature
@@ -27,129 +25,167 @@ interface Token {
 interface Renderer {
   renderToken(tokens: Token[], idx: number, options: unknown): string;
 }
-/**
- * Synchronously fetches SVG content from a URL by spawning a short-lived node process.
- * This is necessary because markdown-it's render pipeline is synchronous.
- */
-function fetchSvgSync(url: string): string {
-  try {
-    const proto = url.startsWith("https") ? "https" : "http";
-    const script = [
-      `const m = require("${proto}");`,
-      `m.get(${JSON.stringify(url)}, (r) => {`,
-      `  let d = "";`,
-      `  r.on("data", (c) => d += c);`,
-      `  r.on("end", () => process.stdout.write(d));`,
-      `  r.on("error", (e) => { process.stderr.write(e.message); process.exit(1); });`,
-      `}).on("error", (e) => { process.stderr.write(e.message); process.exit(1); });`,
-    ].join("\n");
 
-    const svg = execFileSync(process.execPath, ["-e", script], {
-      encoding: "utf-8",
-      timeout: 15_000,
-    });
-
-    return svg;
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    return `<div style="color:var(--vscode-errorForeground, red);padding:8px;border:1px solid currentColor;border-radius:4px;">
-      <strong>PlantUML render error:</strong> ${message.replace(/</g, "&lt;")}
-    </div>`;
-  }
+/** Value stored per positional slot (token index). */
+interface SlotEntry {
+  /** The encoded PlantUML key that was last rendered at this position. */
+  encodedKey: string;
+  /** The SVG HTML that was last shown at this position. */
+  svg: string;
 }
 
 /**
- * Synchronously posts diagram text to the PlantUML server by spawning a short-lived node process.
- * Supports both plain text and deflate-compressed request bodies.
+ * SVG cache: encoded PlantUML string → rendered SVG.
+ * Populated asynchronously; read synchronously by the fence callback.
  */
-function postSvgSync(
-  serverUrl: string,
+const svgCache = new Map<string, string>();
+
+/**
+ * Slot cache: token index → last rendered result for that position.
+ * Ensures we return the previous SVG on cache miss (no flicker).
+ */
+const slotCache = new Map<number, SlotEntry>();
+
+/** Number of in-flight async fetches. */
+let pendingFetches = 0;
+
+/** Exposed for testing – resets all internal state. */
+export function _resetCaches(): void {
+  svgCache.clear();
+  slotCache.clear();
+  pendingFetches = 0;
+}
+
+/** Exposed for testing – read-only access to cache sizes. */
+export function _cacheStats(): {
+  svgCacheSize: number;
+  slotCacheSize: number;
+  pendingFetches: number;
+} {
+  return {
+    svgCacheSize: svgCache.size,
+    slotCacheSize: slotCache.size,
+    pendingFetches,
+  };
+}
+
+/**
+ * Wraps raw PlantUML code in @startuml/@enduml if not already present.
+ */
+function wrapDiagram(code: string): string {
+  return code.startsWith("@start") ? code : `@startuml\n${code}\n@enduml`;
+}
+
+/**
+ * Wraps an SVG string in the standard container div.
+ */
+function wrapSvgHtml(svg: string): string {
+  return `<div class="plantuml-diagram" style="text-align:center;margin:1em 0;">${svg}</div>`;
+}
+
+/**
+ * Returns a placeholder div that occupies space but shows nothing.
+ * Used on cold start when no previous SVG is available.
+ */
+function emptyPlaceholder(): string {
+  return `<div class="plantuml-diagram" style="text-align:center;margin:1em 0;"></div>`;
+}
+
+/**
+ * Kicks off an asynchronous SVG fetch for the given diagram text and
+ * encoded cache key. When all pending fetches have settled, calls
+ * `onAllFetched` so the host can trigger a re-render.
+ */
+function fetchInBackground(
   diagramText: string,
-  compress: boolean
-): string {
-  try {
-    const postUrl = `${serverUrl}/svg/`;
-    const proto = postUrl.startsWith("https") ? "https" : "http";
+  encodedKey: string,
+  onAllFetched?: () => void,
+): void {
+  pendingFetches++;
 
-    const scriptLines = [
-      `const m = require("${proto}");`,
-      `const text = ${JSON.stringify(diagramText)};`,
-    ];
-
-    if (compress) {
-      scriptLines.push(
-        `const zlib = require("zlib");`,
-        `const body = zlib.deflateSync(Buffer.from(text, "utf-8"), { level: 9 });`
-      );
-    } else {
-      scriptLines.push(
-        `const body = Buffer.from(text, "utf-8");`
-      );
-    }
-
-    scriptLines.push(
-      `const url = new URL(${JSON.stringify(postUrl)});`,
-      `const headers = { "Content-Type": "text/plain", "Content-Length": body.length };`,
-      compress ? `headers["Content-Encoding"] = "deflate";` : "",
-      `const opts = { hostname: url.hostname, port: url.port || undefined, path: url.pathname, method: "POST", headers: headers };`,
-      `const req = m.request(opts, (r) => {`,
-      `  let d = "";`,
-      `  r.on("data", (c) => d += c);`,
-      `  r.on("end", () => process.stdout.write(d));`,
-      `  r.on("error", (e) => { process.stderr.write(e.message); process.exit(1); });`,
-      `}).on("error", (e) => { process.stderr.write(e.message); process.exit(1); });`,
-      `req.write(body);`,
-      `req.end();`
-    );
-
-    const script = scriptLines.join("\n");
-
-    const svg = execFileSync(process.execPath, ["-e", script], {
-      encoding: "utf-8",
-      timeout: 15_000,
+  fetchSvg(diagramText)
+    .then((svg) => {
+      svgCache.set(encodedKey, svg);
+    })
+    .catch(() => {
+      // Don't cache errors – next render pass will retry.
+    })
+    .finally(() => {
+      pendingFetches--;
+      if (pendingFetches === 0) {
+        // Prune SVG cache: keep only entries referenced by a current slot.
+        // Slot entries for removed diagrams may linger (trivially small),
+        // but their encodedKeys will no longer match the document state,
+        // so the corresponding SVG entries get cleaned up on the next
+        // fetch cycle after the diagram at that position changes.
+        const activeKeys = new Set(
+          [...slotCache.values()].map((s) => s.encodedKey),
+        );
+        for (const key of svgCache.keys()) {
+            /* v8 ignore next @preserve */
+          if (!activeKeys.has(key)) {
+            svgCache.delete(key);
+          }
+        }
+        onAllFetched?.();
+      }
     });
-
-    return svg;
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    return `<div style="color:var(--vscode-errorForeground, red);padding:8px;border:1px solid currentColor;border-radius:4px;">
-      <strong>PlantUML render error:</strong> ${message.replace(/</g, "&lt;")}
-    </div>`;
-  }
 }
 
 /**
  * Markdown-it plugin that renders ```plantuml fenced code blocks
- * as inline SVG by fetching from the configured PlantUML server.
+ * as inline SVG diagrams.
+ *
+ * On the first render of a new/changed diagram the fence returns
+ * the previous SVG for that position (or an empty placeholder on
+ * cold start) and fires an async fetch in the background. Once all
+ * pending fetches have completed, `onAllFetched` is called so the
+ * host can trigger `markdown.preview.refresh` for a single
+ * flicker-free update.
+ *
+ * @param md          The markdown-it instance.
+ * @param onAllFetched Callback invoked when all in-flight fetches
+ *                     have settled. Typically wired to
+ *                     `markdown.preview.refresh`.
  */
-export function plantUmlPlugin(md: MarkdownIt): void {
+export function plantUmlPlugin(
+  md: MarkdownIt,
+  onAllFetched?: () => void,
+): void {
   const defaultFence = md.renderer.rules.fence;
 
   md.renderer.rules.fence = (tokens, idx, options, env, self) => {
     const token = tokens[idx];
     if (token?.info.trim().toLowerCase() === "plantuml") {
       const code = token.content.trim();
-      // Wrap in @startuml/@enduml if not already present
-      const wrapped = code.startsWith("@start")
-        ? code
-        : `@startuml\n${code}\n@enduml`;
-
-      // Apply configured theme if applicable
+      const wrapped = wrapDiagram(code);
       const diagramText = addTheme(wrapped);
 
-      const serverUrl = getServerUrl();
-      const method = getRenderMethod();
+      const encodedKey = encodePlantUml(diagramText);
 
-      let svg: string;
-      if (method === "post" || method === "post-deflate") {
-        svg = postSvgSync(serverUrl, diagramText, method === "post-deflate");
-      } else {
-        const encoded = encodePlantUml(diagramText);
-        const url = `${serverUrl}/svg/${encoded}`;
-        svg = fetchSvgSync(url);
+      // --- Cache hit: return immediately ---
+      const cached = svgCache.get(encodedKey);
+      if (cached !== undefined) {
+        const html = wrapSvgHtml(cached);
+        slotCache.set(idx, { encodedKey, svg: html });
+        return html;
       }
 
-      return `<div class="plantuml-diagram" style="text-align:center;margin:1em 0;">${svg}</div>`;
+      // --- Cache miss: trigger background fetch ---
+      fetchInBackground(diagramText, encodedKey, onAllFetched);
+
+      // Return the previous SVG for this slot if available (no flicker).
+      const slot = slotCache.get(idx);
+      if (slot !== undefined) {
+        // Update the slot to track the new key while keeping the old SVG.
+        slotCache.set(idx, { encodedKey, svg: slot.svg });
+        return slot.svg;
+      }
+
+      // Cold start – nothing to show yet.
+      const placeholder = emptyPlaceholder();
+      slotCache.set(idx, { encodedKey, svg: placeholder });
+      return placeholder;
     }
 
     // Fall back to default fence rendering for non-plantuml blocks

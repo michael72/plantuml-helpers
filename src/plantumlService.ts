@@ -123,7 +123,7 @@ async function fetchSvgViaPost(
   const protocol = parsedUrl.protocol === "https:" ? https : http;
 
   const headers: Record<string, string | number> = {
-    "Content-Type": "text/plain",
+    "Content-Type": compress ? "application/octet-stream": "text/plain",
     "Content-Length": body.length,
   };
   if (compress) {
