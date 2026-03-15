@@ -94,7 +94,7 @@ describe("markdownItPlantUml", () => {
     it("should register a fence rule on the markdown-it instance", () => {
       const md = createMockMd();
 
-      plantUmlPlugin(md as Parameters<typeof plantUmlPlugin>[0]);
+      plantUmlPlugin(md as Parameters<typeof  plantUmlPlugin>[0], () => {});
 
       expect(md.renderer.rules.fence).toBeDefined();
       expect(typeof md.renderer.rules.fence).toBe("function");
@@ -104,7 +104,7 @@ describe("markdownItPlantUml", () => {
   describe("cold start (empty cache)", () => {
     it("should return an empty placeholder on first render", () => {
       const md = createMockMd();
-      plantUmlPlugin(md as Parameters<typeof plantUmlPlugin>[0]);
+      plantUmlPlugin(md as Parameters<typeof  plantUmlPlugin>[0], () => {});
 
       const tokens = [createToken("plantuml", "A -> B\n")];
       const result = md.renderer.rules.fence!(
@@ -122,7 +122,7 @@ describe("markdownItPlantUml", () => {
 
     it("should trigger a background fetch on cache miss", () => {
       const md = createMockMd();
-      plantUmlPlugin(md as Parameters<typeof plantUmlPlugin>[0]);
+      plantUmlPlugin(md as Parameters<typeof  plantUmlPlugin>[0], () => {});
 
       const tokens = [createToken("plantuml", "A -> B")];
       md.renderer.rules.fence!(tokens, 0, {}, {}, createMockSelf());
@@ -132,7 +132,7 @@ describe("markdownItPlantUml", () => {
 
     it("should wrap bare code in @startuml/@enduml before encoding", () => {
       const md = createMockMd();
-      plantUmlPlugin(md as Parameters<typeof plantUmlPlugin>[0]);
+      plantUmlPlugin(md as Parameters<typeof  plantUmlPlugin>[0], () => {});
 
       const tokens = [createToken("plantuml", "A -> B")];
       md.renderer.rules.fence!(tokens, 0, {}, {}, createMockSelf());
@@ -142,7 +142,7 @@ describe("markdownItPlantUml", () => {
 
     it("should not double-wrap code that already has @startuml", () => {
       const md = createMockMd();
-      plantUmlPlugin(md as Parameters<typeof plantUmlPlugin>[0]);
+      plantUmlPlugin(md as Parameters<typeof  plantUmlPlugin>[0], () => {});
 
       const code = "@startuml\nA -> B\n@enduml";
       const tokens = [createToken("plantuml", code)];
@@ -153,7 +153,7 @@ describe("markdownItPlantUml", () => {
 
     it("should not double-wrap code that starts with @startmindmap", () => {
       const md = createMockMd();
-      plantUmlPlugin(md as Parameters<typeof plantUmlPlugin>[0]);
+      plantUmlPlugin(md as Parameters<typeof  plantUmlPlugin>[0], () => {});
 
       const code = "@startmindmap\n* root\n** child\n@endmindmap";
       const tokens = [createToken("plantuml", code)];
@@ -167,7 +167,7 @@ describe("markdownItPlantUml", () => {
     it("should return the fetched SVG on the second render pass", async () => {
       const md = createMockMd();
       const onAllFetched = vi.fn();
-      plantUmlPlugin(md as Parameters<typeof plantUmlPlugin>[0], onAllFetched);
+      plantUmlPlugin(md as Parameters<typeof  plantUmlPlugin>[0], onAllFetched);
 
       mocks.fetchSvg.mockResolvedValue("<svg><text>diagram</text></svg>");
 
@@ -189,7 +189,7 @@ describe("markdownItPlantUml", () => {
 
     it("should not trigger another fetch on cache hit", async () => {
       const md = createMockMd();
-      plantUmlPlugin(md as Parameters<typeof plantUmlPlugin>[0]);
+      plantUmlPlugin(md as Parameters<typeof  plantUmlPlugin>[0], () => {});
 
       mocks.fetchSvg.mockResolvedValue("<svg></svg>");
 
@@ -210,7 +210,7 @@ describe("markdownItPlantUml", () => {
   describe("no-flicker slot cache", () => {
     it("should return previous SVG when diagram changes at same position", async () => {
       const md = createMockMd();
-      plantUmlPlugin(md as Parameters<typeof plantUmlPlugin>[0]);
+      plantUmlPlugin(md as Parameters<typeof  plantUmlPlugin>[0], () => {});
 
       // Return a stable key per distinct input
       mocks.encodePlantUml.mockImplementation(
@@ -261,7 +261,7 @@ describe("markdownItPlantUml", () => {
     it("should call onAllFetched when a single fetch completes", async () => {
       const md = createMockMd();
       const onAllFetched = vi.fn();
-      plantUmlPlugin(md as Parameters<typeof plantUmlPlugin>[0], onAllFetched);
+      plantUmlPlugin(md as Parameters<typeof  plantUmlPlugin>[0], onAllFetched);
 
       mocks.fetchSvg.mockResolvedValue("<svg></svg>");
 
@@ -276,7 +276,7 @@ describe("markdownItPlantUml", () => {
     it("should call onAllFetched only after ALL fetches complete", async () => {
       const md = createMockMd();
       const onAllFetched = vi.fn();
-      plantUmlPlugin(md as Parameters<typeof plantUmlPlugin>[0], onAllFetched);
+      plantUmlPlugin(md as Parameters<typeof  plantUmlPlugin>[0], onAllFetched);
 
       let callCount = 0;
       mocks.encodePlantUml.mockImplementation(() => `encoded_${++callCount}`);
@@ -320,7 +320,7 @@ describe("markdownItPlantUml", () => {
     it("should call onAllFetched even when fetches fail", async () => {
       const md = createMockMd();
       const onAllFetched = vi.fn();
-      plantUmlPlugin(md as Parameters<typeof plantUmlPlugin>[0], onAllFetched);
+      plantUmlPlugin(md as Parameters<typeof  plantUmlPlugin>[0], onAllFetched);
 
       mocks.fetchSvg.mockRejectedValue(new Error("Network error"));
 
@@ -334,7 +334,7 @@ describe("markdownItPlantUml", () => {
     it("should work without an onAllFetched callback", async () => {
       const md = createMockMd();
       // No callback passed
-      plantUmlPlugin(md as Parameters<typeof plantUmlPlugin>[0]);
+      plantUmlPlugin(md as Parameters<typeof  plantUmlPlugin>[0], () => {});
 
       mocks.fetchSvg.mockResolvedValue("<svg></svg>");
 
@@ -348,7 +348,7 @@ describe("markdownItPlantUml", () => {
   describe("error handling", () => {
     it("should not cache failed fetches", async () => {
       const md = createMockMd();
-      plantUmlPlugin(md as Parameters<typeof plantUmlPlugin>[0]);
+      plantUmlPlugin(md as Parameters<typeof  plantUmlPlugin>[0], () => {});
 
       // First call: error
       mocks.fetchSvg.mockRejectedValueOnce(new Error("timeout"));
@@ -383,7 +383,7 @@ describe("markdownItPlantUml", () => {
     it("should prune unreferenced SVG cache entries after all fetches complete", async () => {
       const md = createMockMd();
       const onAllFetched = vi.fn();
-      plantUmlPlugin(md as Parameters<typeof plantUmlPlugin>[0], onAllFetched);
+      plantUmlPlugin(md as Parameters<typeof  plantUmlPlugin>[0], onAllFetched);
 
       // Distinct keys per distinct content
       mocks.encodePlantUml.mockImplementation(
@@ -436,7 +436,7 @@ describe("markdownItPlantUml", () => {
   describe("case and whitespace handling", () => {
     it("should be case-insensitive for the plantuml info string", () => {
       const md = createMockMd();
-      plantUmlPlugin(md as Parameters<typeof plantUmlPlugin>[0]);
+      plantUmlPlugin(md as Parameters<typeof  plantUmlPlugin>[0], () => {});
 
       const tokens = [createToken("PlantUML", "A -> B")];
       const result = md.renderer.rules.fence!(
@@ -454,7 +454,7 @@ describe("markdownItPlantUml", () => {
 
     it("should trim whitespace from the info string", () => {
       const md = createMockMd();
-      plantUmlPlugin(md as Parameters<typeof plantUmlPlugin>[0]);
+      plantUmlPlugin(md as Parameters<typeof  plantUmlPlugin>[0], () => {});
 
       const tokens = [createToken("  plantuml  ", "A -> B")];
       const result = md.renderer.rules.fence!(
@@ -476,7 +476,7 @@ describe("markdownItPlantUml", () => {
         .fn()
         .mockReturnValue("<pre><code>js code</code></pre>");
       const md = createMockMd(originalFence);
-      plantUmlPlugin(md as Parameters<typeof plantUmlPlugin>[0]);
+      plantUmlPlugin(md as Parameters<typeof  plantUmlPlugin>[0], () => {});
 
       const tokens = [createToken("javascript", 'console.log("hi")')];
       const self = createMockSelf();
@@ -488,7 +488,7 @@ describe("markdownItPlantUml", () => {
 
     it("should use renderToken when no original fence rule exists", () => {
       const md = createMockMd(undefined);
-      plantUmlPlugin(md as Parameters<typeof plantUmlPlugin>[0]);
+      plantUmlPlugin(md as Parameters<typeof  plantUmlPlugin>[0], () => {});
 
       const tokens = [createToken("javascript", 'console.log("hi")')];
       const self = createMockSelf();
@@ -500,7 +500,7 @@ describe("markdownItPlantUml", () => {
 
     it("should not call fetchSvg for non-plantuml blocks", () => {
       const md = createMockMd();
-      plantUmlPlugin(md as Parameters<typeof plantUmlPlugin>[0]);
+      plantUmlPlugin(md as Parameters<typeof  plantUmlPlugin>[0], () => {});
 
       const tokens = [createToken("python", "print('hello')")];
       md.renderer.rules.fence!(tokens, 0, {}, {}, createMockSelf());
@@ -519,7 +519,7 @@ describe("markdownItPlantUml", () => {
 
     it("should report pending fetches while in flight", () => {
       const md = createMockMd();
-      plantUmlPlugin(md as Parameters<typeof plantUmlPlugin>[0]);
+      plantUmlPlugin(md as Parameters<typeof  plantUmlPlugin>[0], () => {});
 
       // Never-resolving promise
       mocks.fetchSvg.mockReturnValue(new Promise(() => {}));

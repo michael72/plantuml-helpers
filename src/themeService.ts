@@ -55,7 +55,7 @@ export function getThemeSetting(): string {
  */
 export function addTheme(diagramText: string): string {
   const theme = getThemeSetting();
-  if (theme === "_none_") {
+  if (theme === "_none_" || theme.trim().length === 0) {
     return diagramText;
   }
   if (/!theme\b/i.test(diagramText)) {

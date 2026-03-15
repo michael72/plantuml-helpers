@@ -109,7 +109,10 @@ export function activate(context: vscode.ExtensionContext) {
 
   return {
     extendMarkdownIt(md: unknown) {
-      plantUmlPlugin(md as Parameters<typeof plantUmlPlugin>[0]);
+      plantUmlPlugin(md as Parameters<typeof plantUmlPlugin>[0], () => {
+        // trigger rendering again when svgs have been received
+        void vscode.commands.executeCommand("markdown.preview.refresh");
+      });
       return md;
     },
   };

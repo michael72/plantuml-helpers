@@ -99,7 +99,7 @@ function emptyPlaceholder(): string {
 function fetchInBackground(
   diagramText: string,
   encodedKey: string,
-  onAllFetched?: () => void
+  onAllFetched: () => void
 ): void {
   pendingFetches++;
 
@@ -127,7 +127,7 @@ function fetchInBackground(
             svgCache.delete(key);
           }
         }
-        onAllFetched?.();
+        onAllFetched();
       }
     });
 }
@@ -150,13 +150,16 @@ function fetchInBackground(
  */
 export function plantUmlPlugin(
   md: MarkdownIt,
-  onAllFetched?: () => void
+  onAllFetched: () => void
 ): void {
   const defaultFence = md.renderer.rules.fence;
 
   md.renderer.rules.fence = (tokens, idx, options, env, self) => {
     const token = tokens[idx];
-    if (token?.info.trim().toLowerCase() === "plantuml") {
+    if (
+      token &&
+      ["plantuml", "puml"].includes(token.info.trim().toLowerCase())
+    ) {
       const code = token.content.trim();
       const wrapped = wrapDiagram(code);
       const diagramText = addTheme(wrapped);
