@@ -88,10 +88,30 @@
     "configuration": {
       "title": "PlantUML Helpers",
       "properties": {
-        "plantumlHelpers.server": {
+        "plantumlHelpers.serverType": {
           "type": "string",
-          "default": "https://www.plantuml.com/plantuml",
-          "description": "PlantUML server URL. Can be changed to a local server (e.g., http://localhost:8080/plantuml)"
+          "enum": [
+            "PlantUML Server",
+            "Local pumlsrv",
+            "Other"
+          ],
+          "enumDescriptions": [
+            "Use the public PlantUML server at plantuml.com",
+            "Use a local pumlsrv instance (lightweight local server). Will be installed and started automatically.",
+            "Use a custom PlantUML server URL"
+          ],
+          "default": "PlantUML Server",
+          "description": "Which PlantUML server to use for rendering diagrams."
+        },
+        "plantumlHelpers.pumlsrvPort": {
+          "type": "number",
+          "default": 8380,
+          "description": "Port for the local pumlsrv server. Only used when serverType is 'Local pumlsrv'."
+        },
+        "plantumlHelpers.serverUrl": {
+          "type": "string",
+          "default": "http://localhost:8080/plantuml",
+          "description": "Custom PlantUML server URL. Only used when serverType is 'Other'."
         },
         "plantumlHelpers.renderMethod": {
           "type": "string",

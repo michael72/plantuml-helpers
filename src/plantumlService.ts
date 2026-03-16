@@ -3,18 +3,17 @@ import * as https from "https";
 import * as http from "http";
 import * as zlib from "zlib";
 import { encodePlantUml } from "./plantumlEncoder.js";
+import {
+  getServerUrl,
+  getServerType,
+  ensurePumlsrvRunning,
+} from "./pumlsrvService.js";
+
+export { getServerUrl };
 
 /**
  * Service for fetching PlantUML diagrams from a PlantUML server.
  */
-
-/**
- * Gets the configured PlantUML server URL.
- */
-export function getServerUrl(): string {
-  const config = vscode.workspace.getConfiguration("plantumlHelpers");
-  return config.get<string>("server", "https://www.plantuml.com/plantuml");
-}
 
 /**
  * Gets the configured render method for communicating with the PlantUML server.
@@ -27,11 +26,16 @@ export function getRenderMethod(): "get" | "post" | "post-deflate" {
 /**
  * Fetches an SVG diagram from the PlantUML server.
  * Uses the configured render method (GET, POST, or POST with deflate compression).
+ * When 'Local pumlsrv' is selected, ensures pumlsrv is running first.
  *
  * @param diagramText The PlantUML diagram source text
  * @returns Promise resolving to the SVG content
  */
 export async function fetchSvg(diagramText: string): Promise<string> {
+  if (getServerType() === "Local pumlsrv") {
+    await ensurePumlsrvRunning();
+  }
+
   const method = getRenderMethod();
   if (method === "post" || method === "post-deflate") {
     return fetchSvgViaPost(diagramText, method === "post-deflate");

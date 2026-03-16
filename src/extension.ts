@@ -9,6 +9,11 @@ import { extractUml } from "./selection.js";
 import { fetchSvg } from "./plantumlService.js";
 import { plantUmlPlugin } from "./markdownItPlugin.js";
 import { registerSetThemeCommand } from "./themeService.js";
+import {
+  getServerType,
+  getPumlsrvPort,
+  stopPumlsrv,
+} from "./pumlsrvService.js";
 
 // Track the current preview state
 let lastDiagramText: string | undefined;
@@ -94,6 +99,39 @@ export function activate(context: vscode.ExtensionContext) {
 
   const setTheme = registerSetThemeCommand();
 
+  // Track active pumlsrv port so we can stop it if settings change
+  let activePumlsrvPort: number | undefined;
+  if (getServerType() === "Local pumlsrv") {
+    activePumlsrvPort = getPumlsrvPort();
+  }
+
+  const configChangeListener = vscode.workspace.onDidChangeConfiguration(
+    (event) => {
+      if (!event.affectsConfiguration("plantumlHelpers")) {
+        return;
+      }
+
+      const newType = getServerType();
+      const newPort = getPumlsrvPort();
+
+      if (activePumlsrvPort !== undefined) {
+        // pumlsrv was active - check if we need to stop or restart it
+        if (newType !== "Local pumlsrv") {
+          // Switching away from pumlsrv - stop it
+          void stopPumlsrv(activePumlsrvPort);
+          activePumlsrvPort = undefined;
+        } else if (newPort !== activePumlsrvPort) {
+          // Port changed - stop old instance; new one will start on next render
+          void stopPumlsrv(activePumlsrvPort);
+          activePumlsrvPort = newPort;
+        }
+      } else if (newType === "Local pumlsrv") {
+        // Switched to pumlsrv - record the port; actual start happens on first render
+        activePumlsrvPort = newPort;
+      }
+    }
+  );
+
   for (const s of [
     swapLine,
     rotateLeft,
@@ -103,6 +141,7 @@ export function activate(context: vscode.ExtensionContext) {
     showPreview,
     textChangeListener,
     setTheme,
+    configChangeListener,
   ]) {
     context.subscriptions.push(s);
   }
@@ -233,7 +272,9 @@ async function updatePreviewFromDocument(
 }
 
 export function deactivate(): void {
-  // nothing to do
+  if (getServerType() === "Local pumlsrv") {
+    void stopPumlsrv(getPumlsrvPort());
+  }
 }
 
 function rotateSelected(
