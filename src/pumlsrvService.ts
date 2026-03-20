@@ -131,7 +131,11 @@ function startPumlsrvProcess(binary: string, port: number): void {
   });
 }
 
+let ensureRunningPromise: Promise<void> | undefined;
+
 export async function stopPumlsrv(port: number): Promise<void> {
+  // Clear the cached startup promise so future callers restart from scratch
+  ensureRunningPromise = undefined;
   return new Promise((resolve) => {
     const req = http.get(
       `http://localhost:${port}/exit`,
@@ -154,7 +158,15 @@ export async function stopPumlsrv(port: number): Promise<void> {
   });
 }
 
-export async function ensurePumlsrvRunning(): Promise<void> {
+export function ensurePumlsrvRunning(): Promise<void> {
+  ensureRunningPromise ??= doEnsurePumlsrvRunning().catch((err: unknown) => {
+    ensureRunningPromise = undefined;
+    throw err;
+  });
+  return ensureRunningPromise;
+}
+
+async function doEnsurePumlsrvRunning(): Promise<void> {
   const port = getPumlsrvPort();
 
   if (await checkPumlsrvRunning(port)) {
