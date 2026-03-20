@@ -111,6 +111,39 @@ async function installPumlsrv(): Promise<void> {
   });
 }
 
+async function runInstallWithProgress(): Promise<void> {
+  await vscode.window.withProgress(
+    {
+      location: vscode.ProgressLocation.Notification,
+      title: "Installing pumlsrv...",
+      cancellable: false,
+    },
+    async () => {
+      await installPumlsrv();
+    }
+  );
+}
+
+export function isPumlsrvInstalled(): boolean {
+  return findPumlsrvBinary() !== undefined;
+}
+
+export async function installPumlsrvManually(): Promise<void> {
+  if (isPumlsrvInstalled()) {
+    void vscode.window.showInformationMessage("pumlsrv is already installed.");
+    return;
+  }
+  await runInstallWithProgress();
+  if (findPumlsrvBinary() === undefined) {
+    void vscode.window.showErrorMessage(
+      `pumlsrv installation failed: binary not found after install. ` +
+        `Expected location: ${getPumlsrvBinDir()}`
+    );
+  } else {
+    void vscode.window.showInformationMessage("pumlsrv installed successfully.");
+  }
+}
+
 let pumlsrvProcess: child_process.ChildProcess | undefined;
 
 function startPumlsrvProcess(binary: string, port: number): void {
@@ -176,16 +209,19 @@ async function doEnsurePumlsrvRunning(): Promise<void> {
   let binary = findPumlsrvBinary();
 
   if (binary === undefined) {
-    await vscode.window.withProgress(
-      {
-        location: vscode.ProgressLocation.Notification,
-        title: "Installing pumlsrv...",
-        cancellable: false,
-      },
-      async () => {
-        await installPumlsrv();
-      }
+    const choice = await vscode.window.showInformationMessage(
+      "pumlsrv is not installed. Install it now?",
+      { modal: true },
+      "Install"
     );
+    if (choice !== "Install") {
+      throw new Error(
+        "pumlsrv is not installed. " +
+          "Use the 'PlantUMLHelpers: Install pumlsrv' command to install it."
+      );
+    }
+
+    await runInstallWithProgress();
 
     binary = findPumlsrvBinary();
     if (binary === undefined) {

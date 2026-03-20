@@ -13,6 +13,7 @@ import {
   getServerType,
   getPumlsrvPort,
   stopPumlsrv,
+  installPumlsrvManually,
 } from "./pumlsrvService.js";
 
 // Track the current preview state
@@ -97,6 +98,13 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
 
+  const installPumlsrv = vscode.commands.registerCommand(
+    "pumlhelper.installPumlsrv",
+    async () => {
+      await installPumlsrvManually();
+    }
+  );
+
   const setTheme = registerSetThemeCommand();
 
   // Track active pumlsrv port so we can stop it if settings change
@@ -140,6 +148,7 @@ export function activate(context: vscode.ExtensionContext) {
     reFormat,
     showPreview,
     textChangeListener,
+    installPumlsrv,
     setTheme,
     configChangeListener,
   ]) {

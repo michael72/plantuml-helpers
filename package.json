@@ -65,6 +65,11 @@
         "command": "pumlhelper.setTheme",
         "title": "Set theme",
         "category": "PlantUMLHelpers"
+      },
+      {
+        "command": "pumlhelper.installPumlsrv",
+        "title": "Install pumlsrv",
+        "category": "PlantUMLHelpers"
       }
     ],
     "keybindings": [
@@ -97,11 +102,11 @@
           ],
           "enumDescriptions": [
             "Use the public PlantUML server at plantuml.com",
-            "Use a local pumlsrv instance (lightweight local server). Will be installed and started automatically.",
+            "Use a local pumlsrv instance (lightweight local server). The first render will prompt to install it if not present.",
             "Use a custom PlantUML server URL"
           ],
           "default": "PlantUML Server",
-          "description": "Which PlantUML server to use for rendering diagrams."
+          "markdownDescription": "Which PlantUML server to use for rendering diagrams. When _Local pumlsrv_ is selected the extension manages a local [pumlsrv](https://github.com/michael72/pumlsrv) process. [$(cloud-download) Install pumlsrv](command:pumlhelper.installPumlsrv)"
         },
         "plantumlHelpers.pumlsrvPort": {
           "type": "number",
