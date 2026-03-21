@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   httpGet: vi.fn(),
   httpsRequest: vi.fn(),
   httpRequest: vi.fn(),
+  ensurePumlsrvRunning: vi.fn().mockResolvedValue(undefined),
 }));
 
 // Mock modules before imports
@@ -20,6 +21,16 @@ vi.mock("http", () => ({
   get: mocks.httpGet,
   request: mocks.httpRequest,
 }));
+
+vi.mock("../src/pumlsrvService.js", async (importOriginal) => {
+  const original =
+    await importOriginal<typeof import("../src/pumlsrvService.js")>();
+  return {
+    ...original,
+    getServerUrl: vi.fn(original.getServerUrl),
+    ensurePumlsrvRunning: mocks.ensurePumlsrvRunning,
+  };
+});
 
 vi.mock("vscode", () => ({
   workspace: {
@@ -134,17 +145,6 @@ describe("plantumlService", () => {
       expect(result).toBe("post");
     });
 
-    it("should return 'post-deflate' when configured", () => {
-      vi.mocked(vscode.workspace.getConfiguration).mockReturnValue({
-        get: vi.fn((_key: string, defaultValue: string) => {
-          if (_key === "renderMethod") return "post-deflate";
-          return defaultValue;
-        }),
-      } as unknown as vscode.WorkspaceConfiguration);
-
-      const result = getRenderMethod();
-      expect(result).toBe("post-deflate");
-    });
   });
 
   describe("fetchSvg", () => {
@@ -321,19 +321,24 @@ describe("plantumlService", () => {
       expect(mockRequest.end).toHaveBeenCalled();
     });
 
-    it("should POST deflate-compressed content when renderMethod is 'post-deflate'", async () => {
+    it("should always use POST with deflate compression when serverType is 'Local pumlsrv'", async () => {
       vi.mocked(vscode.workspace.getConfiguration).mockReturnValue({
         get: vi.fn((_key: string, defaultValue: string) => {
-          if (_key === "renderMethod") return "post-deflate";
+          if (_key === "serverType") return "Local pumlsrv";
           return defaultValue;
         }),
       } as unknown as vscode.WorkspaceConfiguration);
 
-      const svgContent = "<svg>deflate diagram</svg>";
+      // Mock getServerUrl to return a valid localhost URL for pumlsrv
+      vi.mocked(getServerUrl).mockReturnValueOnce(
+        "http://localhost:8765/plantuml"
+      );
+
+      const svgContent = "<svg>pumlsrv diagram</svg>";
       const mockResponse = createMockResponse(200, svgContent);
       const mockRequest = createMockRequest();
 
-      mocks.httpsRequest.mockImplementation(
+      mocks.httpRequest.mockImplementation(
         (_opts: unknown, callback: (res: http.IncomingMessage) => void) => {
           callback(mockResponse);
           emitResponseEvents(mockResponse);
@@ -345,23 +350,20 @@ describe("plantumlService", () => {
       const result = await fetchSvg(diagramText);
 
       expect(result).toBe(svgContent);
+      expect(mocks.ensurePumlsrvRunning).toHaveBeenCalled();
 
-      // Verify request options for compressed POST
-      const options = mocks.httpsRequest.mock
+      // Verify POST with deflate compression was used regardless of renderMethod config
+      const options = mocks.httpRequest.mock
         .calls[0]![0] as http.RequestOptions;
       expect(options.method).toBe("POST");
-      expect((options.headers as Record<string, unknown>)["Content-Type"]).toBe(
-        "text/plain"
-      );
       expect(
         (options.headers as Record<string, unknown>)["Content-Encoding"]
       ).toBe("deflate");
 
-      // Verify body was written (compressed, so it should be a Buffer)
+      // Verify body was compressed
       const writtenBody = (mockRequest.write as ReturnType<typeof vi.fn>).mock
         .calls[0]![0] as Buffer;
       expect(Buffer.isBuffer(writtenBody)).toBe(true);
-      // Compressed body should differ from the plain text
       expect(writtenBody).not.toEqual(Buffer.from(diagramText, "utf-8"));
     });
 
