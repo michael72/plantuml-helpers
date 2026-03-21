@@ -1,6 +1,7 @@
 /* v8 ignore start */
 import * as vscode from "vscode";
 import * as http from "http";
+import * as net from "net";
 import * as child_process from "child_process";
 import * as os from "os";
 import * as path from "path";
@@ -16,25 +17,41 @@ export function getServerType(): ServerType {
   return config.get<ServerType>("serverType", "PlantUML Server");
 }
 
-export function getPumlsrvPort(): number {
-  const config = vscode.workspace.getConfiguration("plantumlHelpers");
-  return config.get<number>("pumlsrvPort", 8380);
-}
-
 export function getCustomServerUrl(): string {
   const config = vscode.workspace.getConfiguration("plantumlHelpers");
   return config.get<string>("serverUrl", "http://localhost:8080/plantuml");
 }
+
+let activePumlsrvPort: number | undefined;
 
 export function getServerUrl(): string {
   const type = getServerType();
   if (type === "PlantUML Server") {
     return "https://www.plantuml.com/plantuml";
   } else if (type === "Local pumlsrv") {
-    return `http://localhost:${getPumlsrvPort()}/plantuml`;
+    return `http://localhost:${activePumlsrvPort}/plantuml`;
   } else {
     return getCustomServerUrl();
   }
+}
+
+async function findFreePort(): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const server = net.createServer();
+    server.listen(0, "127.0.0.1", () => {
+      const address = server.address();
+      const port =
+        typeof address === "object" && address ? address.port : undefined;
+      server.close(() => {
+        if (port === undefined) {
+          reject(new Error("Could not determine a free port"));
+        } else {
+          resolve(port);
+        }
+      });
+    });
+    server.on("error", reject);
+  });
 }
 
 async function checkPumlsrvRunning(port: number): Promise<boolean> {
@@ -156,7 +173,8 @@ export async function installPumlsrvManually(): Promise<void> {
 let pumlsrvProcess: child_process.ChildProcess | undefined;
 
 function startPumlsrvProcess(binary: string, port: number): void {
-  pumlsrvProcess = child_process.spawn(binary, ["-N", port.toString()], {
+  // do not save settings + do not bring up browser on startup
+  pumlsrvProcess = child_process.spawn(binary, ["-n", "-N", port.toString()], {
     detached: false,
     stdio: "ignore",
   });
@@ -175,9 +193,14 @@ function startPumlsrvProcess(binary: string, port: number): void {
 
 let ensureRunningPromise: Promise<void> | undefined;
 
-export async function stopPumlsrv(port: number): Promise<void> {
+export async function stopPumlsrv(): Promise<void> {
   // Clear the cached startup promise so future callers restart from scratch
   ensureRunningPromise = undefined;
+  const port = activePumlsrvPort;
+  activePumlsrvPort = undefined;
+  if (port === undefined) {
+    return;
+  }
   return new Promise((resolve) => {
     const req = http.get(
       `http://localhost:${port}/exit`,
@@ -211,9 +234,10 @@ export function ensurePumlsrvRunning(): Promise<void> {
 }
 
 async function doEnsurePumlsrvRunning(): Promise<void> {
-  const port = getPumlsrvPort();
-
-  if (await checkPumlsrvRunning(port)) {
+  if (
+    activePumlsrvPort !== undefined &&
+    (await checkPumlsrvRunning(activePumlsrvPort))
+  ) {
     return;
   }
 
@@ -243,6 +267,8 @@ async function doEnsurePumlsrvRunning(): Promise<void> {
     }
   }
 
+  const port = await findFreePort();
+  activePumlsrvPort = port;
   startPumlsrvProcess(binary, port);
 
   // Wait up to 10 seconds for pumlsrv to be ready
