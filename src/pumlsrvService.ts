@@ -31,7 +31,7 @@ export function getServerUrl(): string {
   if (type === "PlantUML Server") {
     return "https://www.plantuml.com/plantuml";
   } else if (type === "Local pumlsrv") {
-    return `http://localhost:${getPumlsrvPort()}`;
+    return `http://localhost:${getPumlsrvPort()}/plantuml`;
   } else {
     return getCustomServerUrl();
   }
@@ -41,7 +41,7 @@ async function checkPumlsrvRunning(port: number): Promise<boolean> {
   return new Promise((resolve) => {
     const encoded = encodePlantUml(HELLO_WORLD_PUML);
     const req = http.get(
-      `http://localhost:${port}/svg/${encoded}`,
+      `http://localhost:${port}/plantuml/svg/${encoded}`,
       { timeout: 2000 },
       (res) => {
         // Drain response to avoid socket hang
@@ -49,7 +49,9 @@ async function checkPumlsrvRunning(port: number): Promise<boolean> {
         resolve(res.statusCode === 200);
       }
     );
-    req.on("error", () => { resolve(false); });
+    req.on("error", () => {
+      resolve(false);
+    });
     req.on("timeout", () => {
       req.destroy();
       resolve(false);
@@ -103,7 +105,11 @@ async function installPumlsrv(): Promise<void> {
       if (code === 0) {
         resolve();
       } else {
-        reject(new Error(`pumlsrv installation failed with exit code ${code?.toString() ?? "unknown"}`));
+        reject(
+          new Error(
+            `pumlsrv installation failed with exit code ${code?.toString() ?? "unknown"}`
+          )
+        );
       }
     });
 
@@ -140,7 +146,10 @@ export async function installPumlsrvManually(): Promise<void> {
         `Expected location: ${getPumlsrvBinDir()}`
     );
   } else {
-    void vscode.window.showInformationMessage("pumlsrv installed successfully.");
+    void vscode.window.showInformationMessage(
+      "pumlsrv installed successfully."
+    );
+    void vscode.commands.executeCommand("markdown.preview.refresh");
   }
 }
 
@@ -178,7 +187,9 @@ export async function stopPumlsrv(port: number): Promise<void> {
         resolve();
       }
     );
-    req.on("error", () => { resolve(); });
+    req.on("error", () => {
+      resolve();
+    });
     req.on("timeout", () => {
       req.destroy();
       // Fall back to killing the process directly

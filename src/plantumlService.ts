@@ -32,6 +32,7 @@ export function getRenderMethod(): "get" | "post" | "post-deflate" {
  * @returns Promise resolving to the SVG content
  */
 export async function fetchSvg(diagramText: string): Promise<string> {
+  /* v8 ignore next @preserve */
   if (getServerType() === "Local pumlsrv") {
     await ensurePumlsrvRunning();
   }
