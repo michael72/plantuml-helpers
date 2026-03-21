@@ -15,6 +15,35 @@ export { getServerUrl };
  * Service for fetching PlantUML diagrams from a PlantUML server.
  */
 
+/** LRU memo cache: raw diagram text → SVG string, capped at MEMO_CACHE_SIZE. */
+const MEMO_CACHE_SIZE = 10;
+const svgMemoCache = new Map<string, string>();
+
+function svgMemoCacheGet(key: string): string | undefined {
+  const value = svgMemoCache.get(key);
+  if (value !== undefined) {
+    // Refresh to most-recently-used position.
+    svgMemoCache.delete(key);
+    svgMemoCache.set(key, value);
+  }
+  return value;
+}
+
+function svgMemoCacheSet(key: string, value: string): void {
+  if (svgMemoCache.has(key)) {
+    svgMemoCache.delete(key);
+  } else if (svgMemoCache.size >= MEMO_CACHE_SIZE) {
+    // Evict the least-recently-used entry (first key in insertion order).
+    svgMemoCache.delete(svgMemoCache.keys().next().value!);
+  }
+  svgMemoCache.set(key, value);
+}
+
+/** Exposed for testing – clears the memo cache. */
+export function _resetSvgMemoCache(): void {
+  svgMemoCache.clear();
+}
+
 /**
  * Gets the configured render method for communicating with the PlantUML server.
  */
@@ -33,16 +62,25 @@ export function getRenderMethod(): "get" | "post" {
  * @returns Promise resolving to the SVG content
  */
 export async function fetchSvg(diagramText: string): Promise<string> {
-  if (getServerType() === "Local pumlsrv") {
-    await ensurePumlsrvRunning();
-    return fetchSvgViaPost(diagramText, true);
+  const cached = svgMemoCacheGet(diagramText);
+  if (cached !== undefined) {
+    return cached;
   }
 
-  const method = getRenderMethod();
-  if (method === "post") {
-    return fetchSvgViaPost(diagramText, false);
+  let svg: string;
+  if (getServerType() === "Local pumlsrv") {
+    await ensurePumlsrvRunning();
+    svg = await fetchSvgViaPost(diagramText, true);
+  } else {
+    const method = getRenderMethod();
+    svg =
+      method === "post"
+        ? await fetchSvgViaPost(diagramText, false)
+        : await fetchSvgViaGet(diagramText);
   }
-  return fetchSvgViaGet(diagramText);
+
+  svgMemoCacheSet(diagramText, svg);
+  return svg;
 }
 
 /**
