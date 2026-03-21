@@ -108,11 +108,6 @@
           "default": "PlantUML Server",
           "markdownDescription": "Which PlantUML server to use for rendering diagrams. When _Local pumlsrv_ is selected the extension manages a local [pumlsrv](https://github.com/michael72/pumlsrv) process. [$(cloud-download) Install pumlsrv](command:pumlhelper.installPumlsrv)"
         },
-        "plantumlHelpers.pumlsrvPort": {
-          "type": "number",
-          "default": 8380,
-          "description": "Port for the local pumlsrv server. Only used when serverType is 'Local pumlsrv'."
-        },
         "plantumlHelpers.serverUrl": {
           "type": "string",
           "default": "http://localhost:8080/plantuml",
