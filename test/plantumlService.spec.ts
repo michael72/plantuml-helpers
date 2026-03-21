@@ -370,7 +370,8 @@ describe("plantumlService", () => {
       vi.mocked(vscode.workspace.getConfiguration).mockReturnValue({
         get: vi.fn((_key: string, defaultValue: string) => {
           if (_key === "renderMethod") return "post";
-          if (_key === "server") return customUrl;
+          if (_key === "serverType") return "Other";
+          if (_key === "serverUrl") return customUrl;
           return defaultValue;
         }),
       } as unknown as vscode.WorkspaceConfiguration);

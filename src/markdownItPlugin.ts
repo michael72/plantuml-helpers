@@ -148,10 +148,7 @@ function fetchInBackground(
  *                     have settled. Typically wired to
  *                     `markdown.preview.refresh`.
  */
-export function plantUmlPlugin(
-  md: MarkdownIt,
-  onAllFetched: () => void
-): void {
+export function plantUmlPlugin(md: MarkdownIt, onAllFetched: () => void): void {
   const defaultFence = md.renderer.rules.fence;
 
   md.renderer.rules.fence = (tokens, idx, options, env, self) => {
