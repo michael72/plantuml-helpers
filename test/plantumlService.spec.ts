@@ -45,6 +45,7 @@ import {
   getServerUrl,
   getRenderMethod,
   fetchSvg,
+  _resetSvgMemoCache,
 } from "../src/plantumlService";
 
 // Create a mock response helper that emits events on next tick
@@ -87,6 +88,7 @@ function createMockRequest(): http.ClientRequest {
 describe("plantumlService", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    _resetSvgMemoCache();
     // Reset vscode mock to default https URL (vi.clearAllMocks only clears call history, not implementations)
     vi.mocked(vscode.workspace.getConfiguration).mockReturnValue({
       get: vi.fn((_key: string, defaultValue: string) => defaultValue),
@@ -248,6 +250,74 @@ describe("plantumlService", () => {
 
       expect(result).toBe(svgContent);
       expect(callCount).toBe(2);
+    });
+
+    it("should return cached SVG without hitting the server on repeated calls", async () => {
+      const svgContent = "<svg>cached diagram</svg>";
+      const mockResponse = createMockResponse(200, svgContent);
+      const mockRequest = createMockRequest();
+
+      mocks.httpsGet.mockImplementation(
+        (_url: unknown, callback: (res: http.IncomingMessage) => void) => {
+          callback(mockResponse);
+          emitResponseEvents(mockResponse);
+          return mockRequest;
+        }
+      );
+
+      const diagramText = "@startuml\nA -> B\n@enduml";
+      const first = await fetchSvg(diagramText);
+      const second = await fetchSvg(diagramText);
+
+      expect(first).toBe(svgContent);
+      expect(second).toBe(svgContent);
+      // Server should only be contacted once.
+      expect(mocks.httpsGet).toHaveBeenCalledTimes(1);
+    });
+
+    it("should evict the least-recently-used entry when the cache exceeds 10 items", async () => {
+      const mockRequest = createMockRequest();
+
+      // Serve a unique SVG for each diagram.
+      mocks.httpsGet.mockImplementation(
+        (url: unknown, callback: (res: http.IncomingMessage) => void) => {
+          const mockResponse = createMockResponse(200, `<svg>${url as string}</svg>`);
+          callback(mockResponse);
+          emitResponseEvents(mockResponse);
+          return mockRequest;
+        }
+      );
+
+      // Fill the cache with 10 distinct diagrams.
+      for (let i = 1; i <= 10; i++) {
+        await fetchSvg(`@startuml\nDiagram${i}\n@enduml`);
+      }
+      expect(mocks.httpsGet).toHaveBeenCalledTimes(10);
+
+      // Access diagram 1 to make it most-recently-used.
+      await fetchSvg(`@startuml\nDiagram1\n@enduml`);
+      expect(mocks.httpsGet).toHaveBeenCalledTimes(10); // still cached
+
+      // Adding diagram 11 should evict diagram 2 (LRU), not diagram 1.
+      await fetchSvg(`@startuml\nDiagram11\n@enduml`);
+      expect(mocks.httpsGet).toHaveBeenCalledTimes(11);
+
+      // Diagram 2 was evicted – a new fetch is required.
+      vi.clearAllMocks();
+      mocks.httpsGet.mockImplementation(
+        (url: unknown, callback: (res: http.IncomingMessage) => void) => {
+          const mockResponse = createMockResponse(200, `<svg>${url as string}</svg>`);
+          callback(mockResponse);
+          emitResponseEvents(mockResponse);
+          return mockRequest;
+        }
+      );
+      await fetchSvg(`@startuml\nDiagram2\n@enduml`);
+      expect(mocks.httpsGet).toHaveBeenCalledTimes(1);
+
+      // Diagram 1 is still cached – no new fetch.
+      await fetchSvg(`@startuml\nDiagram1\n@enduml`);
+      expect(mocks.httpsGet).toHaveBeenCalledTimes(1);
     });
 
     it("should construct correct URL with encoded diagram", async () => {
