@@ -117,11 +117,10 @@
           "type": "string",
           "enum": [
             "get",
-            "post",
-            "post-deflate"
+            "post"
           ],
           "default": "get",
-          "description": "Method to communicate with the PlantUML server. 'get' encodes the diagram in the URL (default), 'post' sends the diagram as plain text in the request body, 'post-deflate' sends a deflate-compressed diagram in the request body."
+          "description": "Method to communicate with the PlantUML server. 'get' encodes the diagram in the URL (default), 'post' sends the diagram as plain text in the request body. When using 'Local pumlsrv', post with deflate compression is always used regardless of this setting."
         },
         "plantumlHelpers.theme": {
           "type": "string",
@@ -152,8 +151,8 @@
     "@types/markdown-it": "^14.1.2",
     "@types/node": "^25.5.0",
     "@types/vscode": "^1.110.0",
-    "@typescript-eslint/eslint-plugin": "^8.57.0",
-    "@typescript-eslint/parser": "^8.57.0",
+    "@typescript-eslint/eslint-plugin": "^8.57.1",
+    "@typescript-eslint/parser": "^8.57.1",
     "@vitest/coverage-v8": "4.0.18",
     "@vitest/ui": "4.0.18",
     "@vscode/vsce": "^3.7.1",
