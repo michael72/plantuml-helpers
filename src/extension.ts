@@ -11,7 +11,6 @@ import { plantUmlPlugin } from "./markdownItPlugin.js";
 import { registerSetThemeCommand } from "./themeService.js";
 import {
   getServerType,
-  getPumlsrvPort,
   stopPumlsrv,
   installPumlsrvManually,
 } from "./pumlsrvService.js";
@@ -107,11 +106,8 @@ export function activate(context: vscode.ExtensionContext) {
 
   const setTheme = registerSetThemeCommand();
 
-  // Track active pumlsrv port so we can stop it if settings change
-  let activePumlsrvPort: number | undefined;
-  if (getServerType() === "Local pumlsrv") {
-    activePumlsrvPort = getPumlsrvPort();
-  }
+  // Track whether pumlsrv is active so we can stop it if settings change
+  let pumlsrvActive = getServerType() === "Local pumlsrv";
 
   const configChangeListener = vscode.workspace.onDidChangeConfiguration(
     (event) => {
@@ -120,22 +116,14 @@ export function activate(context: vscode.ExtensionContext) {
       }
 
       const newType = getServerType();
-      const newPort = getPumlsrvPort();
 
-      if (activePumlsrvPort !== undefined) {
-        // pumlsrv was active - check if we need to stop or restart it
-        if (newType !== "Local pumlsrv") {
-          // Switching away from pumlsrv - stop it
-          void stopPumlsrv(activePumlsrvPort);
-          activePumlsrvPort = undefined;
-        } else if (newPort !== activePumlsrvPort) {
-          // Port changed - stop old instance; new one will start on next render
-          void stopPumlsrv(activePumlsrvPort);
-          activePumlsrvPort = newPort;
-        }
-      } else if (newType === "Local pumlsrv") {
-        // Switched to pumlsrv - record the port; actual start happens on first render
-        activePumlsrvPort = newPort;
+      if (pumlsrvActive && newType !== "Local pumlsrv") {
+        // Switching away from pumlsrv - stop it
+        void stopPumlsrv();
+        pumlsrvActive = false;
+      } else if (!pumlsrvActive && newType === "Local pumlsrv") {
+        // Switched to pumlsrv; actual start happens on first render
+        pumlsrvActive = true;
       }
     }
   );
@@ -281,9 +269,7 @@ async function updatePreviewFromDocument(
 }
 
 export function deactivate(): void {
-  if (getServerType() === "Local pumlsrv") {
-    void stopPumlsrv(getPumlsrvPort());
-  }
+  void stopPumlsrv();
 }
 
 function rotateSelected(
