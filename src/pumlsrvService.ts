@@ -43,10 +43,10 @@ async function findFreePort(): Promise<number> {
       const port =
         typeof address === "object" && address ? address.port : undefined;
       server.close(() => {
-        if (port !== undefined) {
-          resolve(port);
-        } else {
+        if (port === undefined) {
           reject(new Error("Could not determine a free port"));
+        } else {
+          resolve(port);
         }
       });
     });
@@ -173,7 +173,8 @@ export async function installPumlsrvManually(): Promise<void> {
 let pumlsrvProcess: child_process.ChildProcess | undefined;
 
 function startPumlsrvProcess(binary: string, port: number): void {
-  pumlsrvProcess = child_process.spawn(binary, ["-N", port.toString()], {
+  // do not save settings + do not bring up browser on startup
+  pumlsrvProcess = child_process.spawn(binary, ["-n", "-N", port.toString()], {
     detached: false,
     stdio: "ignore",
   });
@@ -233,6 +234,13 @@ export function ensurePumlsrvRunning(): Promise<void> {
 }
 
 async function doEnsurePumlsrvRunning(): Promise<void> {
+  if (
+    activePumlsrvPort !== undefined &&
+    (await checkPumlsrvRunning(activePumlsrvPort))
+  ) {
+    return;
+  }
+
   let binary = findPumlsrvBinary();
 
   if (binary === undefined) {
