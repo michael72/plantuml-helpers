@@ -30,9 +30,12 @@ export function autoFormatTxt(txt: string, rebuild = false): string {
   }
 
   const lines = txt.split(crLf);
-  const tpe = getType(lines);
+  const { special, remaining } = _extractSpecialLines(lines);
+  const tpe = getType(remaining);
   if (tpe == DiagramType.ClassComponent) {
-    let formatted = new SortComponent(Component.fromString(lines))
+    const component = Component.fromString(remaining);
+    _injectSpecialLines(component, special);
+    let formatted = new SortComponent(component)
       .autoFormat(rebuild)
       .toString(crLf);
     if (!formatted.endsWith(ending)) {
@@ -40,8 +43,10 @@ export function autoFormatTxt(txt: string, rebuild = false): string {
     }
     return formatted;
   } else if (tpe == DiagramType.Sequence) {
+    const component = Component.fromString(remaining, true);
+    _injectSpecialLines(component, special);
     return (
-      new SortSequence(Component.fromString(lines, true))
+      new SortSequence(component)
         .autoFormat()
         .toString(crLf) + ending
     );
@@ -49,6 +54,57 @@ export function autoFormatTxt(txt: string, rebuild = false): string {
     throw new Error(UNKNOWN_DIAGRAM_TYPE);
   } else {
     throw new Error("Unsupported diagram type: " + tpe.toString());
+  }
+}
+
+// Extract !include directives and legend...endlegend blocks from the lines so
+// they are not included in the sorting. They will be re-added at the beginning
+// of the sorted output (after @startuml if present).
+function _extractSpecialLines(lines: string[]): {
+  special: string[];
+  remaining: string[];
+} {
+  const special: string[] = [];
+  const remaining: string[] = [];
+  let inLegend = false;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    const trimmedLower = trimmed.toLowerCase();
+    if (inLegend) {
+      special.push(line);
+      if (trimmedLower === "endlegend") {
+        inLegend = false;
+      }
+    } else if (trimmed.startsWith("!include")) {
+      special.push(line);
+    } else if (
+      trimmedLower === "legend" ||
+      trimmedLower.startsWith("legend ") ||
+      trimmedLower.startsWith("legend\t")
+    ) {
+      special.push(line);
+      inLegend = true;
+    } else {
+      remaining.push(line);
+    }
+  }
+
+  return { special, remaining };
+}
+
+// Inject the extracted special lines into the component header, after the
+// @startuml line if present, or at the beginning otherwise.
+function _injectSpecialLines(component: Component, special: string[]): void {
+  if (special.length === 0) return;
+
+  const startumlIdx = component.header.findIndex((l) =>
+    l.trim().toLowerCase().startsWith("@startuml")
+  );
+  if (startumlIdx !== -1) {
+    component.header.splice(startumlIdx + 1, 0, ...special);
+  } else {
+    component.header.unshift(...special);
   }
 }
 

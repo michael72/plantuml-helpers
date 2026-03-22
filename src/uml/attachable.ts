@@ -32,6 +32,8 @@ export class Attachable {
   }
 
   attachedToString(): string {
-    return this.attached ? "\n" + this.attached.join("\n") : "";
+    return this.attached && this.attached.length > 0
+      ? "\n" + this.attached.join("\n")
+      : "";
   }
 }

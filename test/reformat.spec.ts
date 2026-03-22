@@ -810,4 +810,125 @@ participant yy`;
     const actual = reformat.autoFormatTxt(original, true);
     expect(actual).toBe(expected);
   });
+
+  it("should preserve !include before arrows and keep it at the top", () => {
+    const original = `!include styles.iuml
+[B] -> [C]
+[A] -> [B]
+`;
+    // blank line between header directives and content is consistent with
+    // how other header lines (title, hide empty members, etc.) are formatted
+    const expected = `!include styles.iuml
+
+[A] -> [B]
+[B] -> [C]
+`;
+    const actual = reformat.autoFormatTxt(original);
+    expect(actual).toBe(expected);
+  });
+
+  it("should move !include from middle of arrows to the top before sorting", () => {
+    const original = `[B] -> [C]
+!include styles.iuml
+[A] -> [B]
+`;
+    const expected = `!include styles.iuml
+
+[A] -> [B]
+[B] -> [C]
+`;
+    const actual = reformat.autoFormatTxt(original);
+    expect(actual).toBe(expected);
+  });
+
+  it("should preserve multiple !include directives at the top", () => {
+    const original = `!include styles.iuml
+!include components.iuml
+[B] -> [C]
+[A] -> [B]
+`;
+    const expected = `!include styles.iuml
+!include components.iuml
+
+[A] -> [B]
+[B] -> [C]
+`;
+    const actual = reformat.autoFormatTxt(original);
+    expect(actual).toBe(expected);
+  });
+
+  it("should extract legend block and place it at the top after sorting", () => {
+    const original = `legend
+  some legend text
+endlegend
+[B] -> [C]
+[A] -> [B]
+`;
+    const expected = `legend
+  some legend text
+endlegend
+
+[A] -> [B]
+[B] -> [C]
+`;
+    const actual = reformat.autoFormatTxt(original);
+    expect(actual).toBe(expected);
+  });
+
+  it("should extract legend block from the middle and place it at the top", () => {
+    const original = `[B] -> [C]
+legend right
+  some legend text
+endlegend
+[A] -> [B]
+`;
+    const expected = `legend right
+  some legend text
+endlegend
+
+[A] -> [B]
+[B] -> [C]
+`;
+    const actual = reformat.autoFormatTxt(original);
+    expect(actual).toBe(expected);
+  });
+
+  it("should place !include and legend after @startuml", () => {
+    const original = `@startuml
+[B] -> [C]
+!include styles.iuml
+legend
+  some legend
+endlegend
+[A] -> [B]
+@enduml
+`;
+    const expected = `@startuml
+!include styles.iuml
+legend
+  some legend
+endlegend
+
+[A] -> [B]
+[B] -> [C]
+
+@enduml
+`;
+    const actual = reformat.autoFormatTxt(original);
+    expect(actual).toBe(expected);
+  });
+
+  it("should preserve !include in sequence diagrams at the top", () => {
+    const original = `!include styles.iuml
+A -> B
+B -> C
+`;
+    const expected = `!include styles.iuml
+
+A -> B
+B -> C
+`;
+    const actual = reformat.autoFormatTxt(original);
+    expect(actual).toBe(expected);
+  });
 });
