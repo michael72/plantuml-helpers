@@ -155,7 +155,7 @@
     "@typescript-eslint/eslint-plugin": "^8.57.1",
     "@typescript-eslint/parser": "^8.57.1",
     "@vitest/coverage-v8": "4.0.18",
-    "@vitest/ui": "4.0.18",
+    "@vitest/ui": "4.1.1",
     "@vscode/vsce": "^3.7.1",
     "eslint": "^10.0.3",
     "markdown-it": "^14.1.1",
