@@ -154,14 +154,14 @@
     "@types/vscode": "^1.110.0",
     "@typescript-eslint/eslint-plugin": "^8.57.2",
     "@typescript-eslint/parser": "^8.57.2",
-    "@vitest/coverage-v8": "4.0.18",
-    "@vitest/ui": "4.0.18",
+    "@vitest/coverage-v8": "^4.1.2",
+    "@vitest/ui": "^4.1.2",
     "@vscode/vsce": "^3.7.1",
     "eslint": "^10.0.3",
     "markdown-it": "^14.1.1",
     "prettier": "^3.8.1",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
-    "vitest": "4.0.18"
+    "vitest": "^4.1.2"
   }
 }

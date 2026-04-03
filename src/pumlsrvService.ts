@@ -19,7 +19,7 @@ export function getServerType(): ServerType {
 
 export function getCustomServerUrl(): string {
   const config = vscode.workspace.getConfiguration("plantumlHelpers");
-  return config.get<string>("serverUrl", "http://localhost:8080/plantuml");
+  return config.get("serverUrl", "http://localhost:8080/plantuml");
 }
 
 let activePumlsrvPort: number | undefined;

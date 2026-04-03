@@ -43,7 +43,7 @@ export function parseThemes(text: string): string[] {
  */
 export function getThemeSetting(): string {
   const config = vscode.workspace.getConfiguration("plantumlHelpers");
-  return config.get<string>("theme", "_none_");
+  return config.get("theme", "_none_");
 }
 
 /**
