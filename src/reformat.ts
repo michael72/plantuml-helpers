@@ -101,7 +101,7 @@ function _injectSpecialLines(component: Component, special: string[]): void {
   const startumlIdx = component.header.findIndex((l) =>
     l.trim().toLowerCase().startsWith("@startuml")
   );
-  if (startumlIdx !== -1) {
+  if (startumlIdx >= 0) {
     component.header.splice(startumlIdx + 1, 0, ...special);
   } else {
     component.header.unshift(...special);
