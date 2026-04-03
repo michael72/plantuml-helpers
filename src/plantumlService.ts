@@ -18,28 +18,29 @@ export { getServerUrl };
 /**
  * Gets the configured render method for communicating with the PlantUML server.
  */
-export function getRenderMethod(): "get" | "post" | "post-deflate" {
+export function getRenderMethod(): "get" | "post" {
   const config = vscode.workspace.getConfiguration("plantumlHelpers");
-  return config.get<"get" | "post" | "post-deflate">("renderMethod", "get");
+  return config.get<"get" | "post">("renderMethod", "get");
 }
 
 /**
  * Fetches an SVG diagram from the PlantUML server.
- * Uses the configured render method (GET, POST, or POST with deflate compression).
- * When 'Local pumlsrv' is selected, ensures pumlsrv is running first.
+ * Uses the configured render method (GET or POST).
+ * When 'Local pumlsrv' is selected, always uses POST with deflate compression
+ * (the fastest method supported by pumlsrv), regardless of the renderMethod setting.
  *
  * @param diagramText The PlantUML diagram source text
  * @returns Promise resolving to the SVG content
  */
 export async function fetchSvg(diagramText: string): Promise<string> {
-  /* v8 ignore next @preserve */
   if (getServerType() === "Local pumlsrv") {
     await ensurePumlsrvRunning();
+    return fetchSvgViaPost(diagramText, true);
   }
 
   const method = getRenderMethod();
-  if (method === "post" || method === "post-deflate") {
-    return fetchSvgViaPost(diagramText, method === "post-deflate");
+  if (method === "post") {
+    return fetchSvgViaPost(diagramText, false);
   }
   return fetchSvgViaGet(diagramText);
 }

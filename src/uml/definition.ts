@@ -45,7 +45,7 @@ export class Definition extends Attachable {
   }
   static fromString(line: string): Definition | undefined {
     const shorten = (s: string, by: string): string => {
-      if (s.length > 0 && s[0] === by) {
+      if (s.length > 0 && s[0] === by && !/[+\-/><]/.test(s)) {
         return s.substring(1, s.length - 1);
       }
       return s;

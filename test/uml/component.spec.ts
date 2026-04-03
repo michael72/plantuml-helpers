@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { Component } from "../../src/uml/component";
-import { Definition } from "../../src/uml/definition";
+import { Definition, joinContent } from "../../src/uml/definition";
 
 describe("Component", () => {
   describe("Component class", () => {
@@ -157,6 +157,33 @@ describe("Component", () => {
           expect(def).toBe(undefined);
         }
       );
+    });
+  });
+
+  describe("joinContent", () => {
+    it("left.endsWith(lf) is true — uses single lf separator", () => {
+      // left already ends with lf ("\n") → condition true → addLf = lf, not lf+lf
+      expect(joinContent("foo\n", "bar", "\n")).toBe("foo\n\nbar");
+    });
+
+    it("left.endsWith(lf) is false but left.endsWith('\\n') is true — uses single lf separator", () => {
+      // lf is "\r\n": left ends with "\n" but not "\r\n" → condition still true
+      expect(joinContent("foo\n", "bar", "\r\n")).toBe("foo\n\r\nbar");
+    });
+
+    it("both left.endsWith are false and right.startsWith(lf) is true — uses single lf separator", () => {
+      // lf is "\r\n": right starts with "\r\n" → condition true
+      expect(joinContent("foo", "\r\nbar", "\r\n")).toBe("foo\r\n\r\nbar");
+    });
+
+    it("both left.endsWith and right.startsWith(lf) are false but right.startsWith('\\n') is true — uses single lf separator", () => {
+      // lf is "\r\n": right starts with "\n" (not "\r\n") → condition still true
+      expect(joinContent("foo", "\nbar", "\r\n")).toBe("foo\r\n\nbar");
+    });
+
+    it("all conditions are false — uses double lf (blank line) separator", () => {
+      // no side has a trailing/leading newline → addLf = lf + lf
+      expect(joinContent("foo", "bar", "\n")).toBe("foo\n\nbar");
     });
   });
 });
