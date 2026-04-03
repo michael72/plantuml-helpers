@@ -118,9 +118,10 @@ export class Component {
       printName = m[2];
       if (printName !== undefined && printName.length > 0) {
         // remove quotes
-        name = printName.startsWith('"') && !/[+\-/><]/.test(printName)
-          ? printName.substring(1, printName.length - 1)
-          : printName;
+        name =
+          printName.startsWith('"') && !/[+\-/><]/.test(printName)
+            ? printName.substring(1, printName.length - 1)
+            : printName;
       }
       if (m[3] !== undefined && m[3].length > 0) {
         suffix = m[3].trimEnd();

@@ -45,11 +45,7 @@ export function autoFormatTxt(txt: string, rebuild = false): string {
   } else if (tpe == DiagramType.Sequence) {
     const component = Component.fromString(remaining, true);
     _injectSpecialLines(component, special);
-    return (
-      new SortSequence(component)
-        .autoFormat()
-        .toString(crLf) + ending
-    );
+    return new SortSequence(component).autoFormat().toString(crLf) + ending;
   } else if (tpe == DiagramType.Unknown) {
     throw new Error(UNKNOWN_DIAGRAM_TYPE);
   } else {

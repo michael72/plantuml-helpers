@@ -144,7 +144,6 @@ describe("plantumlService", () => {
       const result = getRenderMethod();
       expect(result).toBe("post");
     });
-
   });
 
   describe("fetchSvg", () => {
