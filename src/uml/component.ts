@@ -118,7 +118,7 @@ export class Component {
       printName = m[2];
       if (printName !== undefined && printName.length > 0) {
         // remove quotes
-        name = printName.startsWith('"')
+        name = printName.startsWith('"') && !/[+\-/><]/.test(printName)
           ? printName.substring(1, printName.length - 1)
           : printName;
       }
@@ -283,14 +283,14 @@ export class Component {
           header += " " + s;
         }
       }
-      let result = t + header.trimLeft() + " {" + lf;
+      let result = t + header.trimStart() + " {" + lf;
       t += Component.DEFAULT_TAB;
       const idx = this.content.findIndex((c: Content) => {
         return c instanceof Line;
       });
       const headerContent = this.header
         .map((s: string) => {
-          return s.trimLeft();
+          return s.trimStart();
         })
         .join("\n" + t)
         .trimEnd();
@@ -303,7 +303,7 @@ export class Component {
           this.content
             .slice(0, idx === -1 ? this.content.length : idx)
             .map((s: Content) => {
-              return s.toString().trimLeft();
+              return s.toString().trimStart();
             })
             .join("\n" + t);
       }
@@ -320,7 +320,7 @@ export class Component {
           this.content
             .slice(idx)
             .map((s: Content) => {
-              return s.toString().trimLeft();
+              return s.toString().trimStart();
             })
             .join(lf + t);
       }
