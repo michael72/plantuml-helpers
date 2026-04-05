@@ -53,31 +53,85 @@ export function autoFormatTxt(txt: string, rebuild = false): string {
   }
 }
 
-// Extract !include directives, legend...endlegend blocks, and <style>...</style>
-// blocks from the lines so they are not included in the sorting. They will be
+// Extract lines/blocks that should not be included in the sorting. They will be
 // re-added at the beginning of the sorted output (after @startuml if present).
+//
+// Extracted constructs:
+//   !include directives
+//   legend...endlegend
+//   <style>...</style>
+//   header / header...endheader
+//   footer / footer...endfooter
+//   title / title...end title
+//   skinparam { ... }  (block form — closing "}" would break the component parser)
+//   !if...!endif  (may contain diagram elements; supports nesting)
+//   !procedure...!endprocedure
+//   !function...!endfunction
+//   !startsub...!endsub
+//   !definelong...!enddefinelong  (legacy)
 function _extractSpecialLines(lines: string[]): {
   special: string[];
   remaining: string[];
 } {
+  // Pre-scan: only activate multi-line block tracking when a proper closer
+  // exists in the file. This prevents a bare "header" / "footer" / "title"
+  // (with no matching closer) from swallowing all subsequent lines.
+  const lower = lines.map((l) => l.trim().toLowerCase());
+  const hasCloser = (closer: string) => lower.includes(closer);
+
   const special: string[] = [];
   const remaining: string[] = [];
   let inLegend = false;
   let inStyle = false;
+  let inHeader = false;
+  let inFooter = false;
+  let inTitle = false;
+  let inSkinparam = false;
+  let ifDepth = 0;
+  let inProcedure = false;
+  let inFunction = false;
+  let inStartsub = false;
+  let inDefinelong = false;
 
   for (const line of lines) {
     const trimmed = line.trim();
     const trimmedLower = trimmed.toLowerCase();
+
     if (inLegend) {
       special.push(line);
-      if (trimmedLower === "endlegend") {
-        inLegend = false;
-      }
+      if (trimmedLower === "endlegend") inLegend = false;
     } else if (inStyle) {
       special.push(line);
-      if (trimmedLower === "</style>") {
-        inStyle = false;
-      }
+      if (trimmedLower === "</style>") inStyle = false;
+    } else if (inHeader) {
+      special.push(line);
+      if (trimmedLower === "endheader") inHeader = false;
+    } else if (inFooter) {
+      special.push(line);
+      if (trimmedLower === "endfooter") inFooter = false;
+    } else if (inTitle) {
+      special.push(line);
+      if (trimmedLower === "end title") inTitle = false;
+    } else if (inSkinparam) {
+      special.push(line);
+      if (trimmedLower === "}") inSkinparam = false;
+    } else if (ifDepth > 0) {
+      special.push(line);
+      if (trimmedLower.startsWith("!if ") || trimmedLower === "!if")
+        ifDepth++;
+      else if (trimmedLower === "!endif") ifDepth--;
+    } else if (inProcedure) {
+      special.push(line);
+      if (trimmedLower === "!endprocedure") inProcedure = false;
+    } else if (inFunction) {
+      special.push(line);
+      if (trimmedLower === "!endfunction") inFunction = false;
+    } else if (inStartsub) {
+      special.push(line);
+      if (trimmedLower.startsWith("!endsub")) inStartsub = false;
+    } else if (inDefinelong) {
+      special.push(line);
+      if (trimmedLower === "!enddefinelong") inDefinelong = false;
     } else if (trimmed.startsWith("!include")) {
       special.push(line);
     } else if (
@@ -90,6 +144,51 @@ function _extractSpecialLines(lines: string[]): {
     } else if (trimmedLower === "<style>") {
       special.push(line);
       inStyle = true;
+    } else if (trimmedLower === "header" && hasCloser("endheader")) {
+      special.push(line);
+      inHeader = true;
+    } else if (
+      trimmedLower.startsWith("header ") ||
+      trimmedLower.startsWith("header\t")
+    ) {
+      special.push(line); // single-line header
+    } else if (trimmedLower === "footer" && hasCloser("endfooter")) {
+      special.push(line);
+      inFooter = true;
+    } else if (
+      trimmedLower.startsWith("footer ") ||
+      trimmedLower.startsWith("footer\t")
+    ) {
+      special.push(line); // single-line footer
+    } else if (trimmedLower === "title" && hasCloser("end title")) {
+      special.push(line);
+      inTitle = true;
+    } else if (
+      trimmedLower.startsWith("title ") ||
+      trimmedLower.startsWith("title\t")
+    ) {
+      special.push(line); // single-line title
+    } else if (
+      trimmedLower.startsWith("skinparam") &&
+      trimmedLower.endsWith("{")
+    ) {
+      special.push(line);
+      inSkinparam = true;
+    } else if (trimmedLower.startsWith("!if ") || trimmedLower === "!if") {
+      special.push(line);
+      ifDepth = 1;
+    } else if (trimmedLower.startsWith("!procedure ")) {
+      special.push(line);
+      inProcedure = true;
+    } else if (trimmedLower.startsWith("!function ")) {
+      special.push(line);
+      inFunction = true;
+    } else if (trimmedLower.startsWith("!startsub")) {
+      special.push(line);
+      inStartsub = true;
+    } else if (trimmedLower.startsWith("!definelong")) {
+      special.push(line);
+      inDefinelong = true;
     } else {
       remaining.push(line);
     }

@@ -1002,4 +1002,178 @@ B -> C
     const actual = reformat.autoFormatTxt(original);
     expect(actual).toBe(expected);
   });
+
+  it("should extract multi-line header block and place it at the top", () => {
+    const original = `[B] -> [C]
+header
+  My [Header] Text
+endheader
+[A] -> [B]
+`;
+    const expected = `header
+  My [Header] Text
+endheader
+
+[A] -> [B]
+[B] -> [C]
+`;
+    const actual = reformat.autoFormatTxt(original);
+    expect(actual).toBe(expected);
+  });
+
+  it("should extract single-line header and place it at the top", () => {
+    const original = `[B] -> [C]
+header My Header
+[A] -> [B]
+`;
+    const expected = `header My Header
+
+[A] -> [B]
+[B] -> [C]
+`;
+    const actual = reformat.autoFormatTxt(original);
+    expect(actual).toBe(expected);
+  });
+
+  it("should extract multi-line footer block and place it at the top", () => {
+    const original = `[B] -> [C]
+footer
+  Page %page% of %lastpage%
+endfooter
+[A] -> [B]
+`;
+    const expected = `footer
+  Page %page% of %lastpage%
+endfooter
+
+[A] -> [B]
+[B] -> [C]
+`;
+    const actual = reformat.autoFormatTxt(original);
+    expect(actual).toBe(expected);
+  });
+
+  it("should extract single-line footer and place it at the top", () => {
+    const original = `[B] -> [C]
+footer Page %page%
+[A] -> [B]
+`;
+    const expected = `footer Page %page%
+
+[A] -> [B]
+[B] -> [C]
+`;
+    const actual = reformat.autoFormatTxt(original);
+    expect(actual).toBe(expected);
+  });
+
+  it("should extract single-line title and place it at the top", () => {
+    const original = `[B] -> [C]
+title My Diagram
+[A] -> [B]
+`;
+    const expected = `title My Diagram
+
+[A] -> [B]
+[B] -> [C]
+`;
+    const actual = reformat.autoFormatTxt(original);
+    expect(actual).toBe(expected);
+  });
+
+  it("should extract multi-line title block and place it at the top", () => {
+    const original = `[B] -> [C]
+title
+  My [Diagram] Title
+end title
+[A] -> [B]
+`;
+    const expected = `title
+  My [Diagram] Title
+end title
+
+[A] -> [B]
+[B] -> [C]
+`;
+    const actual = reformat.autoFormatTxt(original);
+    expect(actual).toBe(expected);
+  });
+
+  it("should extract skinparam block and place it at the top", () => {
+    const original = `[B] -> [C]
+skinparam component {
+  BackgroundColor #FFFFFF
+  BorderColor black
+}
+[A] -> [B]
+`;
+    const expected = `skinparam component {
+  BackgroundColor #FFFFFF
+  BorderColor black
+}
+
+[A] -> [B]
+[B] -> [C]
+`;
+    const actual = reformat.autoFormatTxt(original);
+    expect(actual).toBe(expected);
+  });
+
+  it("should extract !if...!endif block and place it at the top", () => {
+    const original = `[B] -> [C]
+!if %variable_defined("DARK")
+skinparam BackgroundColor #333333
+!endif
+[A] -> [B]
+`;
+    const expected = `!if %variable_defined("DARK")
+skinparam BackgroundColor #333333
+!endif
+
+[A] -> [B]
+[B] -> [C]
+`;
+    const actual = reformat.autoFormatTxt(original);
+    expect(actual).toBe(expected);
+  });
+
+  it("should handle nested !if blocks correctly", () => {
+    const original = `[B] -> [C]
+!if %cond1()
+!if %cond2()
+skinparam BackgroundColor red
+!endif
+!endif
+[A] -> [B]
+`;
+    const expected = `!if %cond1()
+!if %cond2()
+skinparam BackgroundColor red
+!endif
+!endif
+
+[A] -> [B]
+[B] -> [C]
+`;
+    const actual = reformat.autoFormatTxt(original);
+    expect(actual).toBe(expected);
+  });
+
+  it("should extract !procedure block and place it at the top", () => {
+    const original = `[B] -> [C]
+!procedure $highlight($name)
+  component $name #yellow
+!endprocedure
+[A] -> [B]
+`;
+    const expected = `!procedure $highlight($name)
+  component $name #yellow
+!endprocedure
+
+[A] -> [B]
+[B] -> [C]
+`;
+    const actual = reformat.autoFormatTxt(original);
+    expect(actual).toBe(expected);
+  });
 });
