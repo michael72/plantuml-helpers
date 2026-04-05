@@ -137,6 +137,7 @@ export class Component {
     // parse the content of the component
     for (; i < arr.length; ++i) {
       const s = arr[i];
+      /* v8 ignore next @preserve */
       if (s === undefined || s.length === 0) {
         // Skip empty lines instead of using continue
         // Process next line in the next iteration

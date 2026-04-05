@@ -53,36 +53,92 @@ export function autoFormatTxt(txt: string, rebuild = false): string {
   }
 }
 
-// Extract !include directives and legend...endlegend blocks from the lines so
-// they are not included in the sorting. They will be re-added at the beginning
-// of the sorted output (after @startuml if present).
+// Map from the first token of a block-opening line to the line that closes it.
+// Lookup uses trimmedLower split at the first whitespace or "(" so that
+// prefix-based starts ("legend right", "!if %cond()") resolve to the same key.
+const BLOCK_END = new Map<string, string>([
+  ["legend", "endlegend"],
+  ["<style>", "</style>"],
+  ["header", "endheader"],
+  ["footer", "endfooter"],
+  ["title", "end title"],
+  ["skinparam", "}"], // block form only — see guard below
+  ["!if", "!endif"], // note: nested !if is not tracked; first !endif closes the block
+  ["!procedure", "!endprocedure"],
+  ["!function", "!endfunction"],
+  ["!startsub", "!endsub"],
+  ["!definelong", "!enddefinelong"],
+]);
+
+// For these keywords a bare keyword on its own line starts a multi-line block.
+// Only begin extraction when the closer actually appears in the file, so a bare
+// "header" / "footer" / "title" used without a matching closer is left in place.
+const REQUIRES_CLOSER: ReadonlySet<string> = new Set([
+  "header",
+  "footer",
+  "title",
+]);
+
+// Extract lines/blocks that must not be processed by the diagram sorter. They
+// are re-added at the top of the sorted output (after @startuml if present).
 function _extractSpecialLines(lines: string[]): {
   special: string[];
   remaining: string[];
 } {
+  // Pre-compute the set of all distinct trimmed-lower lines for closer checks.
+  const lineSet = new Set(lines.map((l) => l.trim().toLowerCase()));
+
   const special: string[] = [];
   const remaining: string[] = [];
-  let inLegend = false;
+  let currentEndKey: string | null = null;
 
   for (const line of lines) {
     const trimmed = line.trim();
     const trimmedLower = trimmed.toLowerCase();
-    if (inLegend) {
+
+    // Inside a special block: collect until the closing keyword.
+    if (currentEndKey !== null) {
       special.push(line);
-      if (trimmedLower === "endlegend") {
-        inLegend = false;
-      }
-    } else if (trimmed.startsWith("!include")) {
+      if (trimmedLower === currentEndKey) currentEndKey = null;
+    }
+
+    // Single-line !include directive (not a block, no closer needed).
+    else if (trimmed.startsWith("!include")) {
       special.push(line);
-    } else if (
-      trimmedLower === "legend" ||
-      trimmedLower.startsWith("legend ") ||
-      trimmedLower.startsWith("legend\t")
-    ) {
-      special.push(line);
-      inLegend = true;
     } else {
-      remaining.push(line);
+      // Derive the first token to look up in BLOCK_END.
+      // Splitting on whitespace or "(" handles "legend right", "!if %cond()", etc.
+      const firstToken = trimmedLower.split(/[\s(]/)[0];
+      /* v8 ignore next @preserve */
+      if (firstToken != undefined) {
+        const endKey = BLOCK_END.get(firstToken);
+
+        if (endKey == undefined) {
+          remaining.push(line);
+        } else {
+          // skinparam: only the block form (line ends with "{") needs extraction;
+          // single-line "skinparam Key Value" is left for the diagram parser.
+          if (firstToken === "skinparam" && !trimmedLower.endsWith("{")) {
+            remaining.push(line);
+          } // header / footer / title with inline text ("header My Title") is a
+          // self-contained single-line directive — extract it without tracking.
+          else if (
+            REQUIRES_CLOSER.has(firstToken) &&
+            trimmedLower !== firstToken
+          ) {
+            special.push(line);
+          }
+
+          // Bare header / footer / title: only start block tracking when the
+          // closer actually appears later in the file.
+          else if (REQUIRES_CLOSER.has(firstToken) && !lineSet.has(endKey)) {
+            remaining.push(line);
+          } else {
+            special.push(line);
+            currentEndKey = endKey;
+          }
+        }
+      }
     }
   }
 
