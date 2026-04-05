@@ -53,9 +53,9 @@ export function autoFormatTxt(txt: string, rebuild = false): string {
   }
 }
 
-// Extract !include directives and legend...endlegend blocks from the lines so
-// they are not included in the sorting. They will be re-added at the beginning
-// of the sorted output (after @startuml if present).
+// Extract !include directives, legend...endlegend blocks, and <style>...</style>
+// blocks from the lines so they are not included in the sorting. They will be
+// re-added at the beginning of the sorted output (after @startuml if present).
 function _extractSpecialLines(lines: string[]): {
   special: string[];
   remaining: string[];
@@ -63,6 +63,7 @@ function _extractSpecialLines(lines: string[]): {
   const special: string[] = [];
   const remaining: string[] = [];
   let inLegend = false;
+  let inStyle = false;
 
   for (const line of lines) {
     const trimmed = line.trim();
@@ -71,6 +72,11 @@ function _extractSpecialLines(lines: string[]): {
       special.push(line);
       if (trimmedLower === "endlegend") {
         inLegend = false;
+      }
+    } else if (inStyle) {
+      special.push(line);
+      if (trimmedLower === "</style>") {
+        inStyle = false;
       }
     } else if (trimmed.startsWith("!include")) {
       special.push(line);
@@ -81,6 +87,9 @@ function _extractSpecialLines(lines: string[]): {
     ) {
       special.push(line);
       inLegend = true;
+    } else if (trimmedLower === "<style>") {
+      special.push(line);
+      inStyle = true;
     } else {
       remaining.push(line);
     }

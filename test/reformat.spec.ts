@@ -931,4 +931,75 @@ B -> C
     const actual = reformat.autoFormatTxt(original);
     expect(actual).toBe(expected);
   });
+
+  it("should extract style block and place it at the top after sorting", () => {
+    const original = `<style>
+  element {
+    BackGroundColor: #3d3535;
+  }
+</style>
+[B] -> [C]
+[A] -> [B]
+`;
+    const expected = `<style>
+  element {
+    BackGroundColor: #3d3535;
+  }
+</style>
+
+[A] -> [B]
+[B] -> [C]
+`;
+    const actual = reformat.autoFormatTxt(original);
+    expect(actual).toBe(expected);
+  });
+
+  it("should extract style block from the middle and place it at the top", () => {
+    const original = `[B] -> [C]
+<style>
+  element {
+    BackGroundColor: #3d3535;
+  }
+</style>
+[A] -> [B]
+`;
+    const expected = `<style>
+  element {
+    BackGroundColor: #3d3535;
+  }
+</style>
+
+[A] -> [B]
+[B] -> [C]
+`;
+    const actual = reformat.autoFormatTxt(original);
+    expect(actual).toBe(expected);
+  });
+
+  it("should place style block after @startuml", () => {
+    const original = `@startuml
+[B] -> [C]
+<style>
+  element {
+    BackGroundColor: #3d3535;
+  }
+</style>
+[A] -> [B]
+@enduml
+`;
+    const expected = `@startuml
+<style>
+  element {
+    BackGroundColor: #3d3535;
+  }
+</style>
+
+[A] -> [B]
+[B] -> [C]
+
+@enduml
+`;
+    const actual = reformat.autoFormatTxt(original);
+    expect(actual).toBe(expected);
+  });
 });
