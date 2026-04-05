@@ -53,142 +53,87 @@ export function autoFormatTxt(txt: string, rebuild = false): string {
   }
 }
 
-// Extract lines/blocks that should not be included in the sorting. They will be
-// re-added at the beginning of the sorted output (after @startuml if present).
-//
-// Extracted constructs:
-//   !include directives
-//   legend...endlegend
-//   <style>...</style>
-//   header / header...endheader
-//   footer / footer...endfooter
-//   title / title...end title
-//   skinparam { ... }  (block form — closing "}" would break the component parser)
-//   !if...!endif  (may contain diagram elements; supports nesting)
-//   !procedure...!endprocedure
-//   !function...!endfunction
-//   !startsub...!endsub
-//   !definelong...!enddefinelong  (legacy)
+// Map from the first token of a block-opening line to the line that closes it.
+// Lookup uses trimmedLower split at the first whitespace or "(" so that
+// prefix-based starts ("legend right", "!if %cond()") resolve to the same key.
+const BLOCK_END: Readonly<Record<string, string>> = {
+  legend: "endlegend",
+  "<style>": "</style>",
+  header: "endheader",
+  footer: "endfooter",
+  title: "end title",
+  skinparam: "}", // block form only — see guard below
+  "!if": "!endif", // note: nested !if is not tracked; first !endif closes the block
+  "!procedure": "!endprocedure",
+  "!function": "!endfunction",
+  "!startsub": "!endsub",
+  "!definelong": "!enddefinelong",
+};
+
+// For these keywords a bare keyword on its own line starts a multi-line block.
+// Only begin extraction when the closer actually appears in the file, so a bare
+// "header" / "footer" / "title" used without a matching closer is left in place.
+const REQUIRES_CLOSER: ReadonlySet<string> = new Set(["header", "footer", "title"]);
+
+// Extract lines/blocks that must not be processed by the diagram sorter. They
+// are re-added at the top of the sorted output (after @startuml if present).
 function _extractSpecialLines(lines: string[]): {
   special: string[];
   remaining: string[];
 } {
-  // Pre-scan: only activate multi-line block tracking when a proper closer
-  // exists in the file. This prevents a bare "header" / "footer" / "title"
-  // (with no matching closer) from swallowing all subsequent lines.
-  const lower = lines.map((l) => l.trim().toLowerCase());
-  const hasCloser = (closer: string) => lower.includes(closer);
+  // Pre-compute the set of all distinct trimmed-lower lines for closer checks.
+  const lineSet = new Set(lines.map((l) => l.trim().toLowerCase()));
 
   const special: string[] = [];
   const remaining: string[] = [];
-  let inLegend = false;
-  let inStyle = false;
-  let inHeader = false;
-  let inFooter = false;
-  let inTitle = false;
-  let inSkinparam = false;
-  let ifDepth = 0;
-  let inProcedure = false;
-  let inFunction = false;
-  let inStartsub = false;
-  let inDefinelong = false;
+  let currentEndKey: string | null = null;
 
   for (const line of lines) {
     const trimmed = line.trim();
     const trimmedLower = trimmed.toLowerCase();
 
-    if (inLegend) {
+    // Inside a special block: collect until the closing keyword.
+    if (currentEndKey !== null) {
       special.push(line);
-      if (trimmedLower === "endlegend") inLegend = false;
-    } else if (inStyle) {
+      if (trimmedLower === currentEndKey) currentEndKey = null;
+      continue;
+    }
+
+    // Single-line !include directive (not a block, no closer needed).
+    if (trimmed.startsWith("!include")) {
       special.push(line);
-      if (trimmedLower === "</style>") inStyle = false;
-    } else if (inHeader) {
+      continue;
+    }
+
+    // Derive the first token to look up in BLOCK_END.
+    // Splitting on whitespace or "(" handles "legend right", "!if %cond()", etc.
+    const firstToken = trimmedLower.split(/[\s(]/)[0];
+    const endKey = BLOCK_END[firstToken];
+
+    if (endKey !== undefined) {
+      // skinparam: only the block form (line ends with "{") needs extraction;
+      // single-line "skinparam Key Value" is left for the diagram parser.
+      if (firstToken === "skinparam" && !trimmedLower.endsWith("{")) {
+        remaining.push(line);
+        continue;
+      }
+
+      // header / footer / title with inline text ("header My Title") is a
+      // self-contained single-line directive — extract it without tracking.
+      if (REQUIRES_CLOSER.has(firstToken) && trimmedLower !== firstToken) {
+        special.push(line);
+        continue;
+      }
+
+      // Bare header / footer / title: only start block tracking when the
+      // closer actually appears later in the file.
+      if (REQUIRES_CLOSER.has(firstToken) && !lineSet.has(endKey)) {
+        remaining.push(line);
+        continue;
+      }
+
       special.push(line);
-      if (trimmedLower === "endheader") inHeader = false;
-    } else if (inFooter) {
-      special.push(line);
-      if (trimmedLower === "endfooter") inFooter = false;
-    } else if (inTitle) {
-      special.push(line);
-      if (trimmedLower === "end title") inTitle = false;
-    } else if (inSkinparam) {
-      special.push(line);
-      if (trimmedLower === "}") inSkinparam = false;
-    } else if (ifDepth > 0) {
-      special.push(line);
-      if (trimmedLower.startsWith("!if ") || trimmedLower === "!if")
-        ifDepth++;
-      else if (trimmedLower === "!endif") ifDepth--;
-    } else if (inProcedure) {
-      special.push(line);
-      if (trimmedLower === "!endprocedure") inProcedure = false;
-    } else if (inFunction) {
-      special.push(line);
-      if (trimmedLower === "!endfunction") inFunction = false;
-    } else if (inStartsub) {
-      special.push(line);
-      if (trimmedLower.startsWith("!endsub")) inStartsub = false;
-    } else if (inDefinelong) {
-      special.push(line);
-      if (trimmedLower === "!enddefinelong") inDefinelong = false;
-    } else if (trimmed.startsWith("!include")) {
-      special.push(line);
-    } else if (
-      trimmedLower === "legend" ||
-      trimmedLower.startsWith("legend ") ||
-      trimmedLower.startsWith("legend\t")
-    ) {
-      special.push(line);
-      inLegend = true;
-    } else if (trimmedLower === "<style>") {
-      special.push(line);
-      inStyle = true;
-    } else if (trimmedLower === "header" && hasCloser("endheader")) {
-      special.push(line);
-      inHeader = true;
-    } else if (
-      trimmedLower.startsWith("header ") ||
-      trimmedLower.startsWith("header\t")
-    ) {
-      special.push(line); // single-line header
-    } else if (trimmedLower === "footer" && hasCloser("endfooter")) {
-      special.push(line);
-      inFooter = true;
-    } else if (
-      trimmedLower.startsWith("footer ") ||
-      trimmedLower.startsWith("footer\t")
-    ) {
-      special.push(line); // single-line footer
-    } else if (trimmedLower === "title" && hasCloser("end title")) {
-      special.push(line);
-      inTitle = true;
-    } else if (
-      trimmedLower.startsWith("title ") ||
-      trimmedLower.startsWith("title\t")
-    ) {
-      special.push(line); // single-line title
-    } else if (
-      trimmedLower.startsWith("skinparam") &&
-      trimmedLower.endsWith("{")
-    ) {
-      special.push(line);
-      inSkinparam = true;
-    } else if (trimmedLower.startsWith("!if ") || trimmedLower === "!if") {
-      special.push(line);
-      ifDepth = 1;
-    } else if (trimmedLower.startsWith("!procedure ")) {
-      special.push(line);
-      inProcedure = true;
-    } else if (trimmedLower.startsWith("!function ")) {
-      special.push(line);
-      inFunction = true;
-    } else if (trimmedLower.startsWith("!startsub")) {
-      special.push(line);
-      inStartsub = true;
-    } else if (trimmedLower.startsWith("!definelong")) {
-      special.push(line);
-      inDefinelong = true;
+      currentEndKey = endKey;
     } else {
       remaining.push(line);
     }
