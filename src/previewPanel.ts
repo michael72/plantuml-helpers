@@ -1,6 +1,7 @@
 /* v8 ignore start - this UI file is not tested */
 
 import * as vscode from "vscode";
+import * as crypto from "crypto";
 
 /**
  * Message handler type for webview messages.
@@ -311,6 +312,7 @@ export class PlantUmlPreviewPanel {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline';">
   <title>PlantUML Preview</title>
   <style>
     body {
@@ -357,13 +359,16 @@ export class PlantUmlPreviewPanel {
     const escapedMessage = message
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
 
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline';">
   <title>PlantUML Preview - Error</title>
   <style>
     body {
@@ -422,13 +427,9 @@ export class PlantUmlPreviewPanel {
 }
 
 function getNonce(): string {
-  let text = "";
-  const possible =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  for (let i = 0; i < 32; i++) {
-    text += possible.charAt(Math.floor(Math.random() * possible.length));
-  }
-  return text;
+  // Must be cryptographically random - the CSP nonce is the only thing
+  // allowing the preview script to run while blocking injected scripts.
+  return crypto.randomBytes(24).toString("base64url");
 }
 
 /* v8 ignore stop */

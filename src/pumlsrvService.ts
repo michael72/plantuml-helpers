@@ -82,10 +82,10 @@ function getPumlsrvBinDir(): string {
 }
 
 function findPumlsrvBinary(): string | undefined {
-  // Check PATH via 'which'
+  // Check PATH via 'which' (execFileSync avoids spawning a shell)
   try {
     const result = child_process
-      .execSync("which pumlsrv", { encoding: "utf-8", timeout: 5000 })
+      .execFileSync("which", ["pumlsrv"], { encoding: "utf-8", timeout: 5000 })
       .trim();
     if (result && fs.existsSync(result)) {
       return result;
