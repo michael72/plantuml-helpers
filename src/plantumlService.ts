@@ -94,6 +94,7 @@ async function fetchSvgViaGet(diagramText: string): Promise<string> {
             .then(resolve)
             .catch(reject);
         } catch (error) {
+          /* v8 ignore next @preserve - resolveRedirectUrl only throws Error */
           reject(error instanceof Error ? error : new Error(String(error)));
         }
         return;
@@ -188,6 +189,7 @@ async function fetchSvgViaPost(
             .then(resolve)
             .catch(reject);
         } catch (error) {
+          /* v8 ignore next @preserve - resolveRedirectUrl only throws Error */
           reject(error instanceof Error ? error : new Error(String(error)));
         }
         return;
