@@ -81,6 +81,12 @@ describe("findUmlBoundaries", () => {
       expect(result).toEqual({ startLine: 0, endLine: 3 });
     });
 
+    it("should find package with brace on next line when cursor is on the identifier", () => {
+      const lines = ["package MyPackage", "{", "  class A", "}"];
+      const result = findUmlBoundaries(lines, 0, true);
+      expect(result).toEqual({ startLine: 0, endLine: 3 });
+    });
+
     it("should handle nested braces - finds innermost containing block", () => {
       const lines = [
         "package Outer {",
@@ -111,6 +117,69 @@ describe("findUmlBoundaries", () => {
       const lines = ["component MyComponent {", "  [A] -> [B]", "}"];
       const result = findUmlBoundaries(lines, 1, true);
       expect(result).toEqual({ startLine: 0, endLine: 2 });
+    });
+  });
+
+  describe("blocks closed above the cursor", () => {
+    // Diagram with a skinparam block and a package - the whole diagram
+    // should be selected unless the cursor is inside the package block.
+    const lines = [
+      "@startuml Data Flow", // 0
+      "skinparam component {", // 1
+      "  BackgroundColor<<app>> #4A90D9", // 2
+      "}", // 3
+      'package "DB" {', // 4
+      "  [input1] <<input>>", // 5
+      "}", // 6
+      "[app1] <<app>>", // 7
+      "[input1] --> [app1]", // 8
+      "@enduml", // 9
+    ];
+
+    it.each([0, 1, 2, 3, 7, 8])(
+      "should select the whole diagram, not the skinparam or closed package block (cursor=%i)",
+      (cursor) => {
+        const result = findUmlBoundaries(lines, cursor, true);
+        expect(result).toEqual({ startLine: 1, endLine: 8 });
+      }
+    );
+
+    it.each([4, 5, 6])(
+      "should still select the package block when the cursor is inside it (cursor=%i)",
+      (cursor) => {
+        const result = findUmlBoundaries(lines, cursor, true);
+        expect(result).toEqual({ startLine: 4, endLine: 6 });
+      }
+    );
+
+    it("should not stop the forward search at the closing brace of a nested block", () => {
+      const result = findUmlBoundaries(lines, 0, true);
+      expect(result).toEqual({ startLine: 1, endLine: 8 });
+    });
+
+    it("should skip a skinparam block with the brace on the next line", () => {
+      const withNextLineBrace = [
+        "@startuml", // 0
+        "skinparam component", // 1
+        "{", // 2
+        "  BackgroundColor blue", // 3
+        "}", // 4
+        "A -> B", // 5
+        "@enduml", // 6
+      ];
+      const result = findUmlBoundaries(withNextLineBrace, 3, true);
+      expect(result).toEqual({ startLine: 1, endLine: 5 });
+    });
+
+    it("should ignore braces inside quoted labels", () => {
+      const withQuotedBrace = [
+        "@startuml", // 0
+        'A --> B : "set {x}"', // 1
+        "C --> D", // 2
+        "@enduml", // 3
+      ];
+      const result = findUmlBoundaries(withQuotedBrace, 2, true);
+      expect(result).toEqual({ startLine: 1, endLine: 2 });
     });
   });
 
