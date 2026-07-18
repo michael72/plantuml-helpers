@@ -24,6 +24,9 @@
     "Other"
   ],
   "main": "./out/src/extension.js",
+  "bin": {
+    "pumlfmt": "./out/src/cli.js"
+  },
   "activationEvents": [
     "onLanguage:markdown",
     "onLanguage:plantuml"
