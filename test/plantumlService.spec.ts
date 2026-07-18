@@ -249,6 +249,75 @@ describe("plantumlService", () => {
       expect(callCount).toBe(2);
     });
 
+    it("should sanitize active content out of the fetched SVG", async () => {
+      const svgContent =
+        `<svg onload="alert(1)"><script>alert(2)</script>` +
+        `<text>diagram</text></svg>`;
+      const mockResponse = createMockResponse(200, svgContent);
+      const mockRequest = createMockRequest();
+
+      mocks.httpsGet.mockImplementation(
+        (_url: unknown, callback: (res: http.IncomingMessage) => void) => {
+          callback(mockResponse);
+          emitResponseEvents(mockResponse);
+          return mockRequest;
+        }
+      );
+
+      const result = await fetchSvg("@startuml\nA -> B\n@enduml");
+
+      expect(result).toBe("<svg><text>diagram</text></svg>");
+    });
+
+    it("should reject redirects that downgrade HTTPS to HTTP", async () => {
+      const redirectResponse = createMockResponse(302, "", {
+        location: "http://evil.test/svg/encoded",
+      });
+      const mockRequest = createMockRequest();
+
+      mocks.httpsGet.mockImplementation(
+        (_url: unknown, callback: (res: http.IncomingMessage) => void) => {
+          callback(redirectResponse);
+          return mockRequest;
+        }
+      );
+
+      await expect(fetchSvg("@startuml\nA -> B\n@enduml")).rejects.toThrow(
+        "insecure redirect"
+      );
+      expect(mocks.httpGet).not.toHaveBeenCalled();
+    });
+
+    it("should resolve relative redirect locations against the server URL", async () => {
+      const svgContent = "<svg>relative redirect</svg>";
+      const redirectResponse = createMockResponse(302, "", {
+        location: "/plantuml/svg/other",
+      });
+      const finalResponse = createMockResponse(200, svgContent);
+      const mockRequest = createMockRequest();
+
+      const capturedUrls: string[] = [];
+      mocks.httpsGet.mockImplementation(
+        (url: unknown, callback: (res: http.IncomingMessage) => void) => {
+          capturedUrls.push(url as string);
+          const response =
+            capturedUrls.length === 1 ? redirectResponse : finalResponse;
+          callback(response);
+          if (capturedUrls.length > 1) {
+            emitResponseEvents(response);
+          }
+          return mockRequest;
+        }
+      );
+
+      const result = await fetchSvg("@startuml\nA -> B\n@enduml");
+
+      expect(result).toBe(svgContent);
+      expect(capturedUrls[1]).toBe(
+        "https://www.plantuml.com/plantuml/svg/other"
+      );
+    });
+
     it("should construct correct URL with encoded diagram", async () => {
       const svgContent = "<svg>test</svg>";
       const mockResponse = createMockResponse(200, svgContent);

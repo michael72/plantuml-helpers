@@ -3,6 +3,7 @@ import * as https from "https";
 import * as http from "http";
 import * as zlib from "zlib";
 import { encodePlantUml } from "./plantumlEncoder.js";
+import { sanitizeSvg } from "./svgSanitizer.js";
 import {
   getServerUrl,
   getServerType,
@@ -33,16 +34,42 @@ export function getRenderMethod(): "get" | "post" {
  * @returns Promise resolving to the SVG content
  */
 export async function fetchSvg(diagramText: string): Promise<string> {
+  let svg: string;
   if (getServerType() === "Local pumlsrv") {
     await ensurePumlsrvRunning();
-    return fetchSvgViaPost(diagramText, true);
+    svg = await fetchSvgViaPost(diagramText, true);
+  } else if (getRenderMethod() === "post") {
+    svg = await fetchSvgViaPost(diagramText, false);
+  } else {
+    svg = await fetchSvgViaGet(diagramText);
   }
+  // The server (and thus its response) is user/workspace-configurable,
+  // so the SVG is untrusted input for the preview webviews.
+  return sanitizeSvg(svg);
+}
 
-  const method = getRenderMethod();
-  if (method === "post") {
-    return fetchSvgViaPost(diagramText, false);
+/**
+ * Resolves a redirect Location header against the URL of the original
+ * request. Relative locations are resolved; redirects that would
+ * downgrade an HTTPS request to plain HTTP (or switch to a non-HTTP
+ * scheme) are rejected.
+ */
+function resolveRedirectUrl(location: string, baseUrl: string): string {
+  const resolved = new URL(location, baseUrl);
+  if (resolved.protocol !== "https:" && resolved.protocol !== "http:") {
+    throw new Error(
+      `PlantUML server redirected to unsupported URL scheme: ${resolved.protocol}`
+    );
   }
-  return fetchSvgViaGet(diagramText);
+  if (
+    new URL(baseUrl).protocol === "https:" &&
+    resolved.protocol !== "https:"
+  ) {
+    throw new Error(
+      "PlantUML server attempted an insecure redirect from HTTPS to HTTP"
+    );
+  }
+  return resolved.toString();
 }
 
 /**
@@ -62,7 +89,13 @@ async function fetchSvgViaGet(diagramText: string): Promise<string> {
       const statusCode = response.statusCode ?? 0;
       const location = response.headers.location ?? "";
       if (statusCode >= 300 && statusCode < 400 && location.length > 0) {
-        fetchFromUrl(location).then(resolve).catch(reject);
+        try {
+          fetchFromUrl(resolveRedirectUrl(location, url))
+            .then(resolve)
+            .catch(reject);
+        } catch (error) {
+          reject(error instanceof Error ? error : new Error(String(error)));
+        }
         return;
       }
 
@@ -150,7 +183,13 @@ async function fetchSvgViaPost(
       const statusCode = response.statusCode ?? 0;
       const location = response.headers.location ?? "";
       if (statusCode >= 300 && statusCode < 400 && location.length > 0) {
-        fetchFromUrl(location).then(resolve).catch(reject);
+        try {
+          fetchFromUrl(resolveRedirectUrl(location, postUrl))
+            .then(resolve)
+            .catch(reject);
+        } catch (error) {
+          reject(error instanceof Error ? error : new Error(String(error)));
+        }
         return;
       }
 
