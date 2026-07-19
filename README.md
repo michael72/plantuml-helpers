@@ -33,5 +33,39 @@ Commands with key combinations are:
 * Alt-9: swap arrow left / right
 * Alt-0: rotate arrow to right
 
+## Command line interface (`pumlfmt`)
+
+The _Auto Format_ and _Reformat_ commands are also available outside of
+VS Code as the `pumlfmt` CLI. It works on plain PlantUML files
+(`.puml`, `.plantuml`, `.iuml`, `.pu`, `.wsd`) as well as on markdown files
+(`.md`, `.markdown`), where all ```` ```plantuml ````/```` ```puml ````
+code blocks are formatted. Files are modified in place.
+
+```sh
+pumlfmt diagram.puml       # Auto Format (fix arrow layout)
+pumlfmt --reset README.md  # Reset arrow directions to defaults
+pumlfmt --check *.puml     # exit code 1 if a file would change (for CI)
+```
+
+### Installation (Linux / macOS)
+
+Requires Node.js >= 20. Either run the install script from a checkout:
+
+```sh
+./install.sh
+```
+
+or download and run it directly (clones the sources to `~/.local/share/pumlfmt`):
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/michael72/plantuml-helpers/master/install.sh | bash
+```
+
+The script builds the CLI and places a `pumlfmt` launcher in
+`/usr/local/bin` (if writable, e.g. as root in a Docker container) or
+`~/.local/bin` otherwise. The target directory can be overridden with the
+`BIN_DIR` environment variable, the source/build directory with `PUMLFMT_HOME`.
+
+Alternatively `npm install -g` from a checkout also installs the `pumlfmt` binary.
 
 **Enjoy!**
