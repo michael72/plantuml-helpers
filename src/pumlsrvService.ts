@@ -3,10 +3,10 @@ import * as vscode from "vscode";
 import * as http from "http";
 import * as net from "net";
 import * as child_process from "child_process";
-import * as os from "os";
 import * as path from "path";
 import * as fs from "fs";
 import { encodePlantUml } from "./plantumlEncoder.js";
+import { getPumlsrvBinDir, installPinnedPumlsrv } from "./pumlsrvInstaller.js";
 
 const HELLO_WORLD_PUML = "@startuml\nAlice -> Bob: Hello\n@enduml";
 
@@ -76,11 +76,6 @@ async function checkPumlsrvRunning(port: number): Promise<boolean> {
   });
 }
 
-function getPumlsrvBinDir(): string {
-  const env = globalThis.process.env;
-  return env["XDG_BIN_HOME"] ?? path.join(os.homedir(), ".local", "bin");
-}
-
 function findPumlsrvBinary(): string | undefined {
   // Check PATH via 'which' (execFileSync avoids spawning a shell)
   try {
@@ -103,37 +98,6 @@ function findPumlsrvBinary(): string | undefined {
   return undefined;
 }
 
-async function installPumlsrv(): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const proc = child_process.spawn(
-      "bash",
-      [
-        "-c",
-        "curl -sSL https://raw.githubusercontent.com/michael72/pumlsrv/master/get.sh | bash",
-      ],
-      { stdio: ["pipe", "pipe", "pipe"] }
-    );
-
-    // The install script asks whether to start pumlsrv - answer "n"
-    proc.stdin?.write("n\n");
-    proc.stdin?.end();
-
-    proc.on("close", (code) => {
-      if (code === 0) {
-        resolve();
-      } else {
-        reject(
-          new Error(
-            `pumlsrv installation failed with exit code ${code?.toString() ?? "unknown"}`
-          )
-        );
-      }
-    });
-
-    proc.on("error", reject);
-  });
-}
-
 async function runInstallWithProgress(): Promise<void> {
   await vscode.window.withProgress(
     {
@@ -142,7 +106,7 @@ async function runInstallWithProgress(): Promise<void> {
       cancellable: false,
     },
     async () => {
-      await installPumlsrv();
+      await installPinnedPumlsrv();
     }
   );
 }
@@ -156,7 +120,14 @@ export async function installPumlsrvManually(): Promise<void> {
     void vscode.window.showInformationMessage("pumlsrv is already installed.");
     return;
   }
-  await runInstallWithProgress();
+  try {
+    await runInstallWithProgress();
+  } catch (err) {
+    void vscode.window.showErrorMessage(
+      `pumlsrv installation failed: ${err instanceof Error ? err.message : String(err)}`
+    );
+    return;
+  }
   if (findPumlsrvBinary() === undefined) {
     void vscode.window.showErrorMessage(
       `pumlsrv installation failed: binary not found after install. ` +
