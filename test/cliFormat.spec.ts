@@ -169,6 +169,14 @@ describe("formatMarkdownContent", () => {
     expect(result.warnings[0]).toContain("unterminated");
   });
 
+  it("should stop scanning at an unterminated non-plantuml fence", () => {
+    const original = ["```js", "const x = 1;", ""].join("\n");
+    const result = formatMarkdownContent(original);
+    expect(result.text).toBe(original);
+    expect(result.found).toBe(0);
+    expect(result.warnings).toEqual([]);
+  });
+
   it("should skip empty plantuml blocks", () => {
     const original = ["```plantuml", "```", ""].join("\n");
     const result = formatMarkdownContent(original);

@@ -73,10 +73,13 @@ export function formatMarkdownContent(
 
   let i = 0;
   while (i < lines.length) {
+    /* v8 ignore next @preserve - lines[i] is always defined for i < length */
     const open = FENCE_OPEN.exec(lines[i] ?? "");
     i += 1;
     if (open !== null) {
+      /* v8 ignore next @preserve - the capture group always matches */
       const fence = open[1] ?? "";
+      /* v8 ignore next @preserve - the capture group always matches */
       const info = (open[2] ?? "").toLowerCase();
       // find the closing fence: same character, at least the same length
       const close = _findClosingFence(lines, i, fence);
@@ -134,6 +137,7 @@ function _findClosingFence(
 ): number {
   const fenceChar = fence.charAt(0);
   for (let i = from; i < lines.length; i++) {
+    /* v8 ignore next @preserve - lines[i] is always defined for i < length */
     const trimmed = (lines[i] ?? "").trim();
     if (
       trimmed.length >= fence.length &&
@@ -196,6 +200,7 @@ function _tryFormat(
       return formatted;
     }
   } catch (e) {
+    /* v8 ignore next @preserve - autoFormatTxt only throws Error */
     const message = e instanceof Error ? e.message : String(e);
     result.warnings.push(`${what}: ${message}`);
   }
