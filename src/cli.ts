@@ -12,16 +12,13 @@ import {
   formatPlantUmlContent,
 } from "./cliFormat.js";
 
-const USAGE = `Usage: pumlfmt <command> [options] <file>...
+const USAGE = `Usage: pumlfmt [options] <file>...
 
-Format PlantUML diagrams in .puml files or in \`\`\`plantuml code blocks
-of markdown files. Files are modified in place.
-
-Commands:
-  format    Auto-format the diagrams (fix arrow layout)
-  reset     Reset arrow directions to their defaults, then format
+Auto-formats PlantUML diagrams (fixes the arrow layout) in .puml files or
+in \`\`\`plantuml code blocks of markdown files. Files are modified in place.
 
 Options:
+  -r, --reset    Reset arrow directions to their defaults before formatting
   -c, --check    Do not write; exit with code 1 if a file would change
   -h, --help     Show this help
   -V, --version  Print the version
@@ -65,7 +62,6 @@ function main(argv: string[]): number {
 // stop right away (0 for --help/--version, 2 for usage errors).
 function parseArgs(argv: string[]): CliArgs | number {
   const args: CliArgs = { rebuild: false, check: false, files: [] };
-  let command: string | undefined;
 
   for (const arg of argv) {
     if (arg === "-h" || arg === "--help") {
@@ -74,27 +70,16 @@ function parseArgs(argv: string[]): CliArgs | number {
     } else if (arg === "-V" || arg === "--version") {
       process.stdout.write(`pumlfmt ${readVersion()}\n`);
       return 0;
+    } else if (arg === "-r" || arg === "--reset") {
+      args.rebuild = true;
     } else if (arg === "-c" || arg === "--check") {
       args.check = true;
     } else if (arg.startsWith("-")) {
       process.stderr.write(`pumlfmt: unknown option '${arg}'\n\n${USAGE}`);
       return 2;
-    } else if (command === undefined) {
-      command = arg;
     } else {
       args.files.push(arg);
     }
-  }
-
-  if (command === "reset") {
-    args.rebuild = true;
-  } else if (command !== "format") {
-    const problem =
-      command === undefined
-        ? "missing command"
-        : `unknown command '${command}'`;
-    process.stderr.write(`pumlfmt: ${problem}\n\n${USAGE}`);
-    return 2;
   }
 
   if (args.files.length === 0) {

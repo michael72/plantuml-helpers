@@ -42,9 +42,9 @@ VS Code as the `pumlfmt` CLI. It works on plain PlantUML files
 code blocks are formatted. Files are modified in place.
 
 ```sh
-pumlfmt format diagram.puml    # Auto Format (fix arrow layout)
-pumlfmt reset  README.md       # Reset arrow directions to defaults
-pumlfmt format --check *.puml  # exit code 1 if a file would change (for CI)
+pumlfmt diagram.puml       # Auto Format (fix arrow layout)
+pumlfmt --reset README.md  # Reset arrow directions to defaults
+pumlfmt --check *.puml     # exit code 1 if a file would change (for CI)
 ```
 
 ### Installation (Linux / macOS)

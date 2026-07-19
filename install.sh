@@ -81,5 +81,5 @@ case ":$PATH:" in
      log "  export PATH=\"$BIN_DIR:\$PATH\"" ;;
 esac
 log ""
-log "Usage: pumlfmt format <file.puml|file.md>   # auto-format arrow layout"
-log "       pumlfmt reset  <file.puml|file.md>   # reset arrows to defaults"
+log "Usage: pumlfmt <file.puml|file.md>           # auto-format arrow layout"
+log "       pumlfmt --reset <file.puml|file.md>   # reset arrows to defaults"
