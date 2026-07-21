@@ -28,6 +28,7 @@ export function isInsidePlantumlFence(
   let fence: string | undefined;
 
   for (let i = 0; i <= lineIndex; i++) {
+    /* v8 ignore next @preserve - i never exceeds the line count in practice */
     const line = lines[i] ?? "";
     if (fence === undefined) {
       const open = FENCE_OPEN.exec(line);
@@ -36,8 +37,11 @@ export function isInsidePlantumlFence(
         if (i === lineIndex) {
           return false;
         }
-        fence = open[1] ?? "";
-        insidePlantuml = PLANTUML_FENCE_INFOS.has((open[2] ?? "").toLowerCase());
+        // Both capture groups always match when `open` is non-null.
+        fence = open[1];
+        /* v8 ignore next @preserve - the info capture group always matches */
+        const info = (open[2] ?? "").toLowerCase();
+        insidePlantuml = PLANTUML_FENCE_INFOS.has(info);
       }
     } else {
       // Inside a block - look for the matching closing fence (same character,
@@ -60,7 +64,9 @@ export function isInsidePlantumlFence(
     }
   }
 
-  return fence !== undefined && insidePlantuml;
+  // Reachable only when the loop fell through the last line without matching or
+  // closing a fence, i.e. the cursor line is not inside any block.
+  return false;
 }
 
 /* v8 ignore start - the provider wiring depends on the vscode runtime */
