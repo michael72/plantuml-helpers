@@ -1,0 +1,28 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "scopeName": "markdown.plantuml.codeblock",
+  "injectionSelector": "L:text.html.markdown",
+  "patterns": [{ "include": "#plantuml-code-block" }],
+  "repository": {
+    "plantuml-code-block": {
+      "begin": "(^|\\G)(\\s*)(`{3,}|~{3,})\\s*(?i:(plantuml|puml))\\s*$",
+      "beginCaptures": {
+        "3": { "name": "punctuation.definition.markdown" },
+        "4": { "name": "fenced_code.block.language.markdown" }
+      },
+      "end": "(^|\\G)(\\s*)(\\3)\\s*$",
+      "endCaptures": {
+        "3": { "name": "punctuation.definition.markdown" }
+      },
+      "name": "markup.fenced_code.block.markdown",
+      "patterns": [
+        {
+          "begin": "(^|\\G)(\\s*)(.*)",
+          "while": "(^|\\G)(?!\\s*(`{3,}|~{3,})\\s*$)",
+          "contentName": "meta.embedded.block.plantuml",
+          "patterns": [{ "include": "source.plantuml" }]
+        }
+      ]
+    }
+  }
+}

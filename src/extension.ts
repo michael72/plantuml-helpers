@@ -9,6 +9,7 @@ import { extractUml } from "./selection.js";
 import { fetchSvg } from "./plantumlService.js";
 import { plantUmlPlugin } from "./markdownItPlugin.js";
 import { registerSetThemeCommand } from "./themeService.js";
+import { registerPlantUmlCompletionProvider } from "./completion.js";
 import {
   getServerType,
   stopPumlsrv,
@@ -106,6 +107,8 @@ export function activate(context: vscode.ExtensionContext) {
 
   const setTheme = registerSetThemeCommand();
 
+  const completionProvider = registerPlantUmlCompletionProvider();
+
   // Track whether pumlsrv is active so we can stop it if settings change
   let pumlsrvActive = getServerType() === "Local pumlsrv";
 
@@ -138,6 +141,7 @@ export function activate(context: vscode.ExtensionContext) {
     textChangeListener,
     installPumlsrv,
     setTheme,
+    completionProvider,
     configChangeListener,
   ]) {
     context.subscriptions.push(s);

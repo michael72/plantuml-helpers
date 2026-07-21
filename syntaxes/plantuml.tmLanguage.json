@@ -1,0 +1,104 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "PlantUML",
+  "scopeName": "source.plantuml",
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#diagram-markers" },
+    { "include": "#preprocessor" },
+    { "include": "#strings" },
+    { "include": "#directions" },
+    { "include": "#control-keywords" },
+    { "include": "#storage-types" },
+    { "include": "#builtin-commands" },
+    { "include": "#arrows" },
+    { "include": "#colors" },
+    { "include": "#stereotypes" },
+    { "include": "#numbers" }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.block.plantuml",
+          "begin": "/'",
+          "end": "'/"
+        },
+        {
+          "name": "comment.line.apostrophe.plantuml",
+          "match": "'.*$"
+        }
+      ]
+    },
+    "diagram-markers": {
+      "name": "keyword.control.diagram.plantuml",
+      "match": "^\\s*@(?:start|end)\\w+\\b"
+    },
+    "preprocessor": {
+      "patterns": [
+        {
+          "name": "meta.preprocessor.plantuml",
+          "match": "^\\s*(!(?:define|undef|definelong|enddefinelong|ifdef|ifndef|elif|else|endif|include(?:url|sub)?|import|theme|pragma|function|endfunction|procedure|endprocedure|unquoted|return|while|endwhile|foreach|endfor|local|log|assert|dump_memory|startsub|endsub|option))\\b",
+          "captures": {
+            "1": { "name": "keyword.control.preprocessor.plantuml" }
+          }
+        },
+        {
+          "name": "variable.other.preprocessor.plantuml",
+          "match": "\\$[A-Za-z_][A-Za-z0-9_]*"
+        }
+      ]
+    },
+    "strings": {
+      "name": "string.quoted.double.plantuml",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        {
+          "name": "constant.character.escape.plantuml",
+          "match": "\\\\."
+        }
+      ]
+    },
+    "directions": {
+      "name": "keyword.control.direction.plantuml",
+      "match": "\\b(?:left to right|top to bottom)\\s+direction\\b"
+    },
+    "control-keywords": {
+      "name": "keyword.control.plantuml",
+      "match": "(?<![\\w-])(?:start|stop|end(?:if|while|switch|split|fork|note|box|legend|title|header|footer)?|if|then|elseif|else|while|fork|again|split|partition|repeat|backward|detach|kill|switch|case|goto|alt|opt|loop|par|break|critical|group|note|hnote|rnote|ref|over|activate|deactivate|destroy|create|return|autonumber|autoactivate|newpage|also|as|is|hide|show|remove|restore|unlinked|circle|of|on)(?![\\w-])"
+    },
+    "storage-types": {
+      "name": "storage.type.plantuml",
+      "match": "(?<![\\w-])(?:abstract\\s+class|abstract|class|interface|enum|annotation|entity|struct|protocol|exception|diamond|component|actor|participant|boundary|control|database|collections|queue|usecase|object|map|json|state|node|folder|frame|cloud|package|namespace|rectangle|card|agent|artifact|storage|stack|file|person|hexagon|label|together|circle)(?![\\w-])"
+    },
+    "builtin-commands": {
+      "name": "support.function.plantuml",
+      "match": "(?<![\\w-])(?:skinparam|skin|scale|mainframe|sprite|style|title|caption|footer|header|legend|allow_mixing|allowmixing|set\\s+separator|set\\s+namespaceSeparator|order|page|link|url)(?![\\w-])"
+    },
+    "arrows": {
+      "name": "keyword.operator.arrow.plantuml",
+      "match": "(?:<\\|?|<<|\\\\\\\\|//|\\*|o|x|\\})?(?:-{1,3}|\\.{1,3})(?:\\[[^\\]]*\\])?(?:left|right|up|down|le|ri)?(?:-{0,3}|\\.{0,3})(?:\\|?>|>>|\\\\\\\\|//|\\*|o|x|\\{)?"
+    },
+    "colors": {
+      "patterns": [
+        {
+          "name": "constant.other.color.rgb-value.plantuml",
+          "match": "#[0-9A-Fa-f]{6}\\b|#[0-9A-Fa-f]{3}\\b"
+        },
+        {
+          "name": "support.constant.color.plantuml",
+          "match": "#[A-Za-z][A-Za-z0-9_]*"
+        }
+      ]
+    },
+    "stereotypes": {
+      "name": "entity.other.attribute-name.stereotype.plantuml",
+      "match": "<<[^>]*>>"
+    },
+    "numbers": {
+      "name": "constant.numeric.plantuml",
+      "match": "\\b[0-9]+(?:\\.[0-9]+)?\\b"
+    }
+  }
+}
