@@ -33,6 +33,40 @@
   ],
   "contributes": {
     "markdown.markdownItPlugins": true,
+    "languages": [
+      {
+        "id": "plantuml",
+        "aliases": [
+          "PlantUML",
+          "plantuml"
+        ],
+        "extensions": [
+          ".puml",
+          ".plantuml",
+          ".iuml",
+          ".pu",
+          ".wsd"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "plantuml",
+        "scopeName": "source.plantuml",
+        "path": "./syntaxes/plantuml.tmLanguage.json"
+      },
+      {
+        "scopeName": "markdown.plantuml.codeblock",
+        "path": "./syntaxes/plantuml.markdown.injection.json",
+        "injectTo": [
+          "text.html.markdown"
+        ],
+        "embeddedLanguages": {
+          "meta.embedded.block.plantuml": "plantuml"
+        }
+      }
+    ],
     "commands": [
       {
         "command": "pumlhelper.swapLine",

@@ -11,6 +11,7 @@ This is a small helper for editing PlantUML files - as a VS Code extension and a
 * Changes the arrows in PlantUML diagrams from horizontal to vertical and vice versa. It can also swap the arrow direction along with swapping the content. This is helpful when changing the order in which the elements are drawn.
 * Auto-formats whole diagrams (see the [examples](doc/examples.md)).
 * Shows a live preview of the diagram at the cursor position, rendered by a PlantUML server.
+* Provides PlantUML language support in the editor: syntax highlighting and keyword/snippet completion for `.puml` (and `.plantuml`, `.iuml`, `.pu`, `.wsd`) files as well as inside ` ```plantuml ` / ` ```puml ` code blocks in markdown.
 * Renders ` ```plantuml ` / ` ```puml ` code blocks inside VS Code's built-in markdown preview.
 * Supports PlantUML themes and different rendering servers (public server, local [pumlsrv](https://github.com/michael72/pumlsrv) or a custom URL).
 * Formatting is also available on the command line as `pumlfmt`.
@@ -48,6 +49,21 @@ Commands with key combinations are:
 * `Alt+9`: swap arrow and content
 * `Alt+0`: rotate arrow right
 * `Alt+P`: show PlantUML preview
+
+## Language support (highlighting & completion)
+
+PlantUML files (`.puml`, `.plantuml`, `.iuml`, `.pu`, `.wsd`) get syntax
+highlighting for diagram markers (`@startuml`/`@enduml`), element types
+(`class`, `interface`, `actor`, `component`, …), control keywords, arrows,
+comments (`'` and `/' … '/`), strings, colors and preprocessor directives
+(`!define`, `!include`, …). The same highlighting is applied inside
+` ```plantuml ` / ` ```puml ` fenced code blocks in markdown.
+
+Keyword and snippet completion is available in PlantUML files and inside
+PlantUML code blocks in markdown. Start typing (or press `Ctrl+Space`) to get
+suggestions for keywords, element types and preprocessor directives; entries
+like `startuml`, `note-block`, `if-else`, `alt-block`, `loop-block` and
+`package-block` expand into ready-to-fill snippets.
 
 ## Markdown preview
 
