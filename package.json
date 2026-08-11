@@ -193,7 +193,7 @@
     "@vitest/coverage-v8": "^4.1.10",
     "@vitest/ui": "^4.1.10",
     "@vscode/vsce": "^3.9.2",
-    "eslint": "^10.8.0",
+    "eslint": "^10.8.1",
     "markdown-it": "^15.0.0",
     "prettier": "^3.9.5",
     "tsx": "^4.23.5",
