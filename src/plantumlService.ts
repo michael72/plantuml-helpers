@@ -1,6 +1,4 @@
 import * as vscode from "vscode";
-import * as https from "https";
-import * as http from "http";
 import * as zlib from "zlib";
 import { encodePlantUml } from "./plantumlEncoder.js";
 import { sanitizeSvg } from "./svgSanitizer.js";
@@ -9,6 +7,7 @@ import {
   getServerType,
   ensurePumlsrvRunning,
 } from "./pumlsrvService.js";
+import { httpGet, httpPost } from "./httpClient.js";
 
 export { getServerUrl };
 
@@ -49,90 +48,14 @@ export async function fetchSvg(diagramText: string): Promise<string> {
 }
 
 /**
- * Resolves a redirect Location header against the URL of the original
- * request. Relative locations are resolved; redirects that would
- * downgrade an HTTPS request to plain HTTP (or switch to a non-HTTP
- * scheme) are rejected.
- */
-function resolveRedirectUrl(location: string, baseUrl: string): string {
-  const resolved = new URL(location, baseUrl);
-  if (resolved.protocol !== "https:" && resolved.protocol !== "http:") {
-    throw new Error(
-      `PlantUML server redirected to unsupported URL scheme: ${resolved.protocol}`
-    );
-  }
-  if (
-    new URL(baseUrl).protocol === "https:" &&
-    resolved.protocol !== "https:"
-  ) {
-    throw new Error(
-      "PlantUML server attempted an insecure redirect from HTTPS to HTTP"
-    );
-  }
-  return resolved.toString();
-}
-
-/**
  * Fetches SVG via GET request with the encoded diagram in the URL.
+ * Delegates HTTP I/O to httpClient.
  */
 async function fetchSvgViaGet(diagramText: string): Promise<string> {
   const encoded = encodePlantUml(diagramText);
   const serverUrl = getServerUrl();
   const url = `${serverUrl}/svg/${encoded}`;
-
-  return new Promise((resolve, reject) => {
-    const protocol = url.startsWith("https") ? https : http;
-
-    const request = protocol.get(url, (response) => {
-      // Handle redirects
-      /* v8 ignore next @preserve - there should be a response inside the callback */
-      const statusCode = response.statusCode ?? 0;
-      const location = response.headers.location ?? "";
-      if (statusCode >= 300 && statusCode < 400 && location.length > 0) {
-        try {
-          fetchFromUrl(resolveRedirectUrl(location, url))
-            .then(resolve)
-            .catch(reject);
-        } catch (error) {
-          /* v8 ignore next @preserve - resolveRedirectUrl only throws Error */
-          reject(error instanceof Error ? error : new Error(String(error)));
-        }
-        return;
-      }
-
-      if (response.statusCode !== 200) {
-        reject(
-          new Error(
-            `PlantUML server returned status ${response.statusCode}: ${response.statusMessage}`
-          )
-        );
-        return;
-      }
-
-      let data = "";
-      response.setEncoding("utf8");
-      response.on("data", (chunk: string) => {
-        data += chunk;
-      });
-      response.on("end", () => {
-        resolve(data);
-      });
-      response.on("error", reject);
-    });
-
-    request.on("error", (error) => {
-      reject(
-        new Error(`Failed to connect to PlantUML server: ${error.message}`)
-      );
-    });
-
-    request.setTimeout(30000, () => {
-      /* v8 ignore start */
-      request.destroy();
-      reject(new Error("Request to PlantUML server timed out"));
-      /* v8 ignore stop */
-    });
-  });
+  return httpGet(url);
 }
 
 /**
@@ -140,17 +63,19 @@ async function fetchSvgViaGet(diagramText: string): Promise<string> {
  * The PlantUML server (Jetty-based) accepts POST requests where the body
  * contains the diagram source as plain text or deflate-compressed bytes.
  *
+ * Delegates HTTP I/O to httpClient, keeping body preparation (compression)
+ * in this module since that is domain-specific.
+ *
  * @param diagramText The PlantUML diagram source text
  * @param compress Whether to deflate-compress the request body
  * @returns Promise resolving to the SVG content
  */
 async function fetchSvgViaPost(
   diagramText: string,
-  compress: boolean
+  compress: boolean,
 ): Promise<string> {
   const serverUrl = getServerUrl();
   const postUrl = `${serverUrl}/svg/`;
-  const parsedUrl = new URL(postUrl);
 
   let body: Buffer;
 
@@ -160,8 +85,6 @@ async function fetchSvgViaPost(
     body = Buffer.from(diagramText, "utf-8");
   }
 
-  const protocol = parsedUrl.protocol === "https:" ? https : http;
-
   const headers: Record<string, string | number> = {
     "Content-Type": "text/plain",
     "Content-Length": body.length,
@@ -170,106 +93,5 @@ async function fetchSvgViaPost(
     headers["Content-Encoding"] = "deflate";
   }
 
-  const options: http.RequestOptions = {
-    hostname: parsedUrl.hostname,
-    port: parsedUrl.port || undefined,
-    path: parsedUrl.pathname,
-    method: "POST",
-    headers,
-  };
-
-  return new Promise((resolve, reject) => {
-    const request = protocol.request(options, (response) => {
-      /* v8 ignore next @preserve - there should be a response inside the callback */
-      const statusCode = response.statusCode ?? 0;
-      const location = response.headers.location ?? "";
-      if (statusCode >= 300 && statusCode < 400 && location.length > 0) {
-        try {
-          fetchFromUrl(resolveRedirectUrl(location, postUrl))
-            .then(resolve)
-            .catch(reject);
-        } catch (error) {
-          /* v8 ignore next @preserve - resolveRedirectUrl only throws Error */
-          reject(error instanceof Error ? error : new Error(String(error)));
-        }
-        return;
-      }
-
-      if (response.statusCode !== 200) {
-        reject(
-          new Error(
-            `PlantUML server returned status ${response.statusCode}: ${response.statusMessage}`
-          )
-        );
-        return;
-      }
-
-      let data = "";
-      response.setEncoding("utf8");
-      response.on("data", (chunk: string) => {
-        data += chunk;
-      });
-      response.on("end", () => {
-        resolve(data);
-      });
-      response.on("error", reject);
-    });
-
-    request.on("error", (error) => {
-      reject(
-        new Error(`Failed to connect to PlantUML server: ${error.message}`)
-      );
-    });
-
-    request.setTimeout(30000, () => {
-      /* v8 ignore start */
-      request.destroy();
-      reject(new Error("Request to PlantUML server timed out"));
-      /* v8 ignore stop */
-    });
-
-    request.write(body);
-    request.end();
-  });
-}
-
-/**
- * Helper function to fetch from a URL (used for redirects).
- */
-function fetchFromUrl(url: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    /* v8 ignore next @preserve */
-    const protocol = url.startsWith("https") ? https : http;
-
-    const request = protocol.get(url, (response) => {
-      /* v8 ignore start */
-      if (response.statusCode !== 200) {
-        reject(
-          new Error(
-            `PlantUML server returned status ${response.statusCode}: ${response.statusMessage}`
-          )
-        );
-        return;
-      }
-      /* v8 ignore stop */
-
-      let data = "";
-      response.setEncoding("utf8");
-      response.on("data", (chunk: string) => {
-        data += chunk;
-      });
-      response.on("end", () => {
-        resolve(data);
-      });
-      response.on("error", reject);
-    });
-
-    request.on("error", reject);
-    request.setTimeout(30000, () => {
-      /* v8 ignore start */
-      request.destroy();
-      reject(new Error("Request to PlantUML server timed out"));
-      /* v8 ignore stop */
-    });
-  });
+  return httpPost(postUrl, body, { headers });
 }

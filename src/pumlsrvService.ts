@@ -1,11 +1,11 @@
 import * as vscode from "vscode";
-import * as http from "http";
 import * as net from "net";
 import * as child_process from "child_process";
 import * as path from "path";
 import * as fs from "fs";
 import { encodePlantUml } from "./plantumlEncoder.js";
 import { getPumlsrvBinDir, installPinnedPumlsrv } from "./pumlsrvInstaller.js";
+import { httpGet } from "./httpClient.js";
 
 /* ------------------------------------------------------------------ */
 /*  ProcessRunner adapter                                              */
@@ -105,25 +105,16 @@ async function findFreePort(): Promise<number> {
 }
 
 async function checkPumlsrvRunning(port: number): Promise<boolean> {
-  return new Promise((resolve) => {
-    const encoded = encodePlantUml(HELLO_WORLD_PUML);
-    const req = http.get(
+  const encoded = encodePlantUml(HELLO_WORLD_PUML);
+  try {
+    await httpGet(
       `http://localhost:${port}/plantuml/svg/${encoded}`,
       { timeout: 2000 },
-      (res) => {
-        // Drain response to avoid socket hang
-        res.resume();
-        resolve(res.statusCode === 200);
-      }
     );
-    req.on("error", () => {
-      resolve(false);
-    });
-    req.on("timeout", () => {
-      req.destroy();
-      resolve(false);
-    });
-  });
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function findPumlsrvBinary(): string | undefined {
@@ -223,28 +214,15 @@ export async function stopPumlsrv(): Promise<void> {
   if (port === undefined) {
     return;
   }
-  return new Promise((resolve) => {
-    const req = http.get(
-      `http://localhost:${port}/exit`,
-      { timeout: 3000 },
-      (res) => {
-        res.resume();
-        resolve();
-      }
-    );
-    req.on("error", () => {
-      resolve();
-    });
-    req.on("timeout", () => {
-      req.destroy();
-      // Fall back to killing the process directly
-      if (pumlsrvProcess) {
-        pumlsrvProcess.kill();
-        pumlsrvProcess = undefined;
-      }
-      resolve();
-    });
-  });
+  try {
+    await httpGet(`http://localhost:${port}/exit`, { timeout: 3000 });
+  } catch {
+    // Fall back to killing the process directly on timeout/error
+    if (pumlsrvProcess) {
+      pumlsrvProcess.kill();
+      pumlsrvProcess = undefined;
+    }
+  }
 }
 
 export function ensurePumlsrvRunning(): Promise<void> {

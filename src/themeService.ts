@@ -1,8 +1,7 @@
 import * as vscode from "vscode";
-import * as https from "https";
-import * as http from "http";
 import { encodePlantUml } from "./plantumlEncoder.js";
 import { getServerUrl } from "./plantumlService.js";
+import { httpGet } from "./httpClient.js";
 
 /**
  * Fetches the list of available PlantUML themes from the configured server.
@@ -15,7 +14,7 @@ export async function getAvailableThemes(): Promise<string[]> {
   const serverUrl = getServerUrl();
   const url = `${serverUrl}/txt/${encoded}`;
 
-  const text = await fetchText(url);
+  const text = await httpGet(url);
   const result = parseThemes(text);
   return result;
 }
@@ -104,49 +103,5 @@ export function registerSetThemeCommand(): vscode.Disposable {
       );
     }
     await vscode.commands.executeCommand("markdown.preview.refresh");
-  });
-}
-
-/**
- * Fetches plain text from a URL.
- */
-function fetchText(url: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    /* v8 ignore next @preserve */
-    const protocol = url.startsWith("https") ? https : http;
-
-    const request = protocol.get(url, (response) => {
-      if (response.statusCode !== 200) {
-        reject(
-          new Error(
-            `PlantUML server returned status ${response.statusCode}: ${response.statusMessage}`
-          )
-        );
-        return;
-      }
-
-      let data = "";
-      response.setEncoding("utf8");
-      response.on("data", (chunk: string) => {
-        data += chunk;
-      });
-      response.on("end", () => {
-        resolve(data);
-      });
-      response.on("error", reject);
-    });
-
-    request.on("error", (error) => {
-      /* v8 ignore next @preserve */
-      reject(
-        new Error(`Failed to connect to PlantUML server: ${error.message}`)
-      );
-    });
-
-    /* v8 ignore next @preserve */
-    request.setTimeout(15000, () => {
-      request.destroy();
-      reject(new Error("Request to PlantUML server timed out"));
-    });
   });
 }

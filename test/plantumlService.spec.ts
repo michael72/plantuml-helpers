@@ -1,25 +1,14 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { EventEmitter, PassThrough } from "stream";
-import type * as http from "http";
 
-// Use vi.hoisted to declare mocks that will be used in vi.mock
-const mocks = vi.hoisted(() => ({
-  httpsGet: vi.fn(),
+// Mock httpClient before imports
+const httpClientMocks = vi.hoisted(() => ({
   httpGet: vi.fn(),
-  httpsRequest: vi.fn(),
-  httpRequest: vi.fn(),
-  ensurePumlsrvRunning: vi.fn().mockResolvedValue(undefined),
+  httpPost: vi.fn(),
 }));
 
-// Mock modules before imports
-vi.mock("https", () => ({
-  get: mocks.httpsGet,
-  request: mocks.httpsRequest,
-}));
-
-vi.mock("http", () => ({
-  get: mocks.httpGet,
-  request: mocks.httpRequest,
+vi.mock("../src/httpClient.js", () => ({
+  httpGet: httpClientMocks.httpGet,
+  httpPost: httpClientMocks.httpPost,
 }));
 
 vi.mock("../src/pumlsrvService.js", async (importOriginal) => {
@@ -28,7 +17,7 @@ vi.mock("../src/pumlsrvService.js", async (importOriginal) => {
   return {
     ...original,
     getServerUrl: vi.fn(original.getServerUrl),
-    ensurePumlsrvRunning: mocks.ensurePumlsrvRunning,
+    ensurePumlsrvRunning: vi.fn().mockResolvedValue(undefined),
   };
 });
 
@@ -47,47 +36,10 @@ import {
   fetchSvg,
 } from "../src/plantumlService";
 
-// Create a mock response helper that emits events on next tick
-function createMockResponse(
-  statusCode: number,
-  data: string,
-  headers: Record<string, string> = {}
-): http.IncomingMessage {
-  const response = new PassThrough() as unknown as http.IncomingMessage;
-  response.statusCode = statusCode;
-  response.statusMessage = statusCode === 200 ? "OK" : "Error";
-  response.headers = headers;
-  response.setEncoding = vi.fn();
-
-  // Store data to emit later (will be triggered manually)
-  (response as unknown as { _testData: string })._testData = data;
-
-  return response;
-}
-
-// Helper to emit response events after listeners are attached
-function emitResponseEvents(response: http.IncomingMessage): void {
-  const data = (response as unknown as { _testData: string })._testData;
-  process.nextTick(() => {
-    response.emit("data", data);
-    response.emit("end");
-  });
-}
-
-// Create a mock request helper
-function createMockRequest(): http.ClientRequest {
-  const request = new EventEmitter() as http.ClientRequest;
-  request.setTimeout = vi.fn().mockReturnThis();
-  request.destroy = vi.fn();
-  request.write = vi.fn();
-  request.end = vi.fn();
-  return request;
-}
-
 describe("plantumlService", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // Reset vscode mock to default https URL (vi.clearAllMocks only clears call history, not implementations)
+    // Reset vscode mock to default https URL
     vi.mocked(vscode.workspace.getConfiguration).mockReturnValue({
       get: vi.fn((_key: string, defaultValue: string) => defaultValue),
     } as unknown as vscode.WorkspaceConfiguration);
@@ -110,7 +62,7 @@ describe("plantumlService", () => {
 
       expect(result).toBe("https://www.plantuml.com/plantuml");
       expect(vscode.workspace.getConfiguration).toHaveBeenCalledWith(
-        "plantumlHelpers"
+        "plantumlHelpers",
       );
     });
 
@@ -146,53 +98,41 @@ describe("plantumlService", () => {
     });
   });
 
-  describe("fetchSvg", () => {
-    it("should fetch SVG from PlantUML server", async () => {
+  describe("fetchSvg via GET", () => {
+    it("should fetch SVG from PlantUML server via httpGet", async () => {
       const svgContent = "<svg>test diagram</svg>";
-      const mockResponse = createMockResponse(200, svgContent);
-      const mockRequest = createMockRequest();
-
-      mocks.httpsGet.mockImplementation(
-        (_url: unknown, callback: (res: http.IncomingMessage) => void) => {
-          callback(mockResponse);
-          emitResponseEvents(mockResponse);
-          return mockRequest;
-        }
-      );
+      httpClientMocks.httpGet.mockResolvedValue(svgContent);
 
       const result = await fetchSvg("@startuml\nA -> B\n@enduml");
 
       expect(result).toBe(svgContent);
-    });
+      expect(httpClientMocks.httpGet).toHaveBeenCalledTimes(1);
 
-    it("should handle non-200 status codes", async () => {
-      const mockResponse = createMockResponse(500, "Internal Server Error");
-      const mockRequest = createMockRequest();
-
-      mocks.httpsGet.mockImplementation(
-        (_url: unknown, callback: (res: http.IncomingMessage) => void) => {
-          callback(mockResponse);
-          return mockRequest;
-        }
-      );
-
-      await expect(fetchSvg("@startuml\nA -> B\n@enduml")).rejects.toThrow(
-        "PlantUML server returned status 500"
+      // Verify the URL contains the encoded diagram
+      const calledUrl = httpClientMocks.httpGet.mock.calls[0]![0] as string;
+      expect(calledUrl).toContain("/svg/");
+      expect(calledUrl).toMatch(
+        /https:\/\/www\.plantuml\.com\/plantuml\/svg\/[0-9A-Za-z\-_]+/,
       );
     });
 
-    it("should handle network errors", async () => {
-      const mockRequest = createMockRequest();
-
-      mocks.httpsGet.mockImplementation(() => {
-        process.nextTick(() => {
-          mockRequest.emit("error", new Error("Network unreachable"));
-        });
-        return mockRequest;
-      });
+    it("should reject when httpGet fails", async () => {
+      httpClientMocks.httpGet.mockRejectedValue(
+        new Error("Server returned status 500: Internal Server Error"),
+      );
 
       await expect(fetchSvg("@startuml\nA -> B\n@enduml")).rejects.toThrow(
-        "Failed to connect to PlantUML server"
+        "Server returned status 500",
+      );
+    });
+
+    it("should reject when httpGet throws a network error", async () => {
+      httpClientMocks.httpGet.mockRejectedValue(
+        new Error("Failed to connect to server: Network unreachable"),
+      );
+
+      await expect(fetchSvg("@startuml\nA -> B\n@enduml")).rejects.toThrow(
+        "Failed to connect to server",
       );
     });
 
@@ -203,161 +143,37 @@ describe("plantumlService", () => {
       } as unknown as vscode.WorkspaceConfiguration);
 
       const svgContent = "<svg>local diagram</svg>";
-      const mockResponse = createMockResponse(200, svgContent);
-      const mockRequest = createMockRequest();
-
-      mocks.httpGet.mockImplementation(
-        (_url: unknown, callback: (res: http.IncomingMessage) => void) => {
-          callback(mockResponse);
-          emitResponseEvents(mockResponse);
-          return mockRequest;
-        }
-      );
+      httpClientMocks.httpGet.mockResolvedValue(svgContent);
 
       const result = await fetchSvg("@startuml\nA -> B\n@enduml");
 
-      expect(mocks.httpGet).toHaveBeenCalled();
+      const calledUrl = httpClientMocks.httpGet.mock.calls[0]![0] as string;
+      expect(calledUrl).toContain("http://local-plantuml.test");
       expect(result).toBe(svgContent);
-    });
-
-    it("should handle redirects", async () => {
-      const redirectUrl = "https://redirected.plantuml.com/svg/encoded";
-      const svgContent = "<svg>redirected diagram</svg>";
-
-      const redirectResponse = createMockResponse(302, "", {
-        location: redirectUrl,
-      });
-      const finalResponse = createMockResponse(200, svgContent);
-      const mockRequest = createMockRequest();
-
-      let callCount = 0;
-      mocks.httpsGet.mockImplementation(
-        (_url: unknown, callback: (res: http.IncomingMessage) => void) => {
-          callCount++;
-          const response = callCount === 1 ? redirectResponse : finalResponse;
-          callback(response);
-          if (callCount > 1) {
-            emitResponseEvents(response);
-          }
-          return mockRequest;
-        }
-      );
-
-      const result = await fetchSvg("@startuml\nA -> B\n@enduml");
-
-      expect(result).toBe(svgContent);
-      expect(callCount).toBe(2);
     });
 
     it("should sanitize active content out of the fetched SVG", async () => {
       const svgContent =
         `<svg onload="alert(1)"><script>alert(2)</script>` +
         `<text>diagram</text></svg>`;
-      const mockResponse = createMockResponse(200, svgContent);
-      const mockRequest = createMockRequest();
-
-      mocks.httpsGet.mockImplementation(
-        (_url: unknown, callback: (res: http.IncomingMessage) => void) => {
-          callback(mockResponse);
-          emitResponseEvents(mockResponse);
-          return mockRequest;
-        }
-      );
+      httpClientMocks.httpGet.mockResolvedValue(svgContent);
 
       const result = await fetchSvg("@startuml\nA -> B\n@enduml");
 
       expect(result).toBe("<svg><text>diagram</text></svg>");
     });
 
-    it("should reject redirects that downgrade HTTPS to HTTP", async () => {
-      const redirectResponse = createMockResponse(302, "", {
-        location: "http://evil.test/svg/encoded",
-      });
-      const mockRequest = createMockRequest();
-
-      mocks.httpsGet.mockImplementation(
-        (_url: unknown, callback: (res: http.IncomingMessage) => void) => {
-          callback(redirectResponse);
-          return mockRequest;
-        }
-      );
-
-      await expect(fetchSvg("@startuml\nA -> B\n@enduml")).rejects.toThrow(
-        "insecure redirect"
-      );
-      expect(mocks.httpGet).not.toHaveBeenCalled();
-    });
-
-    it("should reject redirects to non-HTTP URL schemes", async () => {
-      const redirectResponse = createMockResponse(302, "", {
-        location: "file:///etc/passwd",
-      });
-      const mockRequest = createMockRequest();
-
-      mocks.httpsGet.mockImplementation(
-        (_url: unknown, callback: (res: http.IncomingMessage) => void) => {
-          callback(redirectResponse);
-          return mockRequest;
-        }
-      );
-
-      await expect(fetchSvg("@startuml\nA -> B\n@enduml")).rejects.toThrow(
-        "unsupported URL scheme"
-      );
-      expect(mocks.httpGet).not.toHaveBeenCalled();
-    });
-
-    it("should resolve relative redirect locations against the server URL", async () => {
-      const svgContent = "<svg>relative redirect</svg>";
-      const redirectResponse = createMockResponse(302, "", {
-        location: "/plantuml/svg/other",
-      });
-      const finalResponse = createMockResponse(200, svgContent);
-      const mockRequest = createMockRequest();
-
-      const capturedUrls: string[] = [];
-      mocks.httpsGet.mockImplementation(
-        (url: unknown, callback: (res: http.IncomingMessage) => void) => {
-          capturedUrls.push(url as string);
-          const response =
-            capturedUrls.length === 1 ? redirectResponse : finalResponse;
-          callback(response);
-          if (capturedUrls.length > 1) {
-            emitResponseEvents(response);
-          }
-          return mockRequest;
-        }
-      );
-
-      const result = await fetchSvg("@startuml\nA -> B\n@enduml");
-
-      expect(result).toBe(svgContent);
-      expect(capturedUrls[1]).toBe(
-        "https://www.plantuml.com/plantuml/svg/other"
-      );
-    });
-
     it("should construct correct URL with encoded diagram", async () => {
       const svgContent = "<svg>test</svg>";
-      const mockResponse = createMockResponse(200, svgContent);
-      const mockRequest = createMockRequest();
-
-      let capturedUrl = "";
-      mocks.httpsGet.mockImplementation(
-        (url: unknown, callback: (res: http.IncomingMessage) => void) => {
-          capturedUrl = url as string;
-          callback(mockResponse);
-          emitResponseEvents(mockResponse);
-          return mockRequest;
-        }
-      );
+      httpClientMocks.httpGet.mockResolvedValue(svgContent);
 
       await fetchSvg("@startuml\ntest\n@enduml");
 
+      const calledUrl = httpClientMocks.httpGet.mock.calls[0]![0] as string;
       // URL should contain /svg/ and encoded content
-      expect(capturedUrl).toContain("/svg/");
-      expect(capturedUrl).toMatch(
-        /https:\/\/www\.plantuml\.com\/plantuml\/svg\/[0-9A-Za-z\-_]+/
+      expect(calledUrl).toContain("/svg/");
+      expect(calledUrl).toMatch(
+        /https:\/\/www\.plantuml\.com\/plantuml\/svg\/[0-9A-Za-z\-_]+/,
       );
     });
   });
@@ -372,40 +188,30 @@ describe("plantumlService", () => {
       } as unknown as vscode.WorkspaceConfiguration);
 
       const svgContent = "<svg>post diagram</svg>";
-      const mockResponse = createMockResponse(200, svgContent);
-      const mockRequest = createMockRequest();
-
-      mocks.httpsRequest.mockImplementation(
-        (_opts: unknown, callback: (res: http.IncomingMessage) => void) => {
-          callback(mockResponse);
-          emitResponseEvents(mockResponse);
-          return mockRequest;
-        }
-      );
+      httpClientMocks.httpPost.mockResolvedValue(svgContent);
 
       const diagramText = "@startuml\nA -> B\n@enduml";
       const result = await fetchSvg(diagramText);
 
       expect(result).toBe(svgContent);
-      expect(mocks.httpsRequest).toHaveBeenCalled();
+      expect(httpClientMocks.httpPost).toHaveBeenCalledTimes(1);
 
-      // Verify request options
-      const options = mocks.httpsRequest.mock
-        .calls[0]![0] as http.RequestOptions;
-      expect(options.method).toBe("POST");
-      expect(options.path).toBe("/plantuml/svg/");
-      expect((options.headers as Record<string, unknown>)["Content-Type"]).toBe(
-        "text/plain"
-      );
-      expect(
-        (options.headers as Record<string, unknown>)["Content-Length"]
-      ).toBe(Buffer.byteLength(diagramText));
+      const calledUrl = httpClientMocks.httpPost.mock.calls[0]![0] as string;
+      const calledBody = httpClientMocks.httpPost.mock
+        .calls[0]![1] as Buffer;
 
-      // Verify body was written
-      expect(mockRequest.write).toHaveBeenCalledWith(
-        Buffer.from(diagramText, "utf-8")
-      );
-      expect(mockRequest.end).toHaveBeenCalled();
+      expect(calledUrl).toBe("https://www.plantuml.com/plantuml/svg/");
+      expect(calledBody).toEqual(Buffer.from(diagramText, "utf-8"));
+
+      // Verify headers passed via options
+      const calledOptions = httpClientMocks.httpPost.mock
+        .calls[0]![2] as Record<string, unknown>;
+      expect(calledOptions).toBeDefined();
+      if (calledOptions) {
+        const headers = calledOptions["headers"] as Record<string, unknown>;
+        expect(headers["Content-Type"]).toBe("text/plain");
+        expect(headers["Content-Length"]).toBe(Buffer.byteLength(diagramText));
+      }
     });
 
     it("should always use POST with deflate compression when serverType is 'Local pumlsrv'", async () => {
@@ -416,42 +222,28 @@ describe("plantumlService", () => {
         }),
       } as unknown as vscode.WorkspaceConfiguration);
 
-      // Mock getServerUrl to return a valid localhost URL for pumlsrv
-      vi.mocked(getServerUrl).mockReturnValueOnce(
-        "http://localhost:8765/plantuml"
-      );
-
       const svgContent = "<svg>pumlsrv diagram</svg>";
-      const mockResponse = createMockResponse(200, svgContent);
-      const mockRequest = createMockRequest();
-
-      mocks.httpRequest.mockImplementation(
-        (_opts: unknown, callback: (res: http.IncomingMessage) => void) => {
-          callback(mockResponse);
-          emitResponseEvents(mockResponse);
-          return mockRequest;
-        }
-      );
+      httpClientMocks.httpPost.mockResolvedValue(svgContent);
 
       const diagramText = "@startuml\nA -> B\n@enduml";
       const result = await fetchSvg(diagramText);
 
       expect(result).toBe(svgContent);
-      expect(mocks.ensurePumlsrvRunning).toHaveBeenCalled();
 
-      // Verify POST with deflate compression was used regardless of renderMethod config
-      const options = mocks.httpRequest.mock
-        .calls[0]![0] as http.RequestOptions;
-      expect(options.method).toBe("POST");
-      expect(
-        (options.headers as Record<string, unknown>)["Content-Encoding"]
-      ).toBe("deflate");
+      const calledBody = httpClientMocks.httpPost.mock
+        .calls[0]![1] as Buffer;
+      expect(Buffer.isBuffer(calledBody)).toBe(true);
+      // Body should be compressed (not plain text)
+      expect(calledBody).not.toEqual(Buffer.from(diagramText, "utf-8"));
 
-      // Verify body was compressed
-      const writtenBody = (mockRequest.write as ReturnType<typeof vi.fn>).mock
-        .calls[0]![0] as Buffer;
-      expect(Buffer.isBuffer(writtenBody)).toBe(true);
-      expect(writtenBody).not.toEqual(Buffer.from(diagramText, "utf-8"));
+      // Verify deflate header
+      const calledOptions = httpClientMocks.httpPost.mock
+        .calls[0]![2] as Record<string, unknown>;
+      expect(calledOptions).toBeDefined();
+      if (calledOptions) {
+        const headers = calledOptions["headers"] as Record<string, unknown>;
+        expect(headers["Content-Encoding"]).toBe("deflate");
+      }
     });
 
     it("should use http for http server URLs in POST mode", async () => {
@@ -466,28 +258,13 @@ describe("plantumlService", () => {
       } as unknown as vscode.WorkspaceConfiguration);
 
       const svgContent = "<svg>local post</svg>";
-      const mockResponse = createMockResponse(200, svgContent);
-      const mockRequest = createMockRequest();
-
-      mocks.httpRequest.mockImplementation(
-        (_opts: unknown, callback: (res: http.IncomingMessage) => void) => {
-          callback(mockResponse);
-          emitResponseEvents(mockResponse);
-          return mockRequest;
-        }
-      );
+      httpClientMocks.httpPost.mockResolvedValue(svgContent);
 
       const result = await fetchSvg("@startuml\nA -> B\n@enduml");
 
       expect(result).toBe(svgContent);
-      expect(mocks.httpRequest).toHaveBeenCalled();
-      expect(mocks.httpsRequest).not.toHaveBeenCalled();
-
-      const options = mocks.httpRequest.mock
-        .calls[0]![0] as http.RequestOptions;
-      expect(options.hostname).toBe("localhost");
-      expect(options.port).toBe("8080");
-      expect(options.path).toBe("/plantuml/svg/");
+      const calledUrl = httpClientMocks.httpPost.mock.calls[0]![0] as string;
+      expect(calledUrl).toBe("http://localhost:8080/plantuml/svg/");
     });
 
     it("should handle non-200 status codes in POST mode", async () => {
@@ -498,18 +275,12 @@ describe("plantumlService", () => {
         }),
       } as unknown as vscode.WorkspaceConfiguration);
 
-      const mockResponse = createMockResponse(500, "Internal Server Error");
-      const mockRequest = createMockRequest();
-
-      mocks.httpsRequest.mockImplementation(
-        (_opts: unknown, callback: (res: http.IncomingMessage) => void) => {
-          callback(mockResponse);
-          return mockRequest;
-        }
+      httpClientMocks.httpPost.mockRejectedValue(
+        new Error("Server returned status 500: Internal Server Error"),
       );
 
       await expect(fetchSvg("@startuml\nA -> B\n@enduml")).rejects.toThrow(
-        "PlantUML server returned status 500"
+        "Server returned status 500",
       );
     });
 
@@ -521,86 +292,13 @@ describe("plantumlService", () => {
         }),
       } as unknown as vscode.WorkspaceConfiguration);
 
-      const mockRequest = createMockRequest();
-
-      mocks.httpsRequest.mockImplementation(() => {
-        process.nextTick(() => {
-          mockRequest.emit("error", new Error("Connection refused"));
-        });
-        return mockRequest;
-      });
-
-      await expect(fetchSvg("@startuml\nA -> B\n@enduml")).rejects.toThrow(
-        "Failed to connect to PlantUML server"
-      );
-    });
-
-    it("should handle redirects in POST mode", async () => {
-      vi.mocked(vscode.workspace.getConfiguration).mockReturnValue({
-        get: vi.fn((_key: string, defaultValue: string) => {
-          if (_key === "renderMethod") return "post";
-          return defaultValue;
-        }),
-      } as unknown as vscode.WorkspaceConfiguration);
-
-      const redirectUrl = "https://redirected.plantuml.com/svg/result";
-      const svgContent = "<svg>redirected post</svg>";
-
-      const redirectResponse = createMockResponse(302, "", {
-        location: redirectUrl,
-      });
-      const finalResponse = createMockResponse(200, svgContent);
-      const mockRequest = createMockRequest();
-
-      // POST request returns redirect
-      mocks.httpsRequest.mockImplementation(
-        (_opts: unknown, callback: (res: http.IncomingMessage) => void) => {
-          callback(redirectResponse);
-          return mockRequest;
-        }
-      );
-
-      // Redirect follow-up uses GET
-      mocks.httpsGet.mockImplementation(
-        (_url: unknown, callback: (res: http.IncomingMessage) => void) => {
-          callback(finalResponse);
-          emitResponseEvents(finalResponse);
-          return mockRequest;
-        }
-      );
-
-      const result = await fetchSvg("@startuml\nA -> B\n@enduml");
-
-      expect(result).toBe(svgContent);
-      expect(mocks.httpsRequest).toHaveBeenCalled();
-      expect(mocks.httpsGet).toHaveBeenCalled();
-    });
-
-    it("should reject invalid redirects in POST mode", async () => {
-      vi.mocked(vscode.workspace.getConfiguration).mockReturnValue({
-        get: vi.fn((_key: string, defaultValue: string) => {
-          if (_key === "renderMethod") return "post";
-          return defaultValue;
-        }),
-      } as unknown as vscode.WorkspaceConfiguration);
-
-      const redirectResponse = createMockResponse(302, "", {
-        location: "http://evil.test/svg/encoded",
-      });
-      const mockRequest = createMockRequest();
-
-      mocks.httpsRequest.mockImplementation(
-        (_opts: unknown, callback: (res: http.IncomingMessage) => void) => {
-          callback(redirectResponse);
-          return mockRequest;
-        }
+      httpClientMocks.httpPost.mockRejectedValue(
+        new Error("Failed to connect to server: Connection refused"),
       );
 
       await expect(fetchSvg("@startuml\nA -> B\n@enduml")).rejects.toThrow(
-        "insecure redirect"
+        "Failed to connect to server",
       );
-      expect(mocks.httpGet).not.toHaveBeenCalled();
-      expect(mocks.httpsGet).not.toHaveBeenCalled();
     });
   });
 });

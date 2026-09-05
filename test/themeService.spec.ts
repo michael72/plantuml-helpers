@@ -1,13 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { EventEmitter, PassThrough } from "stream";
-import type * as http from "http";
 
-// Use vi.hoisted to declare mocks
+// All mocks declared before vi.mock calls
 const mocks = vi.hoisted(() => ({
-  httpsGet: vi.fn(),
   httpGet: vi.fn(),
   encodePlantUml: vi.fn(),
   getServerUrl: vi.fn(),
+  configUpdate: vi.fn(),
   getConfiguration: vi.fn(),
   showQuickPick: vi.fn(),
   showWarningMessage: vi.fn(),
@@ -15,15 +13,10 @@ const mocks = vi.hoisted(() => ({
   withProgress: vi.fn(),
   registerCommand: vi.fn(),
   executeCommand: vi.fn(),
-  configUpdate: vi.fn(),
 }));
 
-vi.mock("https", () => ({
-  get: mocks.httpsGet,
-}));
-
-vi.mock("http", () => ({
-  get: mocks.httpGet,
+vi.mock("../src/httpClient.js", () => ({
+  httpGet: mocks.httpGet,
 }));
 
 vi.mock("../src/plantumlEncoder", () => ({
@@ -62,34 +55,6 @@ import {
   getAvailableThemes,
   registerSetThemeCommand,
 } from "../src/themeService";
-
-// Helper to create a mock HTTP response
-function createMockResponse(
-  statusCode: number,
-  data: string
-): http.IncomingMessage {
-  const response = new PassThrough() as unknown as http.IncomingMessage;
-  response.statusCode = statusCode;
-  response.statusMessage = statusCode === 200 ? "OK" : "Error";
-  response.setEncoding = vi.fn();
-  (response as unknown as { _testData: string })._testData = data;
-  return response;
-}
-
-function emitResponseEvents(response: http.IncomingMessage): void {
-  const data = (response as unknown as { _testData: string })._testData;
-  process.nextTick(() => {
-    response.emit("data", data);
-    response.emit("end");
-  });
-}
-
-function createMockRequest(): http.ClientRequest {
-  const request = new EventEmitter() as http.ClientRequest;
-  request.setTimeout = vi.fn().mockReturnThis();
-  request.destroy = vi.fn();
-  return request;
-}
 
 function mockThemeSetting(theme: string): void {
   mocks.getConfiguration.mockReturnValue({
@@ -160,7 +125,7 @@ Help on themes
       mockThemeSetting("cerulean");
       const input = "@startuml\nA -> B\n@enduml";
       expect(addTheme(input)).toBe(
-        "@startuml\n!theme cerulean\nA -> B\n@enduml"
+        "@startuml\n!theme cerulean\nA -> B\n@enduml",
       );
     });
 
@@ -168,7 +133,7 @@ Help on themes
       mockThemeSetting("amiga");
       const input = "@startmindmap\n* root\n@endmindmap";
       expect(addTheme(input)).toBe(
-        "@startmindmap\n!theme amiga\n* root\n@endmindmap"
+        "@startmindmap\n!theme amiga\n* root\n@endmindmap",
       );
     });
 
@@ -201,44 +166,23 @@ Help on themes
   describe("getAvailableThemes", () => {
     it("should fetch and parse themes from the server", async () => {
       const responseText = "themes :\n  _none_\n  amiga\n  cerulean\n";
-      const response = createMockResponse(200, responseText);
-      const request = createMockRequest();
-
-      mocks.httpsGet.mockImplementation(
-        (
-          _url: string,
-          callback: (res: http.IncomingMessage) => void
-        ): http.ClientRequest => {
-          callback(response);
-          emitResponseEvents(response);
-          return request;
-        }
-      );
+      mocks.httpGet.mockResolvedValue(responseText);
 
       const themes = await getAvailableThemes();
 
       expect(themes).toEqual(["_none_", "amiga", "cerulean"]);
       expect(mocks.encodePlantUml).toHaveBeenCalledWith(
-        "@startuml\nhelp themes\n@enduml"
+        "@startuml\nhelp themes\n@enduml",
       );
     });
 
     it("should reject on server error", async () => {
-      const response = createMockResponse(500, "");
-      const request = createMockRequest();
-
-      mocks.httpsGet.mockImplementation(
-        (
-          _url: string,
-          callback: (res: http.IncomingMessage) => void
-        ): http.ClientRequest => {
-          callback(response);
-          return request;
-        }
+      mocks.httpGet.mockRejectedValue(
+        new Error("Server returned status 500"),
       );
 
       await expect(getAvailableThemes()).rejects.toThrow(
-        "PlantUML server returned status 500"
+        "Server returned status 500",
       );
     });
   });
@@ -252,43 +196,23 @@ Help on themes
 
       expect(mocks.registerCommand).toHaveBeenCalledWith(
         "pumlhelper.setTheme",
-        expect.any(Function)
+        expect.any(Function),
       );
       expect(result).toBe(disposable);
     });
 
     it("should show warning when no themes are fetched", async () => {
       mocks.registerCommand.mockImplementation(
-        (_cmd: string, handler: () => Promise<void>) => {
-          // Store handler to call it
-          (
-            registerSetThemeCommand as unknown as {
-              _handler: () => Promise<void>;
-            }
-          )._handler = handler;
+        () => {
           return { dispose: vi.fn() };
-        }
+        },
       );
 
       mocks.withProgress.mockImplementation(
-        async (_opts: unknown, task: () => Promise<string[]>) => task()
+        async (_opts: unknown, task: () => Promise<string[]>) => task(),
       );
 
-      // Mock getAvailableThemes to return empty
-      const responseText = "no colon here";
-      const response = createMockResponse(200, responseText);
-      const request = createMockRequest();
-
-      mocks.httpsGet.mockImplementation(
-        (
-          _url: string,
-          callback: (res: http.IncomingMessage) => void
-        ): http.ClientRequest => {
-          callback(response);
-          emitResponseEvents(response);
-          return request;
-        }
-      );
+      mocks.httpGet.mockResolvedValue("no colon here");
 
       registerSetThemeCommand();
       const handler = mocks.registerCommand.mock
@@ -296,30 +220,18 @@ Help on themes
       await handler();
 
       expect(mocks.showWarningMessage).toHaveBeenCalledWith(
-        "Could not retrieve PlantUML themes from the server."
+        "Could not retrieve PlantUML themes from the server.",
       );
     });
 
     it("should update setting when theme is picked", async () => {
       mocks.withProgress.mockImplementation(
-        async (_opts: unknown, task: () => Promise<string[]>) => task()
+        async (_opts: unknown, task: () => Promise<string[]>) => task(),
       );
       mocks.showQuickPick.mockResolvedValue("cerulean");
-      mocks.configUpdate.mockResolvedValue(undefined);
 
-      const responseText = "themes :\n  _none_\n  amiga\n  cerulean\n";
-      const response = createMockResponse(200, responseText);
-      const request = createMockRequest();
-
-      mocks.httpsGet.mockImplementation(
-        (
-          _url: string,
-          callback: (res: http.IncomingMessage) => void
-        ): http.ClientRequest => {
-          callback(response);
-          emitResponseEvents(response);
-          return request;
-        }
+      mocks.httpGet.mockResolvedValue(
+        "themes :\n  _none_\n  amiga\n  cerulean\n",
       );
 
       registerSetThemeCommand();
@@ -329,7 +241,7 @@ Help on themes
 
       expect(mocks.configUpdate).toHaveBeenCalledWith("theme", "cerulean", 1);
       expect(mocks.showInformationMessage).toHaveBeenCalledWith(
-        'PlantUML theme set to "cerulean".'
+        'PlantUML theme set to "cerulean".',
       );
     });
   });
