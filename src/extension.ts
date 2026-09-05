@@ -45,13 +45,13 @@ export function activate(context: vscode.ExtensionContext) {
   const autoFormat = vscode.commands.registerTextEditorCommand(
     "pumlhelper.autoFormat",
     (textEditor: vscode.TextEditor) => {
-      autoFormatContent(textEditor, false);
+      void formatDocument(textEditor, false);
     }
   );
   const reFormat = vscode.commands.registerTextEditorCommand(
     "pumlhelper.reFormat",
     (textEditor: vscode.TextEditor) => {
-      autoFormatContent(textEditor, true);
+      void formatDocument(textEditor, true);
     }
   );
 
@@ -200,16 +200,18 @@ async function handlePreviewCommand(command: string): Promise<void> {
 
   // Perform the requested action
   if (command === "autoFormat") {
-    await performFormatting(editor, false);
+    await formatDocument(editor, false);
   } else if (command === "resetArrows") {
-    await performFormatting(editor, true);
+    await formatDocument(editor, true);
   }
 }
 
 /**
- * Performs formatting on the editor and refreshes the preview.
+ * Formats the PlantUML diagram at the cursor position.
+ * Extracts the UML selection, calls the formatter, and applies the result.
+ * Shows user-facing messages for errors and "already sorted" cases.
  */
-async function performFormatting(
+async function formatDocument(
   textEditor: vscode.TextEditor,
   rebuild: boolean
 ): Promise<void> {
@@ -293,41 +295,6 @@ function rotateSelected(
           return rotate.rotateLine(line, dir);
         });
         editBuilder.replace(range, rotated.join("\n"));
-      }
-    }); // apply the (accumulated) replacement(s) (if multiple cursors/selections)
-  }
-}
-
-function autoFormatContent(
-  textEditor: vscode.TextEditor,
-  rebuild: boolean
-): void {
-  if (textEditor != null) {
-    void textEditor.edit((editBuilder) => {
-      const range = extractUml(textEditor, true);
-      if (range === undefined) {
-        void vscode.window.showErrorMessage(
-          "No PlantUML found in current selection!"
-        );
-        return;
-      } else {
-        const oldText = textEditor.document.getText(range);
-        try {
-          const newText = reformat.autoFormatTxt(oldText, rebuild);
-          if (oldText.trim() === newText.trim()) {
-            void vscode.window.showInformationMessage(
-              "The diagram was already sorted."
-            );
-          } else {
-            editBuilder.replace(range, newText);
-          }
-        } catch (e) {
-          if (e instanceof Error) {
-            void vscode.window.showErrorMessage(e.message);
-          } else {
-            throw e;
-          }
-        }
       }
     }); // apply the (accumulated) replacement(s) (if multiple cursors/selections)
   }
