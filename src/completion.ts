@@ -4,70 +4,7 @@ import {
   PlantUmlCompletion,
   PlantUmlCompletionKind,
 } from "./plantumlKeywords.js";
-
-// Fence info strings that mark a code block as PlantUML - the same set used by
-// the markdown-it plugin (see markdownItPlugin.ts) and the CLI formatter.
-const PLANTUML_FENCE_INFOS: ReadonlySet<string> = new Set(["plantuml", "puml"]);
-
-const FENCE_OPEN = /^\s*(`{3,}|~{3,})\s*(\S*)\s*$/;
-
-/**
- * Determines whether the given line sits inside a ```plantuml / ```puml
- * fenced code block. The fence lines themselves are not considered "inside".
- *
- * This is pure logic (no `vscode` dependency) so it can be unit-tested.
- *
- * @param lines     All lines of the document.
- * @param lineIndex The zero-based line to test.
- */
-export function isInsidePlantumlFence(
-  lines: string[],
-  lineIndex: number
-): boolean {
-  let insidePlantuml = false;
-  let fence: string | undefined;
-
-  for (let i = 0; i <= lineIndex; i++) {
-    /* v8 ignore next @preserve - i never exceeds the line count in practice */
-    const line = lines[i] ?? "";
-    if (fence === undefined) {
-      const open = FENCE_OPEN.exec(line);
-      if (open !== null) {
-        // An opening fence marker is markdown, not diagram content.
-        if (i === lineIndex) {
-          return false;
-        }
-        // Both capture groups always match when `open` is non-null.
-        fence = open[1];
-        /* v8 ignore next @preserve - the info capture group always matches */
-        const info = (open[2] ?? "").toLowerCase();
-        insidePlantuml = PLANTUML_FENCE_INFOS.has(info);
-      }
-    } else {
-      // Inside a block - look for the matching closing fence (same character,
-      // at least the same length).
-      const fenceChar = fence.charAt(0);
-      const trimmed = line.trim();
-      const isClose =
-        trimmed.length >= fence.length &&
-        trimmed.split("").every((c) => c === fenceChar);
-      if (isClose) {
-        // A closing fence marker is markdown, not diagram content.
-        if (i === lineIndex) {
-          return false;
-        }
-        fence = undefined;
-        insidePlantuml = false;
-      } else if (i === lineIndex) {
-        return insidePlantuml;
-      }
-    }
-  }
-
-  // Reachable only when the loop fell through the last line without matching or
-  // closing a fence, i.e. the cursor line is not inside any block.
-  return false;
-}
+import { isInsidePlantumlFence } from "./fence.js";
 
 /* v8 ignore start - the provider wiring depends on the vscode runtime */
 

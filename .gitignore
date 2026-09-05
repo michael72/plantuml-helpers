@@ -13,3 +13,7 @@ coverage/
 .c8_output/
 *.js
 *.map
+.opencode
+openspec
+graphify-out
+LONG_example.md

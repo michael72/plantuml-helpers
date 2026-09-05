@@ -1,4 +1,3 @@
-/* v8 ignore start */
 import * as vscode from "vscode";
 import * as http from "http";
 import * as net from "net";
@@ -8,7 +7,58 @@ import * as fs from "fs";
 import { encodePlantUml } from "./plantumlEncoder.js";
 import { getPumlsrvBinDir, installPinnedPumlsrv } from "./pumlsrvInstaller.js";
 
+/* ------------------------------------------------------------------ */
+/*  ProcessRunner adapter                                              */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Handle returned by {@link ProcessRunner.spawn}, abstracting just the
+ * events and methods that pumlsrvService needs from a child process.
+ */
+export interface ChildProcessHandle {
+  on(event: "error", handler: (err: Error) => void): void;
+  on(event: "exit", handler: (code: number | null, signal: string | null) => void): void;
+  kill(): void;
+}
+
+/**
+ * Injectable adapter around child-process creation.
+ *
+ * The production implementation wraps `child_process.spawn`; tests supply
+ * a fake that records calls and simulates lifecycle events.
+ */
+export interface ProcessRunner {
+  spawn(command: string, args: string[], options: child_process.SpawnOptions): ChildProcessHandle;
+}
+
+/** Production ProcessRunner that delegates to `child_process.spawn`. */
+export class NodeProcessRunner implements ProcessRunner {
+  spawn(command: string, args: string[], options: child_process.SpawnOptions): ChildProcessHandle {
+    return child_process.spawn(command, args, options);
+  }
+}
+
+/** The active runner, replaceable via {@link setProcessRunner}. */
+let currentProcessRunner: ProcessRunner = new NodeProcessRunner();
+
+/**
+ * Override the process runner (for tests).
+ *
+ * Call with a {@link FakeProcessRunner} to capture spawn calls without
+ * actually running processes.
+ */
+export function setProcessRunner(runner: ProcessRunner): void {
+  currentProcessRunner = runner;
+}
+
+/** Reset the process runner back to the production Node implementation. */
+export function resetProcessRunner(): void {
+  currentProcessRunner = new NodeProcessRunner();
+}
+
 const HELLO_WORLD_PUML = "@startuml\nAlice -> Bob: Hello\n@enduml";
+
+/* v8 ignore start */
 
 export type ServerType = "PlantUML Server" | "Local pumlsrv" | "Other";
 
@@ -141,14 +191,15 @@ export async function installPumlsrvManually(): Promise<void> {
   }
 }
 
-let pumlsrvProcess: child_process.ChildProcess | undefined;
+let pumlsrvProcess: ChildProcessHandle | undefined;
 
 function startPumlsrvProcess(binary: string, port: number): void {
   // do not save settings + do not bring up browser on startup
-  pumlsrvProcess = child_process.spawn(binary, ["-n", "-N", port.toString()], {
-    detached: false,
-    stdio: "ignore",
-  });
+  pumlsrvProcess = currentProcessRunner.spawn(
+    binary,
+    ["-n", "-N", port.toString()],
+    { detached: false, stdio: "ignore" }
+  );
 
   pumlsrvProcess.on("error", (err) => {
     void vscode.window.showErrorMessage(

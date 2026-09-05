@@ -1,6 +1,7 @@
 import { encodePlantUml } from "./plantumlEncoder.js";
 import { fetchSvg } from "./plantumlService.js";
 import { addTheme } from "./themeService.js";
+import { PLANTUML_FENCE_INFOS } from "./fence.js";
 
 // markdown-it types needed for the plugin signature
 interface MarkdownIt {
@@ -155,7 +156,7 @@ export function plantUmlPlugin(md: MarkdownIt, onAllFetched: () => void): void {
     const token = tokens[idx];
     if (
       token &&
-      ["plantuml", "puml"].includes(token.info.trim().toLowerCase())
+      PLANTUML_FENCE_INFOS.has(token.info.trim().toLowerCase())
     ) {
       const code = token.content.trim();
       const wrapped = wrapDiagram(code);

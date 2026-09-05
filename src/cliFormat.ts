@@ -1,4 +1,9 @@
 import { autoFormatTxt } from "./reformat.js";
+import {
+  FENCE_OPEN_RE,
+  PLANTUML_FENCE_INFOS,
+  findClosingFence,
+} from "./fence.js";
 
 /** Result of formatting the content of a single file. */
 export interface FormatFileResult {
@@ -26,12 +31,6 @@ export const MARKDOWN_EXTENSIONS: ReadonlySet<string> = new Set([
   ".md",
   ".markdown",
 ]);
-
-// Fence info strings that mark a code block as PlantUML - the same set that
-// the markdown-it plugin renders (see markdownItPlugin.ts).
-const PLANTUML_FENCE_INFOS: ReadonlySet<string> = new Set(["plantuml", "puml"]);
-
-const FENCE_OPEN = /^\s*(`{3,}|~{3,})\s*(\S*)\s*$/;
 
 /**
  * Formats the content of a PlantUML file.
@@ -74,7 +73,7 @@ export function formatMarkdownContent(
   let i = 0;
   while (i < lines.length) {
     /* v8 ignore next @preserve - lines[i] is always defined for i < length */
-    const open = FENCE_OPEN.exec(lines[i] ?? "");
+    const open = FENCE_OPEN_RE.exec(lines[i] ?? "");
     i += 1;
     if (open !== null) {
       /* v8 ignore next @preserve - the capture group always matches */
@@ -82,7 +81,7 @@ export function formatMarkdownContent(
       /* v8 ignore next @preserve - the capture group always matches */
       const info = (open[2] ?? "").toLowerCase();
       // find the closing fence: same character, at least the same length
-      const close = _findClosingFence(lines, i, fence);
+      const close = findClosingFence(lines, i, fence);
       if (close < 0) {
         if (PLANTUML_FENCE_INFOS.has(info)) {
           const result = _emptyResult(content);
@@ -128,25 +127,6 @@ function _findUmlRegions(lines: string[]): _Region[] {
     }
   });
   return regions;
-}
-
-function _findClosingFence(
-  lines: string[],
-  from: number,
-  fence: string
-): number {
-  const fenceChar = fence.charAt(0);
-  for (let i = from; i < lines.length; i++) {
-    /* v8 ignore next @preserve - lines[i] is always defined for i < length */
-    const trimmed = (lines[i] ?? "").trim();
-    if (
-      trimmed.length >= fence.length &&
-      trimmed.split("").every((c) => c === fenceChar)
-    ) {
-      return i;
-    }
-  }
-  return -1;
 }
 
 // Formats each region in place (bottom-up so indices stay valid) and joins
