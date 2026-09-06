@@ -11,15 +11,9 @@ vi.mock("../src/httpClient.js", () => ({
   httpPost: httpClientMocks.httpPost,
 }));
 
-vi.mock("../src/pumlsrvService.js", async (importOriginal) => {
-  const original =
-    await importOriginal<typeof import("../src/pumlsrvService.js")>();
-  return {
-    ...original,
-    getServerUrl: vi.fn(original.getServerUrl),
-    ensurePumlsrvRunning: vi.fn().mockResolvedValue(undefined),
-  };
-});
+vi.mock("../src/pumlsrvService.js", () => ({
+  ensurePumlsrvRunning: vi.fn().mockResolvedValue(undefined),
+}));
 
 vi.mock("vscode", () => ({
   workspace: {
@@ -30,11 +24,7 @@ vi.mock("vscode", () => ({
 }));
 
 import * as vscode from "vscode";
-import {
-  getServerUrl,
-  getRenderMethod,
-  fetchSvg,
-} from "../src/plantumlService";
+import { fetchSvg } from "../src/plantumlService";
 
 describe("plantumlService", () => {
   beforeEach(() => {
@@ -47,55 +37,6 @@ describe("plantumlService", () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
-  });
-
-  describe("getServerUrl", () => {
-    it("should return default URL when no config is set", () => {
-      const mockGet = vi
-        .fn()
-        .mockReturnValue("https://www.plantuml.com/plantuml");
-      vi.mocked(vscode.workspace.getConfiguration).mockReturnValue({
-        get: mockGet,
-      } as unknown as vscode.WorkspaceConfiguration);
-
-      const result = getServerUrl();
-
-      expect(result).toBe("https://www.plantuml.com/plantuml");
-      expect(vscode.workspace.getConfiguration).toHaveBeenCalledWith(
-        "plantumlHelpers",
-      );
-    });
-
-    it("should return custom URL when configured", () => {
-      const customUrl = "https://my-plantuml-server.com/plantuml";
-      const mockGet = vi.fn().mockReturnValue(customUrl);
-      vi.mocked(vscode.workspace.getConfiguration).mockReturnValue({
-        get: mockGet,
-      } as unknown as vscode.WorkspaceConfiguration);
-
-      const result = getServerUrl();
-
-      expect(result).toBe(customUrl);
-    });
-  });
-
-  describe("getRenderMethod", () => {
-    it("should return 'get' by default", () => {
-      const result = getRenderMethod();
-      expect(result).toBe("get");
-    });
-
-    it("should return 'post' when configured", () => {
-      vi.mocked(vscode.workspace.getConfiguration).mockReturnValue({
-        get: vi.fn((_key: string, defaultValue: string) => {
-          if (_key === "renderMethod") return "post";
-          return defaultValue;
-        }),
-      } as unknown as vscode.WorkspaceConfiguration);
-
-      const result = getRenderMethod();
-      expect(result).toBe("post");
-    });
   });
 
   describe("fetchSvg via GET", () => {

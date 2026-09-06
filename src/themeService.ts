@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { encodePlantUml } from "./plantumlEncoder.js";
-import { getServerUrl } from "./plantumlService.js";
+import { getServerUrl } from "./serverConfig.js";
 import { httpGet } from "./httpClient.js";
 
 /**

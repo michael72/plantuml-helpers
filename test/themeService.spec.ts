@@ -23,7 +23,7 @@ vi.mock("../src/plantumlEncoder", () => ({
   encodePlantUml: mocks.encodePlantUml,
 }));
 
-vi.mock("../src/plantumlService", () => ({
+vi.mock("../src/serverConfig", () => ({
   getServerUrl: mocks.getServerUrl,
 }));
 

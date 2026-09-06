@@ -1,27 +1,13 @@
-import * as vscode from "vscode";
 import * as zlib from "zlib";
 import { encodePlantUml } from "./plantumlEncoder.js";
 import { sanitizeSvg } from "./svgSanitizer.js";
-import {
-  getServerUrl,
-  getServerType,
-  ensurePumlsrvRunning,
-} from "./pumlsrvService.js";
+import { getServerUrl, getServerType, getRenderMethod } from "./serverConfig.js";
+import { ensurePumlsrvRunning } from "./pumlsrvService.js";
 import { httpGet, httpPost } from "./httpClient.js";
-
-export { getServerUrl };
 
 /**
  * Service for fetching PlantUML diagrams from a PlantUML server.
  */
-
-/**
- * Gets the configured render method for communicating with the PlantUML server.
- */
-export function getRenderMethod(): "get" | "post" {
-  const config = vscode.workspace.getConfiguration("plantumlHelpers");
-  return config.get<"get" | "post">("renderMethod", "get");
-}
 
 /**
  * Fetches an SVG diagram from the PlantUML server.

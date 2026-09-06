@@ -10,8 +10,8 @@ import { fetchSvg } from "./plantumlService.js";
 import { plantUmlPlugin } from "./markdownItPlugin.js";
 import { registerSetThemeCommand } from "./themeService.js";
 import { registerPlantUmlCompletionProvider } from "./completion.js";
+import { getServerType } from "./serverConfig.js";
 import {
-  getServerType,
   stopPumlsrv,
   installPumlsrvManually,
 } from "./pumlsrvService.js";

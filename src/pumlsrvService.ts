@@ -6,6 +6,7 @@ import * as fs from "fs";
 import { encodePlantUml } from "./plantumlEncoder.js";
 import { getPumlsrvBinDir, installPinnedPumlsrv } from "./pumlsrvInstaller.js";
 import { httpGet } from "./httpClient.js";
+import { setActivePumlsrvPort } from "./serverConfig.js";
 
 /* ------------------------------------------------------------------ */
 /*  ProcessRunner adapter                                              */
@@ -60,30 +61,7 @@ const HELLO_WORLD_PUML = "@startuml\nAlice -> Bob: Hello\n@enduml";
 
 /* v8 ignore start */
 
-export type ServerType = "PlantUML Server" | "Local pumlsrv" | "Other";
-
-export function getServerType(): ServerType {
-  const config = vscode.workspace.getConfiguration("plantumlHelpers");
-  return config.get<ServerType>("serverType", "PlantUML Server");
-}
-
-export function getCustomServerUrl(): string {
-  const config = vscode.workspace.getConfiguration("plantumlHelpers");
-  return config.get("serverUrl", "http://localhost:8080/plantuml");
-}
-
 let activePumlsrvPort: number | undefined;
-
-export function getServerUrl(): string {
-  const type = getServerType();
-  if (type === "PlantUML Server") {
-    return "https://www.plantuml.com/plantuml";
-  } else if (type === "Local pumlsrv") {
-    return `http://localhost:${activePumlsrvPort}/plantuml`;
-  } else {
-    return getCustomServerUrl();
-  }
-}
 
 async function findFreePort(): Promise<number> {
   return new Promise((resolve, reject) => {
@@ -211,6 +189,7 @@ export async function stopPumlsrv(): Promise<void> {
   ensureRunningPromise = undefined;
   const port = activePumlsrvPort;
   activePumlsrvPort = undefined;
+  setActivePumlsrvPort(undefined);
   if (port === undefined) {
     return;
   }
@@ -269,6 +248,7 @@ async function doEnsurePumlsrvRunning(): Promise<void> {
 
   const port = await findFreePort();
   activePumlsrvPort = port;
+  setActivePumlsrvPort(port);
   startPumlsrvProcess(binary, port);
 
   // Wait up to 10 seconds for pumlsrv to be ready
