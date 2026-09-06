@@ -4,6 +4,7 @@ import {
   PLANTUML_FENCE_INFOS,
   findClosingFence,
 } from "./fence.js";
+import { findAllUmlBoundaries, UmlBoundary } from "./umlBoundary.js";
 
 /** Result of formatting the content of a single file. */
 export interface FormatFileResult {
@@ -45,7 +46,7 @@ export function formatPlantUmlContent(
 ): FormatFileResult {
   const eol = _eol(content);
   const lines = content.split(/\r?\n/);
-  const regions = _findUmlRegions(lines);
+  const regions = findAllUmlBoundaries(lines);
 
   if (regions.length === 0) {
     // bare diagram without @startuml/@enduml markers
@@ -68,7 +69,7 @@ export function formatMarkdownContent(
 ): FormatFileResult {
   const eol = _eol(content);
   const lines = content.split(/\r?\n/);
-  const regions: _Region[] = [];
+  const regions: UmlBoundary[] = [];
 
   let i = 0;
   while (i < lines.length) {
@@ -92,7 +93,7 @@ export function formatMarkdownContent(
       }
       if (PLANTUML_FENCE_INFOS.has(info) && close > i) {
         // exclude the fence lines themselves from the region
-        regions.push({ start: i, end: close - 1 });
+        regions.push({ startLine: i, endLine: close - 1 });
       }
       i = close + 1;
     }
@@ -101,39 +102,15 @@ export function formatMarkdownContent(
   return _formatRegions(lines, regions, eol, rebuild);
 }
 
-interface _Region {
-  /** First line of the diagram (inclusive). */
-  start: number;
-  /** Last line of the diagram (inclusive). */
-  end: number;
-}
-
 function _emptyResult(content: string): FormatFileResult {
   return { text: content, found: 0, changed: 0, warnings: [] };
-}
-
-// Finds all @startuml ... @enduml sections (markers included in the region -
-// autoFormatTxt handles them and keeps them in place).
-function _findUmlRegions(lines: string[]): _Region[] {
-  const regions: _Region[] = [];
-  let start = -1;
-  lines.forEach((line, idx) => {
-    const trimmed = line.trim().toLowerCase();
-    if (start < 0 && trimmed.startsWith("@startuml")) {
-      start = idx;
-    } else if (start >= 0 && trimmed.startsWith("@enduml")) {
-      regions.push({ start, end: idx });
-      start = -1;
-    }
-  });
-  return regions;
 }
 
 // Formats each region in place (bottom-up so indices stay valid) and joins
 // the lines back together.
 function _formatRegions(
   lines: string[],
-  regions: _Region[],
+  regions: UmlBoundary[],
   eol: string,
   rebuild: boolean
 ): FormatFileResult {
@@ -144,17 +121,17 @@ function _formatRegions(
     const region = regions[r];
     /* v8 ignore next @preserve */
     if (region !== undefined) {
-      const original = lines.slice(region.start, region.end + 1).join(eol);
+      const original = lines.slice(region.startLine, region.endLine + 1).join(eol);
       const formatted = _tryFormat(
         original,
         rebuild,
         result,
-        `diagram at line ${region.start + 1}`
+        `diagram at line ${region.startLine + 1}`
       );
       if (formatted !== original) {
         lines.splice(
-          region.start,
-          region.end - region.start + 1,
+          region.startLine,
+          region.endLine - region.startLine + 1,
           ...formatted.split(/\r?\n/)
         );
       }

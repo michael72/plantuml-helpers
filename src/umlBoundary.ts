@@ -113,6 +113,28 @@ export function findUmlBoundaries(
   return { startLine, endLine };
 }
 
+/**
+ * Finds all `@startuml` … `@enduml` regions in a set of lines.
+ * Returns an empty array when no regions are found.
+ *
+ * This is the "find all regions" counterpart to the cursor-based
+ * `findUmlBoundaries`, intended for CLI batch formatting of PlantUML files.
+ */
+export function findAllUmlBoundaries(lines: string[]): UmlBoundary[] {
+  const regions: UmlBoundary[] = [];
+  let start = -1;
+  lines.forEach((line, idx) => {
+    const trimmed = line.trim().toLowerCase();
+    if (start < 0 && trimmed.startsWith("@startuml")) {
+      start = idx;
+    } else if (start >= 0 && trimmed.startsWith("@enduml")) {
+      regions.push({ startLine: start, endLine: idx });
+      start = -1;
+    }
+  });
+  return regions;
+}
+
 // Style-only blocks contain no diagram content that could be formatted, so
 // they are never selected as the enclosing block.
 function _isStyleBlock(text: string): boolean {
