@@ -1,5 +1,6 @@
 import { toString, joinContent, Content, Definition } from "./definition.js";
 import { Line } from "./line.js";
+import { REGEX_BLOCK_OPENER, isBlockOpener } from "./diagramtype.js";
 
 export class Component {
   constructor(
@@ -12,9 +13,6 @@ export class Component {
     public suffix?: string, // content between name and opening brace: could be color, stereotype and/or link etc.
     private printName?: string
   ) {}
-
-  static regexTitle =
-    /\s*(package|namespace|node|folder|frame|cloud|database|class|component|interface|enum|annotation)\s+([^{\s]*)\s*([^{]*)?{.*/;
 
   static fromString(
     s: string | Array<string>,
@@ -108,7 +106,7 @@ export class Component {
       const header = currentLine === undefined ? [] : [currentLine];
       return [new Component(header, [], []), i];
     }
-    const m = this.regexTitle.exec(currentLine);
+    const m = REGEX_BLOCK_OPENER.exec(currentLine);
 
     if (m && arr.length > 1) {
       // found a component definition
@@ -145,7 +143,7 @@ export class Component {
         if (def) {
           content.push(def);
           prevLine = def;
-        } else if (this.regexTitle.exec(s)) {
+        } else if (isBlockOpener(s)) {
           // parse child element until closing bracket
           const [child, next] = this._fromString(arr, i);
           children = children ?? [];

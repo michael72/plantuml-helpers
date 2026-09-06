@@ -1,7 +1,7 @@
 import { SortComponent } from "./sortcomponent.js";
 import { SortSequence } from "./sortsequence.js";
 import { Component } from "./uml/component.js";
-import { DiagramType, getType } from "./uml/diagramtype.js";
+import { DiagramType, getDiagramType } from "./uml/diagramtype.js";
 
 const REGEX_LINEENDING = /(.*\S+)(\s*)$/s;
 
@@ -31,7 +31,7 @@ export function autoFormatTxt(txt: string, rebuild = false): string {
 
   const lines = txt.split(crLf);
   const { special, remaining } = _extractSpecialLines(lines);
-  const tpe = getType(remaining);
+  const tpe = getDiagramType(remaining);
   if (tpe == DiagramType.ClassComponent) {
     const component = Component.fromString(remaining);
     _injectSpecialLines(component, special);
