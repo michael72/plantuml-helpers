@@ -96,16 +96,18 @@ export function rebuildArrows(
   const result: Array<{ from: string; to: string; direction: number }> =
     lines.map((l) => ({ ...l }));
 
-  // Identify groups of consecutive same-from same-direction lines
-  // and apply rotations per group.
+  // Identify groups of consecutive same-from same-layout lines
+  // and apply rotations per group. Layout matches the original class
+  // grouping by line.layout() (Horizontal=even dirs, Vertical=odd dirs).
   let groupStart = 0;
   while (groupStart < result.length) {
     const { from, direction } = result[groupStart]!;
+    const groupLayout = direction % 2; // 0=Horizontal (Right/Left), 1=Vertical (Down/Up)
     let groupEnd = groupStart + 1;
     while (
       groupEnd < result.length &&
       result[groupEnd]!.from === from &&
-      result[groupEnd]!.direction === direction
+      (result[groupEnd]!.direction % 2) === groupLayout
     ) {
       groupEnd++;
     }
@@ -119,12 +121,16 @@ export function rebuildArrows(
         result[groupStart]!.direction
       );
     } else if (cnt >= 3) {
-      // leave the last arrows in the same direction
-      // rotate the first ones to the left
-      // rotate the in-between arrows to the right
-      // <- ... | -> ... | ^ ...
-      // rotate more when in horizontal layout: vertical arrows can also be drawn diagonally
-      const isHorizontal = direction === 0 || direction === 2; // Right or Left
+      // The original class code uses `line.layout()` from the line that
+      // triggered group processing (i.e., the line AFTER the group, or the
+      // dummy sentinel for the last group, which is always Horizontal).
+      // We replicate that here: for non-last groups use the next line's
+      // direction to derive layout; for the last group default to Horizontal.
+      const nextLayout =
+        groupEnd < result.length
+          ? result[groupEnd]!.direction % 2
+          : 0; // dummy sentinel is always Horizontal
+      const isHorizontal = nextLayout === 0;
       let c = Math.floor((cnt - (cnt % 3)) / 3);
       if (isHorizontal && cnt % 3 === 2) {
         c += 1;

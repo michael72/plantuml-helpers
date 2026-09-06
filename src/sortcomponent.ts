@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { Layout } from "./uml/arrow.js";
-import { sortByDependencies } from "./sortKernels.js";
+import { rebuildArrows, sortByDependencies } from "./sortKernels.js";
 import { Component } from "./uml/component.js";
 import { Content, Definition } from "./uml/definition.js";
 import { Line } from "./uml/line.js";
@@ -22,60 +21,23 @@ export class SortComponent {
   }
 
   private _rebuild(): void {
-    let prevName = "";
-    let prevDir: Layout | undefined = undefined;
-    let cnt = 1; // count from same starting node in same direction
+    const lines = [...this.component.lines()];
+    /* v8 ignore next @preserve */
+    if (lines.length === 0) return;
 
-    const lines = [
-      ...this.component.lines(),
-      Line.fromString("__dummy->__dummy"),
-    ];
+    const plainLines = lines.map((l) => ({
+      from: l.from(),
+      to: l.to(),
+      direction: l.combinedDirection(),
+    }));
 
-    for (let i = 0; i < lines.length; ++i) {
-      const line = lines[i];
-      /* v8 ignore next @preserve */
-      if (line == null) {
-        // ignore line
-      } else {
-        const name = line.from();
-        const dir = line.layout();
-        if (name === prevName && dir === prevDir) {
-          cnt += 1;
-        } else {
-          prevName = name;
-          prevDir = dir;
-          if (cnt == 2) {
-            // special case: only 2 same arrows going out:
-            // rotate the first to right
-            lines[i - cnt]?.rotateRight();
-          }
-          // 3 or more arrows going out
-          else if (cnt >= 3) {
-            // leave the last arrows in the same direction
-            // rotate the first ones to the left
-            // rotate the in-between arrows to the right
-            // <- ... | -> ... | ^ ...
-            // rotate more when in horizontal layout: vertical arrows can also be drawn diagonally
-            let c = (cnt - (cnt % 3)) / 3; // c = number of rounds
-            if (dir == Layout.Horizontal && cnt % 3 == 2) {
-              c += 1;
-            }
-            let start = i - cnt;
-            let end = start + c;
-            for (let j = start; j < end; ++j) {
-              lines[j]?.rotateLeft();
-            }
-            start = end;
-            end += c;
-            if (dir == Layout.Horizontal && cnt % 3 == 1) {
-              end += 1;
-            }
-            for (let j = start; j < end; ++j) {
-              lines[j]?.rotateRight();
-            }
-          }
-          cnt = 1;
-        }
+    const result = rebuildArrows(plainLines);
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i]!;
+      const targetDir = result[i]!.direction;
+      while (Number(line.combinedDirection()) !== targetDir) {
+        line.rotateRight();
       }
     }
   }
