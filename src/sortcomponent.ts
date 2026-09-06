@@ -1,7 +1,6 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { rebuildArrows, sortByDependencies } from "./sortKernels.js";
+import { formatLines } from "./sorter.js";
 import { Component } from "./uml/component.js";
-import { Content, Definition } from "./uml/definition.js";
+import { Definition } from "./uml/definition.js";
 import { Line } from "./uml/line.js";
 
 export class SortComponent {
@@ -9,37 +8,12 @@ export class SortComponent {
 
   autoFormat(rebuild: boolean): Component {
     this.restructure();
-    for (const line of this.component.lines()) {
-      line.setDefaultDirection(rebuild);
-    }
-    this._sort(this._initialSort());
+    const lines = Array.from(this.component.lines());
+    formatLines(lines, rebuild);
+    const definitions = Array.from(this.component.definitions());
+    this.component.content = [...definitions, ...lines];
     this._sortPackages();
-    if (rebuild) {
-      this._rebuild();
-    }
     return this.component;
-  }
-
-  private _rebuild(): void {
-    const lines = [...this.component.lines()];
-    /* v8 ignore next @preserve */
-    if (lines.length === 0) return;
-
-    const plainLines = lines.map((l) => ({
-      from: l.from(),
-      to: l.to(),
-      direction: l.combinedDirection(),
-    }));
-
-    const result = rebuildArrows(plainLines);
-
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i]!;
-      const targetDir = result[i]!.direction;
-      while (Number(line.combinedDirection()) !== targetDir) {
-        line.rotateRight();
-      }
-    }
   }
 
   restructure(): void {
@@ -50,76 +24,6 @@ export class SortComponent {
       this.component.content = this.component.content.concat(lines);
     }
     this._renameComponents(componentNames);
-  }
-
-  private _sort(orig: Line[]): void {
-    // leave all content that is not explicitly an arrow connection
-    // before the arrow lines that are being sorted
-    const others: Content[] = Array.from(this.component.definitions());
-    let sorted: Line[] = [];
-    let idx = 0;
-
-    // now sort in the original sorted elements using already present
-    // elements: left side of arrow first, then right side.
-    while (orig.length !== 0) {
-      if (idx === sorted.length) {
-        // take the first element of the original list
-        sorted = sorted.concat(orig.splice(0, 1));
-      }
-      sorted = this._moveOrigToSorted(sorted, idx, orig);
-      idx++;
-    }
-    this.component.content = others.concat(sorted);
-  }
-
-  private _initialSort(): Line[] {
-    const nodes = this._sortByDependencies();
-    return Array.from(this.component.lines()).sort((a: Line, b: Line) => {
-      let result = nodes.indexOf(a.from()) - nodes.indexOf(b.from());
-      if (result === 0) {
-        result = a.combinedDirection() - b.combinedDirection();
-        if (result === 0) {
-          result = nodes.indexOf(a.to()) - nodes.indexOf(b.to());
-        }
-      }
-      return result;
-    });
-  }
-
-  private _sortByDependencies(): string[] {
-    const lines: Array<{ from: string; to: string }> = [];
-    for (const line of this.component.lines()) {
-      lines.push({ from: line.from(), to: line.to() });
-    }
-    return sortByDependencies(lines);
-  }
-
-
-  private _moveOrigToSorted(
-    sorted: Line[],
-    lineIdx: number,
-    orig: Line[]
-  ): Line[] {
-    const currentLine = sorted[lineIdx];
-    /* v8 ignore next @preserve */
-    if (!currentLine) return sorted;
-
-    for (const c of currentLine.components) {
-      /* v8 ignore next @preserve */
-      if (c == null) {
-        // skip
-      } else {
-        for (let oidx = 0; oidx < orig.length; ++oidx) {
-          const origLine = orig[oidx];
-          // move lines to sorted with elements that are already in the sorted lines
-          if (origLine?.has(c) === true) {
-            sorted = sorted.concat(orig.splice(oidx, 1));
-            --oidx;
-          }
-        }
-      }
-    }
-    return sorted;
   }
 
   private _sortPackages(component: Component = this.component): void {
