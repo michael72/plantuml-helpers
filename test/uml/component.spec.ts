@@ -158,6 +158,36 @@ describe("Component", () => {
         }
       );
     });
+
+    it("should handle attached lines on a definition", () => {
+      const def = new Definition("component", "A");
+
+      // attach lines after the note — the note blocks preceding lines
+      def.attach("note right: note for A");
+      def.attach("footer line 1");
+      def.attach("footer line 2");
+
+      // last attached line does not start with "note "
+      expect(def.isNoteAttached()).toBe(false);
+      expect(def.attachedToString()).toBe(
+        "\nnote right: note for A\nfooter line 1\nfooter line 2"
+      );
+
+      // moveAttached pops non-note lines, stops at the note
+      const moved = def.moveAttached();
+      expect(moved).toEqual(["footer line 1", "footer line 2"]);
+      expect(def.attachedToString()).toBe("\nnote right: note for A");
+
+      // isNoteAttached now returns true (only note remains)
+      expect(def.isNoteAttached()).toBe(true);
+    });
+
+    it("should handle a definition with no attached lines", () => {
+      const def = new Definition("component", "A");
+      expect(def.attachedToString()).toBe("");
+      expect(def.isNoteAttached()).toBe(false);
+      expect(def.moveAttached()).toEqual([]);
+    });
   });
 
   describe("joinContent", () => {

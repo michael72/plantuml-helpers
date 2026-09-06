@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { formatLines } from "./sorter.js";
 import { Component } from "./uml/component.js";
 import { Definition } from "./uml/definition.js";

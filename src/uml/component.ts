@@ -1,4 +1,3 @@
-import { Attachable } from "./attachable.js";
 import { toString, joinContent, Content, Definition } from "./definition.js";
 import { Line } from "./line.js";
 
@@ -128,7 +127,7 @@ export class Component {
       }
     }
 
-    let prevLine: Attachable | undefined;
+    let prevLine: Content | undefined;
     const header = new Array<string>();
     const content = new Array<Content>();
     let footer = new Array<string>();

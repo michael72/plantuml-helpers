@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { sortByDependencies, rebuildArrows } from "./sortKernels.js";
 import { Line } from "./uml/line.js";
 
@@ -79,7 +80,7 @@ export function formatLines(lines: Line[], rebuild = false): Line[] {
       const result = rebuildArrows(plainLines);
       for (let i = 0; i < lines.length; i++) {
         const targetDir = result[i]!.direction;
-        while (lines[i]!.combinedDirection() !== targetDir) {
+        while (Number(lines[i]!.combinedDirection()) !== targetDir) {
           lines[i]!.rotateRight();
         }
       }

@@ -1,4 +1,3 @@
-import { Attachable } from "./attachable.js";
 import {
   REGEX_INTERFACE,
   REGEX_CLASS,
@@ -35,14 +34,14 @@ export function joinContent(
   return left + (left.length > 0 && right.length > 0 ? addLf : "") + right;
 }
 
-export class Definition extends Attachable {
+export class Definition {
+  attached?: Array<string>;
+
   constructor(
     public type: string,
     public name: string,
     public alias?: string
-  ) {
-    super();
-  }
+  ) {}
   static fromString(line: string): Definition | undefined {
     const shorten = (s: string, by: string): string => {
       if (s.length > 0 && s[0] === by && !/[+\-/><]/.test(s)) {
@@ -95,7 +94,43 @@ export class Definition extends Attachable {
     return this.type === "component";
   }
 
-  override toString(): string {
+  attach(line: string): void {
+    this.attached ??= new Array<string>();
+    this.attached.push(line);
+  }
+
+  isNoteAttached(): boolean {
+    return (
+      this.attached != undefined &&
+      this.attached.length > 0 &&
+      this.attached[this.attached.length - 1]?.startsWith("note ") === true
+    );
+  }
+
+  moveAttached(): Array<string> {
+    let result = new Array<string>();
+    // move attached only if not a note (notes belong to the preceeding line)
+    while (
+      this.attached &&
+      this.attached.length > 0 &&
+      !this.isNoteAttached()
+    ) {
+      const last = this.attached.pop();
+      /* v8 ignore else @preserve */
+      if (last !== undefined) {
+        result = [last, ...result];
+      }
+    }
+    return result;
+  }
+
+  attachedToString(): string {
+    return this.attached && this.attached.length > 0
+      ? "\n" + this.attached.join("\n")
+      : "";
+  }
+
+  toString(): string {
     const comp = `${this.type} ${this.name}`;
     const content =
       this.alias != null && this.alias.length > 0

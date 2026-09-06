@@ -1,6 +1,5 @@
 import { reverseHead } from "../helpers.js";
 import { Arrow, Layout, ArrowDirection } from "./arrow.js";
-import { Attachable } from "./attachable.js";
 import { Component } from "./component.js";
 
 /** Combined direction is ordered clockwise. */
@@ -11,7 +10,9 @@ export enum CombinedDirection {
   Up,
 }
 
-export class Line extends Attachable {
+export class Line {
+  attached?: Array<string>;
+
   /** Regex to find an arrow in the current line. */
   static REGEX =
     /^(\s*)((?:"[^"]+")|[^-~="><\\/\s]*)(?:\s+("[^"]+"))?\s*(\S*[^A-Za-np-z_\s]+)\s*(?:("[^"]+")\s+)?((?:"[^"]+")|[^-~="><\\/\s]*)(\s*[-+]*\s*(?::.*)?)$/;
@@ -26,7 +27,6 @@ export class Line extends Attachable {
     public multiplicities: Array<string>,
     public sides: Array<string>
   ) {
-    super();
     if ((this.components[0]?.length ?? 0) == 0) {
       this.components[0] = "[";
     }
@@ -193,7 +193,43 @@ export class Line extends Attachable {
     }
   }
 
-  override toString(): string {
+  attach(line: string): void {
+    this.attached ??= new Array<string>();
+    this.attached.push(line);
+  }
+
+  isNoteAttached(): boolean {
+    return (
+      this.attached != undefined &&
+      this.attached.length > 0 &&
+      this.attached[this.attached.length - 1]?.startsWith("note ") === true
+    );
+  }
+
+  moveAttached(): Array<string> {
+    let result = new Array<string>();
+    // move attached only if not a note (notes belong to the preceeding line)
+    while (
+      this.attached &&
+      this.attached.length > 0 &&
+      !this.isNoteAttached()
+    ) {
+      const last = this.attached.pop();
+      /* v8 ignore else @preserve */
+      if (last !== undefined) {
+        result = [last, ...result];
+      }
+    }
+    return result;
+  }
+
+  attachedToString(): string {
+    return this.attached && this.attached.length > 0
+      ? "\n" + this.attached.join("\n")
+      : "";
+  }
+
+  toString(): string {
     const side0 = this.sides[0] ?? "";
     const side1 = this.sides[1] ?? "";
     const content =
