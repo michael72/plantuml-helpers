@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { DefaultMap } from "./helpers.js";
 import { Layout } from "./uml/arrow.js";
+import { sortByDependencies } from "./sortKernels.js";
 import { Component } from "./uml/component.js";
 import { Content, Definition } from "./uml/definition.js";
 import { Line } from "./uml/line.js";
@@ -125,71 +125,13 @@ export class SortComponent {
   }
 
   private _sortByDependencies(): string[] {
-    // try to bring the components in order
-    const { deps, froms } = this._calcDependencies();
-
-    const pointedCounts = this._calcPointedCounts(deps);
-
-    return Array.from(deps.keys()).sort((s1: string, s2: string) => {
-      // sort objects to the beginning that are the least pointed to
-      let cmp = pointedCounts.get(s1)! - pointedCounts.get(s2)!;
-      if (cmp === 0) {
-        // more objects depend on the current key: sort to the end
-        cmp = deps.get(s2)!.length - deps.get(s1)!.length;
-        if (cmp === 0) {
-          // preserve original order
-          cmp = froms.indexOf(s1) - froms.indexOf(s2);
-        }
-      }
-      return cmp;
-    });
-  }
-
-  private _calcDependencies(): {
-    deps: DefaultMap<string, string[]>;
-    froms: string[];
-  } {
-    const deps = new DefaultMap<string, string[]>(() => []);
-    const fromSet = new Set<string>();
+    const lines: Array<{ from: string; to: string }> = [];
     for (const line of this.component.lines()) {
-      deps.getDef(line.from()).push(line.to());
-      fromSet.add(line.from());
+      lines.push({ from: line.from(), to: line.to() });
     }
-    const froms = Array.from(fromSet.values());
-    return { deps, froms };
+    return sortByDependencies(lines);
   }
 
-  private _calcPointedCounts(
-    deps: DefaultMap<string, string[]>
-  ): DefaultMap<string, number> {
-    const pointedCounts = new DefaultMap<string, number>(() => 0);
-    for (const [k, v] of deps.entries()) {
-      pointedCounts.set(k, 0);
-      // add transitive dependencies - meaning that if deps contains
-      // A -> B and B -> C then dependency A -> C should be added to deps
-      this._addTransitiveDeps(deps, v);
-    }
-    for (const v of deps.values()) {
-      for (const d of v) {
-        pointedCounts.set(d, pointedCounts.getDef(d) + 1);
-      }
-    }
-
-    return pointedCounts;
-  }
-
-  private _addTransitiveDeps(
-    deps: DefaultMap<string, string[]>,
-    savedDeps: string[]
-  ): void {
-    // addedDeps will contain the newly added dependencies, which will be used in the next round again
-    let addedDeps = savedDeps;
-    while (addedDeps.length !== 0) {
-      addedDeps = addedDeps.flatMap((c) =>
-        Array.from(this._itemDeps(deps.get(c), savedDeps))
-      );
-    }
-  }
 
   private _moveOrigToSorted(
     sorted: Line[],
@@ -480,18 +422,4 @@ export class SortComponent {
     }
   }
 
-  private *_itemDeps(
-    dependentComponents: string[] | undefined,
-    savedDeps: string[]
-  ): Generator<string> {
-    if (dependentComponents) {
-      for (const d of dependentComponents) {
-        // only add elements that are not already contained
-        if (!savedDeps.includes(d)) {
-          savedDeps.push(d);
-          yield d;
-        }
-      }
-    }
-  }
 }
