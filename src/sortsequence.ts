@@ -3,7 +3,7 @@ import { DefaultMap } from "./helpers.js";
 import { Component } from "./uml/component.js";
 import { Content, Definition } from "./uml/definition.js";
 import { Line } from "./uml/line.js";
-import { calculateWeight } from "./sortKernels.js";
+import { orderNames } from "./sortKernels.js";
 
 function _toKey(s: [string, string]): string {
   return s[0] + "," + s[1];
@@ -46,23 +46,8 @@ export class SortSequence {
     });
   }
 
-  private _calculateDirCount(
-    components: string[],
-    weights: Array<[string, string, number]>
-  ): number {
-    let sum = 0;
-    for (const [l, r, num] of weights) {
-      const dist = components.indexOf(l) - components.indexOf(r);
-      if (dist > 0) {
-        sum += num;
-      }
-    }
-    return sum;
-  }
-
   private _orderNames(): string[] {
     const [depCount, names] = this._getCountsAndNames();
-    let filtered: string[] = [];
 
     const weights: Array<[string, string, number]> = [];
     for (const [k, v] of depCount) {
@@ -80,170 +65,7 @@ export class SortSequence {
       }
     }
 
-    let off_left = names[0] === "[" ? 1 : 0;
-    while (
-      off_left !== 0 &&
-      depCount.get("[," + names[off_left]) !== undefined
-    ) {
-      off_left += 1;
-    }
-    const off_right = names[names.length - 1] === "]" ? 1 : 0;
-
-    let numElems = names.length - off_left - off_right;
-    if (numElems >= 9) {
-      filtered = this._filterSimpleConnections(names, depCount);
-      numElems = names.length - off_left - off_right;
-    }
-
-    let ordered: string[] = [...names];
-    let checklist = [...ordered];
-    let minWeight = calculateWeight(ordered, weights);
-    let minDirCount = this._calculateDirCount(ordered, weights);
-
-    const swap = (arr: string[], i: number, j: number): void => {
-      const temp = arr[i];
-      const elemI = arr[i];
-      const elemJ = arr[j];
-      /* v8 ignore else @preserve */
-      if (temp !== undefined && elemI !== undefined && elemJ !== undefined) {
-        arr[i] = elemJ;
-        arr[j] = elemI;
-      }
-    };
-
-    const checkWeight = (recalc = false): boolean => {
-      const weight = calculateWeight(checklist, weights);
-      if (weight <= minWeight || recalc) {
-        const dirCount = this._calculateDirCount(checklist, weights);
-        if (
-          recalc ||
-          weight < minWeight ||
-          (weight === minWeight && dirCount < minDirCount)
-        ) {
-          minWeight = weight;
-          minDirCount = dirCount;
-          ordered = [...checklist];
-          return true;
-        }
-      }
-      return false;
-    };
-
-    const rotate = (left: number, right: number): void => {
-      let rotated: string[] = checklist.slice(left, right);
-      const popped = rotated.pop();
-      /* v8 ignore else @preserve */
-      if (popped !== undefined) {
-        rotated.unshift(popped);
-      }
-      if (left > 0) {
-        rotated = [...checklist.slice(0, left), ...rotated];
-      }
-      if (right < checklist.length) {
-        rotated = [...rotated, ...checklist.slice(right)];
-      }
-      checklist = rotated;
-    };
-
-    if (numElems < 9) {
-      // perform all permutations - for >= 9 this takes too long
-      const counters: number[] = new Array<number>(numElems).fill(0);
-      let i = 1;
-      while (i < ordered.length - off_left - off_right) {
-        const counterI = counters[i];
-        if (counterI !== undefined && counterI < i) {
-          const k = i % 2 && counterI;
-          /* v8 ignore else @preserve */
-          if (k !== undefined) {
-            swap(checklist, i + off_left, k + off_left);
-          }
-          counters[i] = counterI + 1;
-          i = 1;
-          checkWeight();
-        } else {
-          /* v8 ignore else @preserve */
-          if (counterI !== undefined) {
-            counters[i] = 0;
-          }
-          ++i;
-        }
-      }
-    } else {
-      let finished = false;
-      while (!finished) {
-        finished = true;
-        for (let i = off_left; i < ordered.length - off_right; i += 1) {
-          for (let j = i + 1; j < ordered.length - off_right; j += 1) {
-            for (let k = j - i - 1; k > 0; k--) {
-              rotate(i, j + 1);
-              if (checkWeight()) {
-                finished = false;
-              }
-            }
-            rotate(i, j);
-          }
-        }
-      }
-    }
-
-    // re-add the simple connections
-    for (const name of filtered) {
-      let first = true;
-      for (let i = checklist.length - off_right; i >= off_left; i -= 1) {
-        checklist.splice(i, 0, name);
-        checkWeight(first);
-        first = false;
-        checklist.splice(i, 1);
-      }
-      checklist = ordered;
-    }
-
-    return ordered.filter((c) => {
-      return this._isRealComponent(c);
-    });
-  }
-
-  private _isRealComponent(name: string): boolean {
-    return (
-      name.length > 1 ||
-      (name.length === 1 && name[0] !== "[" && name[0] !== "]")
-    );
-  }
-
-  private _filterSimpleConnections(
-    names: string[],
-    depCount: DefaultMap<string, number>
-  ): string[] {
-    const filtered: string[] = [];
-    const deps = new DefaultMap<string, string[]>(() => {
-      return [];
-    });
-    for (const connection of depCount.keys()) {
-      const arr = connection.split(",");
-      const left = arr[0];
-      const right = arr[1];
-      if (
-        left != null &&
-        left.length > 0 &&
-        right != null &&
-        right.length > 0 &&
-        this._isRealComponent(left) &&
-        this._isRealComponent(right)
-      ) {
-        deps.getDef(left).push(right);
-        deps.getDef(right).push(left);
-      }
-    }
-
-    for (const name of names) {
-      if (deps.getDef(name).length === 1) {
-        filtered.push(name);
-      }
-    }
-    for (const name of filtered) {
-      names.splice(names.indexOf(name), 1);
-    }
-    return filtered;
+    return orderNames(names, weights);
   }
 
   private _getCountsAndNames(): [DefaultMap<string, number>, string[]] {
