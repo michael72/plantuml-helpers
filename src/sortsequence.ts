@@ -3,6 +3,7 @@ import { DefaultMap } from "./helpers.js";
 import { Component } from "./uml/component.js";
 import { Content, Definition } from "./uml/definition.js";
 import { Line } from "./uml/line.js";
+import { calculateWeight } from "./sortKernels.js";
 
 function _toKey(s: [string, string]): string {
   return s[0] + "," + s[1];
@@ -43,20 +44,6 @@ export class SortSequence {
         c.alias === undefined
       );
     });
-  }
-
-  private _calculateWeight(
-    components: string[],
-    weights: Array<[string, string, number]>
-  ): number {
-    let sum = 0;
-    const square = (a: number): number => {
-      return a * a;
-    };
-    for (const [l, r, num] of weights) {
-      sum += square((components.indexOf(l) - components.indexOf(r)) * num);
-    }
-    return sum;
   }
 
   private _calculateDirCount(
@@ -110,7 +97,7 @@ export class SortSequence {
 
     let ordered: string[] = [...names];
     let checklist = [...ordered];
-    let minWeight = this._calculateWeight(ordered, weights);
+    let minWeight = calculateWeight(ordered, weights);
     let minDirCount = this._calculateDirCount(ordered, weights);
 
     const swap = (arr: string[], i: number, j: number): void => {
@@ -125,7 +112,7 @@ export class SortSequence {
     };
 
     const checkWeight = (recalc = false): boolean => {
-      const weight = this._calculateWeight(checklist, weights);
+      const weight = calculateWeight(checklist, weights);
       if (weight <= minWeight || recalc) {
         const dirCount = this._calculateDirCount(checklist, weights);
         if (
