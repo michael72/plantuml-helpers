@@ -1,10 +1,9 @@
 import { autoFormatTxt } from "./reformat.js";
 import {
-  FENCE_OPEN_RE,
-  PLANTUML_FENCE_INFOS,
-  findClosingFence,
-} from "./fence.js";
-import { findAllUmlBoundaries, UmlBoundary } from "./umlBoundary.js";
+  findAllUmlBoundaries,
+  findAllUmlFenceBoundaries,
+  UmlBoundary,
+} from "./umlBoundary.js";
 
 /** Result of formatting the content of a single file. */
 export interface FormatFileResult {
@@ -69,37 +68,18 @@ export function formatMarkdownContent(
 ): FormatFileResult {
   const eol = _eol(content);
   const lines = content.split(/\r?\n/);
-  const regions: UmlBoundary[] = [];
+  const { boundaries, unterminatedFenceLine } =
+    findAllUmlFenceBoundaries(lines);
 
-  let i = 0;
-  while (i < lines.length) {
-    /* v8 ignore next @preserve - lines[i] is always defined for i < length */
-    const open = FENCE_OPEN_RE.exec(lines[i] ?? "");
-    i += 1;
-    if (open !== null) {
-      /* v8 ignore next @preserve - the capture group always matches */
-      const fence = open[1] ?? "";
-      /* v8 ignore next @preserve - the capture group always matches */
-      const info = (open[2] ?? "").toLowerCase();
-      // find the closing fence: same character, at least the same length
-      const close = findClosingFence(lines, i, fence);
-      if (close < 0) {
-        if (PLANTUML_FENCE_INFOS.has(info)) {
-          const result = _emptyResult(content);
-          result.warnings.push(`unterminated \`\`\`${info} block at line ${i}`);
-          return result;
-        }
-        break;
-      }
-      if (PLANTUML_FENCE_INFOS.has(info) && close > i) {
-        // exclude the fence lines themselves from the region
-        regions.push({ startLine: i, endLine: close - 1 });
-      }
-      i = close + 1;
-    }
+  if (unterminatedFenceLine !== undefined) {
+    const result = _emptyResult(content);
+    result.warnings.push(
+      `unterminated \`\`\`plantuml block at line ${unterminatedFenceLine}`
+    );
+    return result;
   }
 
-  return _formatRegions(lines, regions, eol, rebuild);
+  return _formatRegions(lines, boundaries, eol, rebuild);
 }
 
 function _emptyResult(content: string): FormatFileResult {

@@ -1,3 +1,9 @@
+import {
+  PLANTUML_FENCE_INFOS,
+  FENCE_OPEN_RE,
+  findClosingFence,
+} from "./fence.js";
+
 /**
  * Result of finding UML boundaries in text.
  */
@@ -133,6 +139,61 @@ export function findAllUmlBoundaries(lines: string[]): UmlBoundary[] {
     }
   });
   return regions;
+}
+
+/**
+ * Result of scanning markdown fences for PlantUML blocks.
+ */
+export interface UmlFenceScanResult {
+  /** Successfully closed PlantUML fenced blocks. */
+  boundaries: UmlBoundary[];
+  /** Line number (0-based, content line, not fence line) of an unterminated
+   * PlantUML fence opening, if one was found. When set, the caller should
+   * warn and stop further processing. */
+  unterminatedFenceLine?: number;
+}
+
+/**
+ * Finds all ```plantuml / ```puml (and tilde-equivalent) fenced code
+ * blocks in a set of lines.  Returns only properly closed fences; when an
+ * unterminated PlantUML fence is encountered, the scan stops and
+ * `unterminatedFenceLine` is set to the content line after the opening fence.
+ *
+ * Non-PlantUML fences (e.g. ```js) are skipped; an unterminated non-PlantUML
+ * fence also stops the scan but without reporting an error.
+ */
+export function findAllUmlFenceBoundaries(
+  lines: string[]
+): UmlFenceScanResult {
+  const boundaries: UmlBoundary[] = [];
+
+  let i = 0;
+  while (i < lines.length) {
+    /* v8 ignore next @preserve - lines[i] is always defined for i < length */
+    const open = FENCE_OPEN_RE.exec(lines[i] ?? "");
+    i += 1;
+    if (open !== null) {
+      /* v8 ignore next @preserve - the capture group always matches */
+      const fence = open[1] ?? "";
+      /* v8 ignore next @preserve - the info capture group always matches */
+      const info = (open[2] ?? "").toLowerCase();
+      // find the closing fence: same character, at least the same length
+      const close = findClosingFence(lines, i, fence);
+      if (close < 0) {
+        if (PLANTUML_FENCE_INFOS.has(info)) {
+          return { boundaries, unterminatedFenceLine: i };
+        }
+        break;
+      }
+      if (PLANTUML_FENCE_INFOS.has(info) && close > i) {
+        // exclude the fence lines themselves from the region
+        boundaries.push({ startLine: i, endLine: close - 1 });
+      }
+      i = close + 1;
+    }
+  }
+
+  return { boundaries };
 }
 
 // Style-only blocks contain no diagram content that could be formatted, so
