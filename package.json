@@ -190,7 +190,7 @@
     "@types/vscode": "^1.125.0",
     "@typescript-eslint/eslint-plugin": "^8.67.0",
     "@typescript-eslint/parser": "^8.69.0",
-    "@vitest/coverage-v8": "^4.1.10",
+    "@vitest/coverage-v8": "^5.0.0",
     "@vitest/ui": "^4.1.10",
     "@vscode/vsce": "^3.9.2",
     "eslint": "^10.8.1",
