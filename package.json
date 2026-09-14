@@ -187,7 +187,7 @@
     "@eslint/js": "^10.0.1",
     "@types/markdown-it": "^14.1.2",
     "@types/node": "^26.2.0",
-    "@types/vscode": "^1.125.0",
+    "@types/vscode": "^1.137.0",
     "@typescript-eslint/eslint-plugin": "^8.70.0",
     "@typescript-eslint/parser": "^8.70.0",
     "@vitest/coverage-v8": "^4.1.10",
