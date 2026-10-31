@@ -22,4 +22,7 @@ eslint.config.js
 *.zip
 *.vsix
 LICENSE
+AGENTS.md
+Architecture.md
+
 
